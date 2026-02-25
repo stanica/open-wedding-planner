@@ -5,8 +5,13 @@ interface Vendor {
   categoryId: number;
   name: string;
   location: string | null;
+  websiteUrl: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  contactWhatsapp: string | null;
   status: string;
   description: string | null;
+  notes: string | null;
 }
 
 interface Category {
