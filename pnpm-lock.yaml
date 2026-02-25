@@ -18,6 +18,12 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18
 
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+
 packages:
 
   /@esbuild/aix-ppc64@0.27.3:
@@ -866,3 +872,7 @@ packages:
       siginfo: 2.0.0
       stackback: 0.0.2
     dev: true
+
+  /zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+    dev: false
