@@ -4,6 +4,7 @@ import { useGatewayStore } from "./stores/gateway-store";
 import { wsClient } from "./lib/ws-client";
 import { AppShell } from "./components/layout/AppShell";
 import { SettingsView } from "./components/settings/SettingsView";
+import { VendorListView } from "./components/vendors/VendorListView";
 
 function PlaceholderView({ title }: { title: string }) {
   return (
@@ -46,7 +47,7 @@ export function App() {
         <Route element={<AppShell />}>
           <Route index element={<DashboardView />} />
           <Route path="research" element={<PlaceholderView title="Research" />} />
-          <Route path="vendors" element={<PlaceholderView title="Vendors" />} />
+          <Route path="vendors" element={<VendorListView />} />
           <Route path="outreach" element={<PlaceholderView title="Outreach" />} />
           <Route path="inbox" element={<PlaceholderView title="Inbox" />} />
           <Route path="timeline" element={<PlaceholderView title="Timeline" />} />
