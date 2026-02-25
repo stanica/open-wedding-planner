@@ -18,6 +18,8 @@ import { translationAgent, mockTranslationAgent } from "./agents/translation.js"
 import { createEmbeddingsTable } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
+import { hasAIProvider, setAIConfig } from "./agents/model-provider.js";
+import { aiConfig } from "./db/schema.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -68,16 +70,25 @@ export async function startGateway(options: GatewayOptions = {}) {
   // 7. Start WebSocket server
   const wsServer = await createWsServer({ port, getState, router, db });
 
-  // 8. Create orchestrator and register agents
+  // 8. Load saved AI config and create orchestrator
+  const [savedAiConfig] = await db.select().from(aiConfig).limit(1);
+  if (savedAiConfig) {
+    setAIConfig({
+      provider: savedAiConfig.provider as "api-key" | "claude-max",
+      model: savedAiConfig.model,
+      proxyUrl: savedAiConfig.proxyUrl,
+    });
+  }
+
   const orchestrator = new Orchestrator(db, (event) => {
     wsServer.broadcast({ type: "event", seq: Date.now(), event });
   });
-  const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
-  orchestrator.registerAgent(hasApiKey ? researchAgent : mockResearchAgent);
-  orchestrator.registerAgent(hasApiKey ? heartbeatAgent : mockHeartbeatAgent);
-  orchestrator.registerAgent(hasApiKey ? outreachAgent : mockOutreachAgent);
-  orchestrator.registerAgent(hasApiKey ? parserAgent : mockParserAgent);
-  orchestrator.registerAgent(hasApiKey ? translationAgent : mockTranslationAgent);
+  const useRealAgents = hasAIProvider();
+  orchestrator.registerAgent(useRealAgents ? researchAgent : mockResearchAgent);
+  orchestrator.registerAgent(useRealAgents ? heartbeatAgent : mockHeartbeatAgent);
+  orchestrator.registerAgent(useRealAgents ? outreachAgent : mockOutreachAgent);
+  orchestrator.registerAgent(useRealAgents ? parserAgent : mockParserAgent);
+  orchestrator.registerAgent(useRealAgents ? translationAgent : mockTranslationAgent);
   registerAgentHandlers(router, orchestrator);
 
   // 9. Start heartbeat scheduler

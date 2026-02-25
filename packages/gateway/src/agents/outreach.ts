@@ -26,12 +26,13 @@ export const outreachAgent: BaseAgent = {
     ctx.emit("drafting", `Drafting message to ${vendor.name}`);
 
     const { generateText } = await import("ai");
-    const { anthropic } = await import("@ai-sdk/anthropic");
+    const { getModel } = await import("./model-provider.js");
 
     const targetLang = languagePrefs.find((l) => l !== "en") ?? "en";
+    const model = await getModel();
 
     const { text: draft } = await generateText({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model,
       system: `You are drafting a ${channel === "email" ? "professional email" : "WhatsApp message"} to a wedding vendor.
 Write in ${targetLang === "en" ? "English" : `${targetLang} (with English being the couple's native language)`}.
 Be warm but professional. Include relevant wedding details.

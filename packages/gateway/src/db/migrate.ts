@@ -150,5 +150,12 @@ export function pushSchema(sqlite: Database.Database) {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       last_active_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS ai_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL DEFAULT 'api-key',
+      model TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
+      proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1'
+    );
   `);
 }

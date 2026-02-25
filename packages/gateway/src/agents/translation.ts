@@ -13,10 +13,11 @@ export const translationAgent: BaseAgent = {
     ctx.emit("translating", `Translating to ${to}...`);
 
     const { generateText } = await import("ai");
-    const { anthropic } = await import("@ai-sdk/anthropic");
+    const { getModel } = await import("./model-provider.js");
+    const model = await getModel();
 
     const { text: translated } = await generateText({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model,
       system: `You are a professional translator. Translate the following text${from ? ` from ${from}` : ""} to ${to}. Only output the translated text, nothing else.`,
       prompt: text,
       abortSignal: ctx.signal,

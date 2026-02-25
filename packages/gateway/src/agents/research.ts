@@ -7,6 +7,7 @@ import { scraperTool } from "../tools/scraper.js";
 import { browserTool } from "../tools/browser.js";
 import { pdfTool } from "../tools/pdf.js";
 import type { BaseAgent, AgentContext, AgentResult } from "./base-agent.js";
+import { getModel } from "./model-provider.js";
 
 interface CreateVendorParams {
   name: string;
@@ -96,8 +97,9 @@ export const researchAgent: BaseAgent = {
 
     const createVendorTool = makeCreateVendorTool(ctx);
 
+    const model = await getModel();
     const { text, toolCalls } = await generateText({
-      model: getModel(),
+      model,
       system: SYSTEM_PROMPT,
       prompt: query,
       tools: {
@@ -190,8 +192,3 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-function getModel() {
-  // Dynamic import to allow configuration
-  const { anthropic } = require("@ai-sdk/anthropic") as typeof import("@ai-sdk/anthropic");
-  return anthropic("claude-sonnet-4-20250514");
-}

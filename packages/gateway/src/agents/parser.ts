@@ -24,10 +24,11 @@ export const parserAgent: BaseAgent = {
     ctx.emit("analyzing", `Analyzing message from ${vendor?.name ?? "vendor"}`);
 
     const { generateText } = await import("ai");
-    const { anthropic } = await import("@ai-sdk/anthropic");
+    const { getModel } = await import("./model-provider.js");
+    const model = await getModel();
 
     const { text: analysis } = await generateText({
-      model: anthropic("claude-sonnet-4-20250514"),
+      model,
       system: `You are analyzing a vendor response for a wedding planning app.
 Extract structured data from the message. Return a JSON object with:
 {

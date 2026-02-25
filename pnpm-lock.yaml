@@ -75,6 +75,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: ^3.0.47
         version: 3.0.47(zod@4.3.6)
+      '@ai-sdk/openai':
+        specifier: ^3.0.33
+        version: 3.0.33(zod@4.3.6)
       '@wedding-planner/shared':
         specifier: workspace:^
         version: link:../shared
@@ -163,6 +166,17 @@ packages:
       '@ai-sdk/provider': 3.0.8
       '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
       '@vercel/oidc': 3.1.0
+      zod: 4.3.6
+    dev: false
+
+  /@ai-sdk/openai@3.0.33(zod@4.3.6):
+    resolution: {integrity: sha512-O/8SVKAiwFHkGAUfBnrLb7L2IjbpP9ySWbmOktOfa0KtzutZkmKNrJ5CtB5dj+lwuENbOuZeRsnsZdOjar7hig==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+    dependencies:
+      '@ai-sdk/provider': 3.0.8
+      '@ai-sdk/provider-utils': 4.0.15(zod@4.3.6)
       zod: 4.3.6
     dev: false
 
