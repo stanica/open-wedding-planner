@@ -6,4 +6,5 @@ export default defineConfig({
   target: "node20",
   clean: true,
   sourcemap: true,
+  noExternal: ["@wedding-planner/shared"],
 });
