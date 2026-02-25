@@ -6,3 +6,4 @@ out/
 *.db-journal
 .DS_Store
 *.csv
+.worktrees/
