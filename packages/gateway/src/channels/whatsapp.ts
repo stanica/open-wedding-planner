@@ -20,6 +20,8 @@ export class WhatsAppChannel {
     | ((msg: { from: string; body: string; messageId: string }) => void)
     | null = null;
   private reconnectDelay = 1000;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
   private shouldReconnect = true;
 
   constructor(config: WhatsAppConfig, broadcast: (event: GatewayEvent) => void) {
@@ -31,6 +33,8 @@ export class WhatsAppChannel {
 
   async connect(): Promise<void> {
     this.shouldReconnect = true;
+    this.reconnectAttempts = 0;
+    this.restoreCredsFromBackup();
     await this.doConnect();
   }
 
@@ -81,13 +85,23 @@ export class WhatsAppChannel {
         });
 
         if (!loggedOut && this.shouldReconnect) {
-          setTimeout(() => this.doConnect(), this.reconnectDelay);
-          this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30_000);
+          this.reconnectAttempts++;
+          if (this.reconnectAttempts > this.maxReconnectAttempts) {
+            this.broadcast({
+              name: "channel-status",
+              data: { channel: "whatsapp", status: "failed" },
+            });
+            this.shouldReconnect = false;
+          } else {
+            setTimeout(() => this.doConnect(), this.reconnectDelay);
+            this.reconnectDelay = Math.min(this.reconnectDelay * 2, 5 * 60_000);
+          }
         }
       }
 
       if (connection === "open") {
         this.reconnectDelay = 1000;
+        this.reconnectAttempts = 0;
         this.broadcast({
           name: "channel-status",
           data: { channel: "whatsapp", status: "connected" },
@@ -138,12 +152,49 @@ export class WhatsAppChannel {
   private backupCreds(): void {
     const credsPath = path.join(this.authDir, "creds.json");
     const backupPath = path.join(this.authDir, "creds.json.bak");
+    const tmpPath = path.join(this.authDir, "creds.json.bak.tmp");
     try {
       if (fs.existsSync(credsPath)) {
-        fs.copyFileSync(credsPath, backupPath);
+        // Atomic backup: write to temp file, then rename
+        fs.copyFileSync(credsPath, tmpPath);
+        fs.renameSync(tmpPath, backupPath);
       }
     } catch {
-      // Backup failure is non-critical
+      // Clean up temp file on failure
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {
+        // ignore
+      }
     }
+  }
+
+  /**
+   * Restore credentials from backup if main creds file is corrupted.
+   */
+  restoreCredsFromBackup(): boolean {
+    const credsPath = path.join(this.authDir, "creds.json");
+    const backupPath = path.join(this.authDir, "creds.json.bak");
+    try {
+      if (!fs.existsSync(credsPath) && fs.existsSync(backupPath)) {
+        fs.copyFileSync(backupPath, credsPath);
+        return true;
+      }
+      // Verify creds is valid JSON, restore from backup if not
+      if (fs.existsSync(credsPath)) {
+        JSON.parse(fs.readFileSync(credsPath, "utf-8"));
+      }
+    } catch {
+      // Main creds corrupted, try restore
+      try {
+        if (fs.existsSync(backupPath)) {
+          fs.copyFileSync(backupPath, credsPath);
+          return true;
+        }
+      } catch {
+        // Both corrupted
+      }
+    }
+    return false;
   }
 }

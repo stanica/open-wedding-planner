@@ -24,6 +24,8 @@ export class GmailChannel {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private broadcast: (event: GatewayEvent) => void;
   private onMessage: ((msg: { from: string; subject: string; body: string; messageId: string }) => void) | null = null;
+  private consecutiveErrors = 0;
+  private maxConsecutiveErrors = 10;
 
   constructor(config: GmailConfig, broadcast: (event: GatewayEvent) => void) {
     this.config = config;
@@ -135,6 +137,7 @@ export class GmailChannel {
         }
 
         this.onMessage({ from, subject, body, messageId });
+        this.consecutiveErrors = 0;
 
         // Mark as read
         await gmail.users.messages.modify({
@@ -144,7 +147,13 @@ export class GmailChannel {
         });
       }
     } catch {
-      this.broadcast({ name: "channel-status", data: { channel: "gmail", status: "error" } });
+      this.consecutiveErrors++;
+      if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+        this.broadcast({ name: "channel-status", data: { channel: "gmail", status: "failed" } });
+        this.stopPolling();
+      } else {
+        this.broadcast({ name: "channel-status", data: { channel: "gmail", status: "error" } });
+      }
     }
   }
 

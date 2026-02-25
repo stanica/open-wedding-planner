@@ -84,6 +84,10 @@ export class Lane {
     return false;
   }
 
+  clearQueue(): void {
+    this.queue = [];
+  }
+
   reset(): void {
     this.activeTaskIds.clear();
     this.queue = [];
@@ -150,6 +154,27 @@ export class CommandQueue {
   reset(): void {
     for (const lane of this.lanes.values()) {
       lane.reset();
+    }
+  }
+
+  /**
+   * Wait for all in-flight tasks to complete (max 30s).
+   * Clears queued tasks immediately so no new work starts.
+   */
+  async waitForDrain(maxWaitMs = 30_000): Promise<void> {
+    // Clear queued (not yet started) tasks
+    for (const lane of this.lanes.values()) {
+      lane.clearQueue();
+    }
+
+    const deadline = Date.now() + maxWaitMs;
+    while (Date.now() < deadline) {
+      const totalActive = Array.from(this.lanes.values()).reduce(
+        (sum, lane) => sum + lane.getActiveCount(),
+        0,
+      );
+      if (totalActive === 0) return;
+      await new Promise((r) => setTimeout(r, 500));
     }
   }
 

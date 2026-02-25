@@ -93,6 +93,8 @@ export async function startGateway(options: GatewayOptions = {}) {
   // Return cleanup function
   async function stop() {
     heartbeat.stop();
+    // Drain in-flight work (max 30s)
+    await orchestrator.waitForDrain(30_000);
     await wsServer.close();
     sqlite.close();
   }

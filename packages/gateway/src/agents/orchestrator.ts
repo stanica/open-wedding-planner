@@ -153,4 +153,8 @@ export class Orchestrator {
   getQueueStatus() {
     return this.queue.getStatus();
   }
+
+  async waitForDrain(maxWaitMs?: number): Promise<void> {
+    return this.queue.waitForDrain(maxWaitMs);
+  }
 }
