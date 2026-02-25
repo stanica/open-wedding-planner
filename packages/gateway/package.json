@@ -17,6 +17,7 @@
     "cheerio": "^1.2.0",
     "csv-parse": "^6.1.0",
     "drizzle-orm": "^0.45.1",
+    "pdf-parse": "^2.4.5",
     "playwright": "^1.58.2",
     "sqlite-vec": "0.1.7-alpha.2",
     "ws": "^8.19.0",
