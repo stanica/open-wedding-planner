@@ -5,6 +5,8 @@ import * as schema from "./db/schema.js";
 import { pushSchema } from "./db/migrate.js";
 import { seedCategories } from "./db/seed.js";
 import { createWsServer } from "./infra/ws-server.js";
+import { Router } from "./infra/router.js";
+import { registerWeddingConfigHandlers } from "./handlers/wedding-config.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import {
@@ -37,7 +39,11 @@ export async function startGateway(options: GatewayOptions = {}) {
   // 4. Seed categories
   await seedCategories(db);
 
-  // 5. Build state snapshot
+  // 5. Create router and register handlers
+  const router = new Router();
+  registerWeddingConfigHandlers(router);
+
+  // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
     return {
       version: "0.0.1",
@@ -49,8 +55,8 @@ export async function startGateway(options: GatewayOptions = {}) {
     };
   }
 
-  // 6. Start WebSocket server
-  const wsServer = await createWsServer({ port, getState });
+  // 7. Start WebSocket server
+  const wsServer = await createWsServer({ port, getState, router, db });
 
   // 7. Print ready signal
   console.log(`${GATEWAY_READY_PREFIX}${port}`);

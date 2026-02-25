@@ -6,6 +6,7 @@ import type {
   ServerMessage,
   GatewayStateSnapshot,
 } from "@wedding-planner/shared";
+import type { Router, Db } from "./router.js";
 
 interface AuthenticatedClient {
   ws: WebSocket;
@@ -16,10 +17,12 @@ interface AuthenticatedClient {
 export interface WsServerOptions {
   port: number;
   getState: () => GatewayStateSnapshot;
+  router?: Router;
+  db?: Db;
 }
 
 export async function createWsServer(options: WsServerOptions) {
-  const { port, getState } = options;
+  const { port, getState, router, db } = options;
   const clients = new Set<AuthenticatedClient>();
   let eventSeq = 0;
 
@@ -70,12 +73,28 @@ export async function createWsServer(options: WsServerOptions) {
       }
 
       if (msg.type === "request") {
-        send(ws, {
-          type: "response",
-          id: msg.id,
-          ok: false,
-          error: `Unknown method: ${msg.method}`,
-        });
+        if (router && db) {
+          router
+            .handle(db, msg.method, msg.params)
+            .then((result) => {
+              send(ws, { type: "response", id: msg.id, ok: true, result });
+            })
+            .catch((err: Error) => {
+              send(ws, {
+                type: "response",
+                id: msg.id,
+                ok: false,
+                error: err.message,
+              });
+            });
+        } else {
+          send(ws, {
+            type: "response",
+            id: msg.id,
+            ok: false,
+            error: `Unknown method: ${msg.method}`,
+          });
+        }
         return;
       }
     });
