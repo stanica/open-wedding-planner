@@ -11,8 +11,13 @@ import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import { Orchestrator } from "./agents/orchestrator.js";
 import { researchAgent, mockResearchAgent } from "./agents/research.js";
+import { heartbeatAgent, mockHeartbeatAgent } from "./agents/heartbeat.js";
+import { outreachAgent, mockOutreachAgent } from "./agents/outreach.js";
+import { parserAgent, mockParserAgent } from "./agents/parser.js";
+import { translationAgent, mockTranslationAgent } from "./agents/translation.js";
 import { createEmbeddingsTable } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
+import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -69,13 +74,25 @@ export async function startGateway(options: GatewayOptions = {}) {
   });
   const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
   orchestrator.registerAgent(hasApiKey ? researchAgent : mockResearchAgent);
+  orchestrator.registerAgent(hasApiKey ? heartbeatAgent : mockHeartbeatAgent);
+  orchestrator.registerAgent(hasApiKey ? outreachAgent : mockOutreachAgent);
+  orchestrator.registerAgent(hasApiKey ? parserAgent : mockParserAgent);
+  orchestrator.registerAgent(hasApiKey ? translationAgent : mockTranslationAgent);
   registerAgentHandlers(router, orchestrator);
 
-  // 9. Print ready signal
+  // 9. Start heartbeat scheduler
+  const heartbeat = new HeartbeatScheduler(
+    orchestrator,
+    (event) => wsServer.broadcast({ type: "event", seq: Date.now(), event }),
+  );
+  heartbeat.start();
+
+  // 10. Print ready signal
   console.log(`${GATEWAY_READY_PREFIX}${port}`);
 
   // Return cleanup function
   async function stop() {
+    heartbeat.stop();
     await wsServer.close();
     sqlite.close();
   }

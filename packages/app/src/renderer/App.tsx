@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
-import { useGatewayStore } from "./stores/gateway-store";
 import { wsClient } from "./lib/ws-client";
 import { AppShell } from "./components/layout/AppShell";
+import { DashboardView } from "./components/dashboard/DashboardView";
 import { SettingsView } from "./components/settings/SettingsView";
 import { VendorListView } from "./components/vendors/VendorListView";
 import { VendorDetailView } from "./components/vendors/VendorDetailView";
@@ -10,35 +10,7 @@ import { BudgetView } from "./components/budget/BudgetView";
 import { ResearchView } from "./components/research/ResearchView";
 import { OutreachView } from "./components/outreach/OutreachView";
 import { InboxView } from "./components/inbox/InboxView";
-
-function PlaceholderView({ title }: { title: string }) {
-  return (
-    <div className="flex h-full items-center justify-center text-gray-500">
-      <p className="text-lg">{title} — coming soon</p>
-    </div>
-  );
-}
-
-function DashboardView() {
-  const connected = useGatewayStore((s) => s.connected);
-  const state = useGatewayStore((s) => s.state);
-
-  return (
-    <div className="p-6">
-      <h1 className="mb-4 text-2xl font-bold">Dashboard</h1>
-      <div className="flex items-center gap-2">
-        <div
-          className={`h-3 w-3 rounded-full ${connected ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`}
-        />
-        <span>
-          {connected
-            ? `Connected to gateway v${state?.version ?? "?"}`
-            : "Connecting..."}
-        </span>
-      </div>
-    </div>
-  );
-}
+import { TimelineView } from "./components/timeline/TimelineView";
 
 export function App() {
   useEffect(() => {
@@ -56,7 +28,7 @@ export function App() {
           <Route path="vendors/:id" element={<VendorDetailView />} />
           <Route path="outreach" element={<OutreachView />} />
           <Route path="inbox" element={<InboxView />} />
-          <Route path="timeline" element={<PlaceholderView title="Timeline" />} />
+          <Route path="timeline" element={<TimelineView />} />
           <Route path="budget" element={<BudgetView />} />
           <Route path="settings" element={<SettingsView />} />
         </Route>
