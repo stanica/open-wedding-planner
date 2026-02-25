@@ -6,7 +6,7 @@ import { pushSchema } from "./db/migrate.js";
 import { seedCategories } from "./db/seed.js";
 import { createWsServer } from "./infra/ws-server.js";
 import { Router } from "./infra/router.js";
-import { registerWeddingConfigHandlers } from "./handlers/wedding-config.js";
+import { registerAllHandlers } from "./handlers/index.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import {
@@ -41,7 +41,7 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // 5. Create router and register handlers
   const router = new Router();
-  registerWeddingConfigHandlers(router);
+  registerAllHandlers(router);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
