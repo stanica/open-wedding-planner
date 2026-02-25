@@ -10,7 +10,8 @@ import { registerAllHandlers } from "./handlers/index.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import { Orchestrator } from "./agents/orchestrator.js";
-import { mockResearchAgent } from "./agents/research.js";
+import { researchAgent, mockResearchAgent } from "./agents/research.js";
+import { createEmbeddingsTable } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
 import {
   DEFAULT_GATEWAY_PORT,
@@ -33,8 +34,9 @@ export async function startGateway(options: GatewayOptions = {}) {
   sqlite.pragma("foreign_keys = ON");
   sqliteVec.load(sqlite);
 
-  // 2. Push schema
+  // 2. Push schema + embeddings
   pushSchema(sqlite);
+  createEmbeddingsTable(sqlite);
 
   // 3. Create Drizzle instance
   const db = drizzle(sqlite, { schema });
@@ -65,7 +67,8 @@ export async function startGateway(options: GatewayOptions = {}) {
   const orchestrator = new Orchestrator(db, (event) => {
     wsServer.broadcast({ type: "event", seq: Date.now(), event });
   });
-  orchestrator.registerAgent(mockResearchAgent);
+  const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+  orchestrator.registerAgent(hasApiKey ? researchAgent : mockResearchAgent);
   registerAgentHandlers(router, orchestrator);
 
   // 9. Print ready signal
