@@ -10,7 +10,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.47",
     "@wedding-planner/shared": "workspace:^",
+    "ai": "^6.0.100",
     "better-sqlite3": "^12.6.2",
     "csv-parse": "^6.1.0",
     "drizzle-orm": "^0.45.1",
