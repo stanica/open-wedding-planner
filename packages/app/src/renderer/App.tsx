@@ -8,6 +8,8 @@ import { VendorListView } from "./components/vendors/VendorListView";
 import { VendorDetailView } from "./components/vendors/VendorDetailView";
 import { BudgetView } from "./components/budget/BudgetView";
 import { ResearchView } from "./components/research/ResearchView";
+import { OutreachView } from "./components/outreach/OutreachView";
+import { InboxView } from "./components/inbox/InboxView";
 
 function PlaceholderView({ title }: { title: string }) {
   return (
@@ -52,8 +54,8 @@ export function App() {
           <Route path="research" element={<ResearchView />} />
           <Route path="vendors" element={<VendorListView />} />
           <Route path="vendors/:id" element={<VendorDetailView />} />
-          <Route path="outreach" element={<PlaceholderView title="Outreach" />} />
-          <Route path="inbox" element={<PlaceholderView title="Inbox" />} />
+          <Route path="outreach" element={<OutreachView />} />
+          <Route path="inbox" element={<InboxView />} />
           <Route path="timeline" element={<PlaceholderView title="Timeline" />} />
           <Route path="budget" element={<BudgetView />} />
           <Route path="settings" element={<SettingsView />} />
