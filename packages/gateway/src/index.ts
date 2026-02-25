@@ -9,6 +9,9 @@ import { Router } from "./infra/router.js";
 import { registerAllHandlers } from "./handlers/index.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
+import { Orchestrator } from "./agents/orchestrator.js";
+import { mockResearchAgent } from "./agents/research.js";
+import { registerAgentHandlers } from "./handlers/agents.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -58,7 +61,14 @@ export async function startGateway(options: GatewayOptions = {}) {
   // 7. Start WebSocket server
   const wsServer = await createWsServer({ port, getState, router, db });
 
-  // 7. Print ready signal
+  // 8. Create orchestrator and register agents
+  const orchestrator = new Orchestrator(db, (event) => {
+    wsServer.broadcast({ type: "event", seq: Date.now(), event });
+  });
+  orchestrator.registerAgent(mockResearchAgent);
+  registerAgentHandlers(router, orchestrator);
+
+  // 9. Print ready signal
   console.log(`${GATEWAY_READY_PREFIX}${port}`);
 
   // Return cleanup function

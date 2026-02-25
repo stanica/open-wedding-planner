@@ -7,6 +7,7 @@ import { SettingsView } from "./components/settings/SettingsView";
 import { VendorListView } from "./components/vendors/VendorListView";
 import { VendorDetailView } from "./components/vendors/VendorDetailView";
 import { BudgetView } from "./components/budget/BudgetView";
+import { ResearchView } from "./components/research/ResearchView";
 
 function PlaceholderView({ title }: { title: string }) {
   return (
@@ -48,7 +49,7 @@ export function App() {
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<DashboardView />} />
-          <Route path="research" element={<PlaceholderView title="Research" />} />
+          <Route path="research" element={<ResearchView />} />
           <Route path="vendors" element={<VendorListView />} />
           <Route path="vendors/:id" element={<VendorDetailView />} />
           <Route path="outreach" element={<PlaceholderView title="Outreach" />} />
