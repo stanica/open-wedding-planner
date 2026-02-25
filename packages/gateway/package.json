@@ -12,6 +12,7 @@
   "dependencies": {
     "@wedding-planner/shared": "workspace:^",
     "better-sqlite3": "^12.6.2",
+    "csv-parse": "^6.1.0",
     "drizzle-orm": "^0.45.1",
     "sqlite-vec": "0.1.7-alpha.2",
     "ws": "^8.19.0",
