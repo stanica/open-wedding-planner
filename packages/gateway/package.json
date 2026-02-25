@@ -14,8 +14,10 @@
     "@wedding-planner/shared": "workspace:^",
     "ai": "^6.0.100",
     "better-sqlite3": "^12.6.2",
+    "cheerio": "^1.2.0",
     "csv-parse": "^6.1.0",
     "drizzle-orm": "^0.45.1",
+    "playwright": "^1.58.2",
     "sqlite-vec": "0.1.7-alpha.2",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
