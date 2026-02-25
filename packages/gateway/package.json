@@ -1,0 +1,27 @@
+{
+  "name": "@wedding-planner/gateway",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@wedding-planner/shared": "workspace:^",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-orm": "^0.45.1",
+    "sqlite-vec": "0.1.7-alpha.2",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.9",
+    "tsup": "^8.5.1",
+    "vitest": "^4.0.18"
+  }
+}
