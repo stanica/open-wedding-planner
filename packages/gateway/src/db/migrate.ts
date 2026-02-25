@@ -87,7 +87,8 @@ export function pushSchema(sqlite: Database.Database) {
       language TEXT,
       sent_at TEXT,
       status TEXT NOT NULL DEFAULT 'draft',
-      thread_id TEXT
+      thread_id TEXT,
+      parsed_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS research_notes (

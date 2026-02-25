@@ -99,6 +99,7 @@ export const communications = sqliteTable("communications", {
   sentAt: text("sent_at"),
   status: text("status").notNull().default("draft"),
   threadId: text("thread_id"),
+  parsedAt: text("parsed_at"),
 });
 
 export const researchNotes = sqliteTable("research_notes", {
