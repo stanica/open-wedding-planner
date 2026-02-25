@@ -1,0 +1,56 @@
+appId: com.weddingplanner.app
+productName: Wedding Planner
+copyright: Copyright © 2026
+
+directories:
+  buildResources: resources
+  output: dist
+
+files:
+  - out/**/*
+  - "!out/**/*.map"
+
+extraResources:
+  - from: ../gateway/dist
+    to: gateway
+    filter:
+      - "**/*"
+
+mac:
+  category: public.app-category.lifestyle
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Utility
