@@ -1,0 +1,26 @@
+{
+  "name": "@wedding-planner/app",
+  "version": "0.0.1",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json"
+  },
+  "dependencies": {
+    "@wedding-planner/shared": "workspace:^",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "^40.6.1",
+    "electron-vite": "^5.0.0",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1"
+  }
+}
