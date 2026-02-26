@@ -38,6 +38,7 @@ export const vendors = sqliteTable("vendors", {
   description: text("description"),
   notes: text("notes"),
   sourceUrl: text("source_url"),
+  threadId: integer("thread_id"),
   status: text("status").notNull().default("researched"),
   createdAt: text("created_at")
     .notNull()
@@ -181,4 +182,39 @@ export const aiConfig = sqliteTable("ai_config", {
   provider: text("provider").notNull().default("api-key"),
   model: text("model").notNull().default("claude-sonnet-4-20250514"),
   proxyUrl: text("proxy_url").notNull().default("http://localhost:3456/v1"),
+});
+
+export const researchThreads = sqliteTable("research_threads", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  categoryTags: text("category_tags"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const researchMessages = sqliteTable("research_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  threadId: integer("thread_id")
+    .notNull()
+    .references(() => researchThreads.id),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  toolCalls: text("tool_calls"),
+  vendorIds: text("vendor_ids"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const toolPermissions = sqliteTable("tool_permissions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  toolName: text("tool_name").notNull().unique(),
+  decision: text("decision").notNull().default("prompt"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
 });

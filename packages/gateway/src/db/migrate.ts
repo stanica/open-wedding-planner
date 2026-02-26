@@ -41,6 +41,7 @@ export function pushSchema(sqlite: Database.Database) {
       description TEXT,
       notes TEXT,
       source_url TEXT,
+      thread_id INTEGER,
       status TEXT NOT NULL DEFAULT 'researched',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -156,6 +157,31 @@ export function pushSchema(sqlite: Database.Database) {
       provider TEXT NOT NULL DEFAULT 'api-key',
       model TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
       proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1'
+    );
+
+    CREATE TABLE IF NOT EXISTS research_threads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      category_tags TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS research_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL REFERENCES research_threads(id),
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      tool_calls TEXT,
+      vendor_ids TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS tool_permissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tool_name TEXT NOT NULL UNIQUE,
+      decision TEXT NOT NULL DEFAULT 'prompt',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
 }
