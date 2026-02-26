@@ -8,9 +8,11 @@ import type { CategoryBudget } from "../../hooks/useBudget";
 export function BudgetCategoryRow({
   data,
   currency,
+  onDeleteEntry,
 }: {
   data: CategoryBudget;
   currency: string;
+  onDeleteEntry: (id: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -61,7 +63,7 @@ export function BudgetCategoryRow({
               <table className="w-full">
                 <tbody>
                   {data.entries.map((entry) => (
-                    <BudgetVendorRow key={entry.id} entry={entry} currency={currency} />
+                    <BudgetVendorRow key={entry.id} entry={entry} currency={currency} onDelete={onDeleteEntry} />
                   ))}
                 </tbody>
               </table>

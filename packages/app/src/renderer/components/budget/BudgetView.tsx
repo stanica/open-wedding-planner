@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { DollarSign } from "lucide-react";
 import { useBudgetData } from "../../hooks/useBudget";
-import { useRequest } from "../../hooks/useRequest";
+import { useRequest, useMutation } from "../../hooks/useRequest";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { BudgetSummaryBar } from "./BudgetSummaryBar";
 import { BudgetCategoryRow } from "./BudgetCategoryRow";
 import { CurrencyDisplay } from "../common/CurrencyDisplay";
@@ -13,10 +15,19 @@ interface WeddingConfig {
 }
 
 export function BudgetView() {
-  const { data, loading } = useBudgetData();
+  const { data, loading, refetch } = useBudgetData();
   const { data: config } = useRequest<WeddingConfig>("wedding-config.get");
+  const { mutate: deleteBudgetEntry, loading: deleting } = useMutation<{ id: number }>("budget.delete");
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
   const currency = config?.currency ?? "EUR";
+
+  async function handleDeleteEntry() {
+    if (deleteTarget === null) return;
+    await deleteBudgetEntry({ id: deleteTarget });
+    setDeleteTarget(null);
+    refetch();
+  }
 
   if (loading) {
     return (
@@ -66,7 +77,7 @@ export function BudgetView() {
           </thead>
           <tbody>
             {data.categoryBudgets.map((cb) => (
-              <BudgetCategoryRow key={cb.category.id} data={cb} currency={currency} />
+              <BudgetCategoryRow key={cb.category.id} data={cb} currency={currency} onDeleteEntry={setDeleteTarget} />
             ))}
           </tbody>
           <tfoot>
@@ -91,6 +102,15 @@ export function BudgetView() {
           </tfoot>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete budget entry?"
+        message="This budget entry will be permanently removed."
+        onConfirm={handleDeleteEntry}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }
