@@ -11,6 +11,7 @@ import { registerCommunicationHandlers } from "./communications.js";
 import { registerResearchNoteHandlers } from "./research-notes.js";
 import { registerDashboardHandlers } from "./dashboard.js";
 import { registerAIConfigHandlers } from "./ai-config.js";
+import { registerToolPermissionHandlers } from "./tool-permissions.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 
@@ -26,6 +27,7 @@ export function registerAllHandlers(router: Router, proxyManager: ProxyManager) 
   registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
   registerAIConfigHandlers(router, proxyManager);
+  registerToolPermissionHandlers(router);
 
   router.register("import.budget-csv", async (db, params) => {
     const { content } = params as { content: string };
