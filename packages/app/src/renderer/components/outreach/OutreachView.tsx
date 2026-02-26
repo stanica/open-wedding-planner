@@ -3,6 +3,7 @@ import { useRequest, useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { DraftCard } from "./DraftCard";
 import { EmptyState } from "../common/EmptyState";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { Send } from "lucide-react";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
@@ -35,7 +36,9 @@ export function OutreachView() {
     { id: number; bodyOriginal: string },
     Communication
   >("communications.update");
+  const { mutate: deleteComm, loading: deleting } = useMutation<{ id: number }>("communications.delete");
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; vendorName: string } | null>(null);
 
   const handleEvent = useCallback(
     (event: GatewayEvent) => {
@@ -63,6 +66,13 @@ export function OutreachView() {
   async function handleEdit(id: number, body: string) {
     await updateComm({ id, bodyOriginal: body });
     setEditingId(null);
+    refetch();
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await deleteComm({ id: deleteTarget.id });
+    setDeleteTarget(null);
     refetch();
   }
 
@@ -101,10 +111,20 @@ export function OutreachView() {
               onSaveEdit={(body) => handleEdit(draft.id, body)}
               onApprove={() => handleApprove(draft.id)}
               onReject={() => handleReject(draft.id)}
+              onDelete={() => setDeleteTarget({ id: draft.id, vendorName: draft.vendorName ?? "Unknown" })}
             />
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete draft?"
+        message={`Delete this outreach draft for ${deleteTarget?.vendorName}?`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

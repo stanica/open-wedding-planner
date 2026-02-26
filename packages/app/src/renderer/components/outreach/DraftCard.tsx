@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardContent } from "../common/Card";
 import { Badge } from "../common/Badge";
 import { ApprovalActions } from "./ApprovalActions";
-import { Mail, MessageCircle, Pencil } from "lucide-react";
+import { Mail, MessageCircle, Pencil, Trash2 } from "lucide-react";
 
 interface Draft {
   id: number;
@@ -22,6 +22,7 @@ interface DraftCardProps {
   onSaveEdit: (body: string) => void;
   onApprove: () => void;
   onReject: () => void;
+  onDelete: () => void;
 }
 
 export function DraftCard({
@@ -32,6 +33,7 @@ export function DraftCard({
   onSaveEdit,
   onApprove,
   onReject,
+  onDelete,
 }: DraftCardProps) {
   const [editBody, setEditBody] = useState(draft.bodyOriginal);
   const ChannelIcon = draft.channel === "email" ? Mail : MessageCircle;
@@ -106,13 +108,22 @@ export function DraftCard({
               </button>
             </div>
           ) : (
-            <button
-              onClick={onStartEdit}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onStartEdit}
+                className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+            </div>
           )}
 
           {!editing && (
