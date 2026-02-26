@@ -12,11 +12,12 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.47",
     "@ai-sdk/openai": "^3.0.33",
-    "@wedding-planner/shared": "workspace:^",
+    "@wedding-planner/shared": "*",
     "@whiskeysockets/baileys": "7.0.0-rc.9",
     "ai": "^6.0.100",
     "better-sqlite3": "^12.6.2",
     "cheerio": "^1.2.0",
+    "claude-max-api-proxy": "^1.0.0",
     "csv-parse": "^6.1.0",
     "drizzle-orm": "^0.45.1",
     "googleapis": "^171.4.0",
