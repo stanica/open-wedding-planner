@@ -72,8 +72,8 @@ export function AIProviderSetup() {
             }
           }
         }
-      } catch {
-        // Best effort
+      } catch (err) {
+        setProxyError(err instanceof Error ? err.message : "Failed to connect to gateway");
       } finally {
         setStartingProxy(false);
       }
@@ -174,9 +174,11 @@ export function AIProviderSetup() {
                 className={`h-2 w-2 rounded-full ${
                   proxyStatus.running
                     ? "bg-green-400"
-                    : proxyError || proxyStatus.error
-                      ? "bg-red-400"
-                      : "bg-gray-500"
+                    : startingProxy
+                      ? "bg-yellow-400 animate-pulse"
+                      : proxyError || proxyStatus.error
+                        ? "bg-red-400"
+                        : "bg-gray-500"
                 }`}
               />
               <p className="text-xs text-gray-400">
