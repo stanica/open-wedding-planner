@@ -6,6 +6,18 @@ import type Database from "better-sqlite3";
  */
 export function pushSchema(sqlite: Database.Database) {
   sqlite.exec(`
+    -- Incremental migrations for existing databases
+    -- SQLite ignores ALTER TABLE ADD COLUMN if column already exists (we catch the error)
+  `);
+
+  // Add thread_id to vendors if it doesn't exist (existing DBs won't have it)
+  try {
+    sqlite.exec(`ALTER TABLE vendors ADD COLUMN thread_id INTEGER`);
+  } catch {
+    // Column already exists — ignore
+  }
+
+  sqlite.exec(`
     CREATE TABLE IF NOT EXISTS wedding_config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       wedding_date TEXT,

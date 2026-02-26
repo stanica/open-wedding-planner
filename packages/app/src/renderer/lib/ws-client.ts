@@ -154,4 +154,14 @@ class WsClient {
   }
 }
 
-export const wsClient = new WsClient();
+// Preserve the singleton across Vite HMR to keep the WS connection alive
+function getOrCreateClient(): WsClient {
+  const key = "__wsClient__";
+  const g = globalThis as Record<string, unknown>;
+  if (!g[key]) {
+    g[key] = new WsClient();
+  }
+  return g[key] as WsClient;
+}
+
+export const wsClient = getOrCreateClient();
