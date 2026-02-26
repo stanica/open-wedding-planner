@@ -36,4 +36,4 @@ export type GatewayEvent =
   | { name: "channel-status"; data: { channel: string; status: ChannelStatus } }
   | { name: "research.messageComplete"; data: { threadId: number; message?: unknown } }
   | { name: "research.toolActivity"; data: { threadId: number; sessionKey: string; toolName: string; phase: "start" | "result"; detail?: string; result?: unknown } }
-  | { name: "research.permissionRequest"; data: { sessionKey: string; requestId: string; toolName: string; toolDescription: string } };
+  | { name: "research.permissionRequest"; data: { sessionKey: string; requestId: string; toolName: string; toolDescription: string; context?: string } };

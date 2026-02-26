@@ -117,7 +117,7 @@ export class Orchestrator {
     };
 
     const permissionCallbacks = {
-      requestPermission: async (toolName: string): Promise<UserResponse> => {
+      requestPermission: async (toolName: string, context?: string): Promise<UserResponse> => {
         const requestId = randomUUID();
         const entry = this.toolRegistry.get(toolName);
         this.broadcast({
@@ -127,6 +127,7 @@ export class Orchestrator {
             requestId,
             toolName,
             toolDescription: entry?.description ?? toolName,
+            context,
           },
         });
         return new Promise<UserResponse>((resolve) => {

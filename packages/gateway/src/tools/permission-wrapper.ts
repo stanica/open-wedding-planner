@@ -8,7 +8,7 @@ export type PermissionDecision = "allow" | "deny" | "prompt";
 export type UserResponse = "allow" | "always-allow" | "deny";
 
 export interface PermissionCallbacks {
-  requestPermission: (toolName: string) => Promise<UserResponse>;
+  requestPermission: (toolName: string, context?: string) => Promise<UserResponse>;
 }
 
 export class PermissionManager {
@@ -65,7 +65,7 @@ export function wrapToolWithPermission(
       }
 
       // decision === "prompt"
-      const response = await callbacks.requestPermission(toolName);
+      const response = await callbacks.requestPermission(toolName, undefined);
 
       if (response === "always-allow") {
         await manager.setDecision(toolName, "allow");

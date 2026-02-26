@@ -84,7 +84,7 @@ describe("wrapToolWithPermission", () => {
       { query: "hello" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
-    expect(requestPermission).toHaveBeenCalledWith("test");
+    expect(requestPermission).toHaveBeenCalledWith("test", undefined);
     expect(result).toEqual({ result: "hello" });
   });
 
@@ -111,5 +111,17 @@ describe("wrapToolWithPermission", () => {
     );
     const decision = await manager.getDecision("test");
     expect(decision).toBe("allow");
+  });
+
+  it("passes context to requestPermission callback", async () => {
+    const requestPermission = vi.fn().mockResolvedValue("allow");
+    const wrapped = wrapToolWithPermission(testTool, "test", manager, {
+      requestPermission,
+    });
+    await wrapped.execute!(
+      { query: "hello" },
+      { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
+    );
+    expect(requestPermission).toHaveBeenCalledWith("test", undefined);
   });
 });
