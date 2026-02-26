@@ -19,6 +19,7 @@ class WsClient {
   private maxReconnectDelay = 30000;
   private pendingRequests = new Map<string, PendingRequest>();
   private eventListeners = new Set<EventListener>();
+  private messageListeners = new Set<(direction: "sent" | "received", msg: unknown) => void>();
   private requestId = 0;
   private shouldReconnect = true;
 
@@ -35,6 +36,9 @@ class WsClient {
 
     this.ws.onmessage = (event) => {
       const msg: ServerMessage = JSON.parse(event.data);
+      for (const listener of this.messageListeners) {
+        listener("received", msg);
+      }
       this.handleMessage(msg);
     };
 
@@ -94,6 +98,9 @@ class WsClient {
   private send(msg: ClientMessage) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
+      for (const listener of this.messageListeners) {
+        listener("sent", msg);
+      }
     }
   }
 
@@ -111,6 +118,11 @@ class WsClient {
   onEvent(listener: EventListener): () => void {
     this.eventListeners.add(listener);
     return () => this.eventListeners.delete(listener);
+  }
+
+  onMessage(listener: (direction: "sent" | "received", msg: unknown) => void): () => void {
+    this.messageListeners.add(listener);
+    return () => this.messageListeners.delete(listener);
   }
 
   disconnect() {
