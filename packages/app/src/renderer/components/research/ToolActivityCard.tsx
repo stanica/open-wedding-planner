@@ -35,11 +35,11 @@ export function ToolActivityCard({ toolName, args, result }: ToolActivityCardPro
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <Icon className="h-3 w-3" />
         <span className="font-medium">{config.label}</span>
-        <span className="truncate max-w-[300px]">{detail}</span>
+        <span className="truncate max-w-[300px]">{String(detail)}</span>
       </button>
-      {expanded && result && (
+      {expanded && result != null && (
         <pre className="mt-1 ml-6 p-2 rounded bg-white/5 text-[11px] text-gray-400 overflow-x-auto max-h-40">
-          {typeof result === "string" ? result : JSON.stringify(result, null, 2)}
+          {typeof result === "string" ? result : JSON.stringify(result, null, 2) ?? ""}
         </pre>
       )}
     </div>
