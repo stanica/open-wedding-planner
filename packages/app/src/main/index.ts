@@ -1,6 +1,6 @@
 import path from "node:path";
 import { app, BrowserWindow, ipcMain } from "electron";
-import { spawnGateway, stopGateway } from "./gateway-manager";
+import { spawnGateway, stopGateway, getLogBuffer } from "./gateway-manager";
 import { createTray, destroyTray } from "./tray";
 
 let mainWindow: BrowserWindow | null = null;
@@ -11,6 +11,7 @@ app.whenReady().then(async () => {
   gatewayPort = await spawnGateway();
 
   ipcMain.handle("get-gateway-port", () => gatewayPort);
+  ipcMain.handle("get-gateway-log-buffer", () => getLogBuffer());
 
   mainWindow = new BrowserWindow({
     width: 1200,

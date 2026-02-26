@@ -1,8 +1,32 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { GATEWAY_READY_PREFIX } from "@wedding-planner/shared";
+import type { BrowserWindow } from "electron";
 
 let gatewayProcess: ChildProcess | null = null;
+
+const logBuffer: Array<{ level: "stdout" | "stderr"; line: string; timestamp: number }> = [];
+const MAX_LOG_BUFFER = 500;
+let debugWindow: BrowserWindow | null = null;
+
+export function setDebugWindow(win: BrowserWindow | null) {
+  debugWindow = win;
+}
+
+export function getLogBuffer() {
+  return logBuffer;
+}
+
+function pushLog(level: "stdout" | "stderr", line: string) {
+  const entry = { level, line, timestamp: Date.now() };
+  logBuffer.push(entry);
+  if (logBuffer.length > MAX_LOG_BUFFER) {
+    logBuffer.splice(0, logBuffer.length - MAX_LOG_BUFFER);
+  }
+  if (debugWindow && !debugWindow.isDestroyed()) {
+    debugWindow.webContents.send("gateway-log", entry);
+  }
+}
 
 export function spawnGateway(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -34,11 +58,15 @@ export function spawnGateway(): Promise<number> {
         clearTimeout(timeout);
         const port = parseInt(line.slice(GATEWAY_READY_PREFIX.length), 10);
         resolve(port);
+      } else {
+        pushLog("stdout", line);
       }
     });
 
     gatewayProcess.stderr?.on("data", (data: Buffer) => {
-      console.error("[gateway]", data.toString());
+      const line = data.toString().trim();
+      console.error("[gateway]", line);
+      pushLog("stderr", line);
     });
 
     gatewayProcess.on("error", (err) => {
