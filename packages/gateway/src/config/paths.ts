@@ -12,6 +12,12 @@ export function getDbPath(): string {
   return path.join(getDataDir(), "data.db");
 }
 
+export function getWorkspaceDir(): string {
+  const dir = path.join(getDataDir(), "workspace");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export function getDeliveryQueueDir(): string {
   const dir = path.join(getDataDir(), "delivery-queue");
   fs.mkdirSync(dir, { recursive: true });
