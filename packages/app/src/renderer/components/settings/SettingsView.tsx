@@ -1,6 +1,7 @@
 import { WeddingConfigForm } from "./WeddingConfigForm";
 import { IntegrationStatus } from "./IntegrationStatus";
 import { AIProviderSetup } from "./AIProviderSetup";
+import { ToolPermissions } from "./ToolPermissions";
 
 export function SettingsView() {
   return (
@@ -9,6 +10,8 @@ export function SettingsView() {
       <WeddingConfigForm />
       <hr className="border-white/10" />
       <AIProviderSetup />
+      <hr className="border-white/10" />
+      <ToolPermissions />
       <hr className="border-white/10" />
       <IntegrationStatus />
     </div>
