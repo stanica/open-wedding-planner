@@ -105,6 +105,24 @@ export function registerAIConfigHandlers(
     };
   });
 
+  router.register("ai-config.ensure-proxy", async () => {
+    if (proxyManager.isRunning()) {
+      return { proxyStatus: proxyManager.getStatus() };
+    }
+    let proxyError: string | null = null;
+    try {
+      await proxyManager.start();
+    } catch (err) {
+      proxyError = err instanceof Error ? err.message : "Failed to start proxy";
+    }
+    return { proxyStatus: proxyManager.getStatus(), proxyError };
+  });
+
+  router.register("ai-config.stop-proxy", async () => {
+    await proxyManager.stop();
+    return { proxyStatus: proxyManager.getStatus() };
+  });
+
   router.register("ai-config.check", async (_db: Db, params: unknown) => {
     const { proxyUrl } = (params as { proxyUrl?: string }) ?? {};
     const url = proxyUrl ?? getAIConfig().proxyUrl;

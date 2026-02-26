@@ -24,6 +24,7 @@ export function AIProviderSetup() {
     "api-key",
   );
   const [saving, setSaving] = useState(false);
+  const [startingProxy, setStartingProxy] = useState(false);
   const [proxyStatus, setProxyStatus] = useState<ProxyStatus>({
     running: false,
     url: null,
@@ -45,6 +46,43 @@ export function AIProviderSetup() {
       })
       .catch(() => {});
   }, []);
+
+  async function handleProviderChange(newProvider: "api-key" | "claude-max") {
+    setProvider(newProvider);
+    setProxyError(null);
+
+    if (newProvider === "claude-max") {
+      setStartingProxy(true);
+      try {
+        const result = await wsClient.request<{
+          proxyStatus: ProxyStatus;
+          proxyError?: string;
+        }>("ai-config.ensure-proxy");
+        setProxyStatus(result.proxyStatus);
+        if (result.proxyError) {
+          setProxyError(result.proxyError);
+        }
+        // Fetch models now that proxy is running
+        if (result.proxyStatus.running) {
+          const cfg = await wsClient.request<AIConfig>("ai-config.get");
+          if (cfg.availableModels.length > 0) {
+            setModels(cfg.availableModels);
+            if (!model || !cfg.availableModels.includes(model)) {
+              setModel(cfg.availableModels[0]);
+            }
+          }
+        }
+      } catch {
+        // Best effort
+      } finally {
+        setStartingProxy(false);
+      }
+    } else {
+      // Stop proxy when switching away (don't await — fire and forget)
+      wsClient.request("ai-config.stop-proxy").catch(() => {});
+      setProxyStatus({ running: false, url: null, error: null });
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -86,7 +124,7 @@ export function AIProviderSetup() {
               type="radio"
               name="ai-provider"
               checked={provider === "api-key"}
-              onChange={() => setProvider("api-key")}
+              onChange={() => handleProviderChange("api-key")}
               className="accent-indigo-500"
             />
             <div>
@@ -113,7 +151,7 @@ export function AIProviderSetup() {
               type="radio"
               name="ai-provider"
               checked={provider === "claude-max"}
-              onChange={() => setProvider("claude-max")}
+              onChange={() => handleProviderChange("claude-max")}
               className="accent-indigo-500"
             />
             <div>
@@ -144,7 +182,7 @@ export function AIProviderSetup() {
               <p className="text-xs text-gray-400">
                 {proxyStatus.running
                   ? "Proxy running"
-                  : saving
+                  : startingProxy
                     ? "Starting proxy..."
                     : "Proxy not running"}
               </p>
