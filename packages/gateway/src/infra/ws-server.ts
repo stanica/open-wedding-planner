@@ -110,7 +110,7 @@ export async function createWsServer(options: WsServerOptions) {
     }
   }
 
-  function broadcast(event: ServerMessage extends { type: "event"; event: infer E } ? E : never) {
+  function broadcast(event: Extract<ServerMessage, { type: "event" }>["event"]) {
     eventSeq++;
     const msg: ServerMessage = { type: "event", seq: eventSeq, event };
     for (const client of clients) {

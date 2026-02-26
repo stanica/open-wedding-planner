@@ -56,7 +56,7 @@ async function defaultBrowse(
 export const browserTool = tool({
   description:
     "Load a web page in a headless browser (for JS-heavy sites that the scraper can't handle). Returns the rendered text content. Optionally extract content matching a CSS selector.",
-  parameters: z.object({
+  inputSchema: z.object({
     url: z.string().url().describe("The URL to browse"),
     selector: z
       .string()

@@ -41,7 +41,7 @@ ${customInstructions ? `Additional instructions: ${customInstructions}` : ""}`,
 Couple: ${config?.coupleNames ?? "the couple"}
 Wedding date: ${config?.weddingDate ?? "TBD"}
 Guest count: ${config?.guestCount ?? "TBD"}
-Budget context: ${config?.totalBudget ? `Total budget ${config.totalBudget} ${config.currency ?? "EUR"}` : "Not specified"}`,
+Budget context: ${config?.budgetTotal ? `Total budget ${config.budgetTotal} ${config.currency ?? "EUR"}` : "Not specified"}`,
       abortSignal: ctx.signal,
     });
 

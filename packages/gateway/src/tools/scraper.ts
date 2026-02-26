@@ -64,7 +64,7 @@ export function scrapeHtml(url: string, html: string): ScrapedPage {
 export const scraperTool = tool({
   description:
     "Fetch and extract text content from a web page. Returns the page title, text content, contact information (emails, phones), and meta tags.",
-  parameters: z.object({
+  inputSchema: z.object({
     url: z.string().url().describe("The URL to scrape"),
   }),
   execute: async ({ url }) => {

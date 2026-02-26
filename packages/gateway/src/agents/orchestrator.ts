@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { eq, sql } from "drizzle-orm";
-import { agentTasks } from "../db/schema.js";
+import { agentTasks, researchMessages } from "../db/schema.js";
 import { CommandQueue } from "../infra/command-queue.js";
 import { SessionManager } from "../infra/sessions.js";
 import { TurnCounter } from "./safety/turn-limits.js";
@@ -9,6 +9,9 @@ import { withTimeout, TimeoutError } from "./safety/timeout.js";
 import type { BaseAgent, AgentContext } from "./base-agent.js";
 import type { Db } from "../infra/router.js";
 import type { GatewayEvent } from "@wedding-planner/shared";
+import type { ToolRegistry } from "../tools/registry.js";
+import { PermissionManager } from "../tools/permission-wrapper.js";
+import type { UserResponse } from "../tools/permission-wrapper.js";
 
 export interface OrchestratorConfig {
   maxTurns?: number;
@@ -27,17 +30,23 @@ export class Orchestrator {
   private config: Required<OrchestratorConfig>;
   private broadcast: (event: GatewayEvent) => void;
   private db: Db;
+  private toolRegistry: ToolRegistry;
+  private permissionManager: PermissionManager;
+  private pendingPermissions = new Map<string, { resolve: (response: UserResponse) => void }>();
 
   constructor(
     db: Db,
     broadcast: (event: GatewayEvent) => void,
+    toolRegistry: ToolRegistry,
     config?: OrchestratorConfig,
   ) {
     this.db = db;
     this.broadcast = broadcast;
+    this.toolRegistry = toolRegistry;
     this.config = { ...DEFAULTS, ...config };
     this.queue = new CommandQueue();
     this.sessions = new SessionManager(db);
+    this.permissionManager = new PermissionManager(db);
   }
 
   registerAgent(agent: BaseAgent): void {
@@ -107,10 +116,37 @@ export class Orchestrator {
       });
     };
 
+    const permissionCallbacks = {
+      requestPermission: async (toolName: string): Promise<UserResponse> => {
+        const requestId = randomUUID();
+        const entry = this.toolRegistry.get(toolName);
+        this.broadcast({
+          name: "research.permissionRequest",
+          data: {
+            sessionKey,
+            requestId,
+            toolName,
+            toolDescription: entry?.description ?? toolName,
+          },
+        });
+        return new Promise<UserResponse>((resolve) => {
+          this.pendingPermissions.set(requestId, { resolve });
+        });
+      },
+    };
+
     try {
       const result = await withTimeout(
         (signal) => {
-          const ctx: AgentContext = { db: this.db, sessionKey, emit, signal };
+          const ctx: AgentContext = {
+            db: this.db,
+            sessionKey,
+            emit,
+            signal,
+            toolRegistry: this.toolRegistry,
+            permissionManager: this.permissionManager,
+            permissionCallbacks,
+          };
           return agent.run(ctx, input);
         },
         this.config.timeoutMs,
@@ -130,6 +166,26 @@ export class Orchestrator {
         name: "agent-complete",
         data: { taskId, summary: result.summary },
       });
+
+      // Save assistant message to thread if this was a research chat
+      const researchInput = input as { threadId?: number };
+      if (researchInput.threadId) {
+        const resultData = result.data as {
+          toolCalls?: unknown[];
+          vendorIds?: number[];
+        } | undefined;
+        await this.db.insert(researchMessages).values({
+          threadId: researchInput.threadId,
+          role: "assistant",
+          content: result.summary,
+          toolCalls: resultData?.toolCalls ? JSON.stringify(resultData.toolCalls) : null,
+          vendorIds: resultData?.vendorIds ? JSON.stringify(resultData.vendorIds) : null,
+        });
+        this.broadcast({
+          name: "research.messageComplete",
+          data: { threadId: researchInput.threadId },
+        });
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       const status = err instanceof TimeoutError ? "failed" : "failed";
@@ -147,6 +203,14 @@ export class Orchestrator {
         name: "agent-activity",
         data: { sessionKey, action: "error", detail: message },
       });
+    }
+  }
+
+  resolvePermission(requestId: string, response: UserResponse): void {
+    const pending = this.pendingPermissions.get(requestId);
+    if (pending) {
+      pending.resolve(response);
+      this.pendingPermissions.delete(requestId);
     }
   }
 

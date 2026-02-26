@@ -37,7 +37,8 @@ export async function getModel(): Promise<LanguageModel> {
       baseURL: currentConfig.proxyUrl,
       apiKey: "claude-max", // proxy doesn't need a real key
     });
-    return openai(currentConfig.model);
+    // Use .chat() to force /chat/completions endpoint (default uses /responses which the proxy doesn't support)
+    return openai.chat(currentConfig.model);
   }
 
   // Default: Anthropic API key

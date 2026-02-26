@@ -34,12 +34,13 @@ export function setPdfParseFn(fn: PdfParseFn) {
 export const pdfTool = tool({
   description:
     "Download and extract text from a PDF file. Returns the text content, page count, and document metadata.",
-  parameters: z.object({
+  inputSchema: z.object({
     url: z.string().url().describe("The URL of the PDF to parse"),
   }),
   execute: async ({ url }) => {
     const buffer = await pdfFetchFn(url);
-    const parse = pdfParseFn ?? (await import("pdf-parse")).default;
+    const pdfParse = await import("pdf-parse");
+    const parse = pdfParseFn ?? (pdfParse as any).default ?? pdfParse;
     const result = await parse(buffer);
     return {
       url,

@@ -1,29 +1,18 @@
-import { generateText, tool } from "ai";
+import { generateText, stepCountIs } from "ai";
+import type { ModelMessage } from "ai";
+import { tool } from "ai";
 import { z } from "zod";
 import { vendors, categories } from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import { searchTool } from "../tools/search.js";
-import { scraperTool } from "../tools/scraper.js";
-import { browserTool } from "../tools/browser.js";
-import { pdfTool } from "../tools/pdf.js";
 import type { BaseAgent, AgentContext, AgentResult } from "./base-agent.js";
 import { getModel } from "./model-provider.js";
-
-interface CreateVendorParams {
-  name: string;
-  categoryName: string;
-  location: string | null;
-  websiteUrl: string | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  description: string | null;
-}
+import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 
 function makeCreateVendorTool(ctx: AgentContext) {
   return tool({
     description:
       "Create a new vendor record in the database. Use this after gathering sufficient information about a vendor. Avoid creating duplicates.",
-    parameters: z.object({
+    inputSchema: z.object({
       name: z.string().describe("The vendor's business name"),
       categoryName: z
         .string()
@@ -39,15 +28,14 @@ function makeCreateVendorTool(ctx: AgentContext) {
         .nullable()
         .describe("Brief description of services and what was found"),
     }),
-    execute: async (params: CreateVendorParams) => {
+    execute: async (params) => {
       ctx.emit("creating-vendor", `Adding vendor: ${params.name}`);
 
-      // Look up category
       const [cat] = await ctx.db
         .select()
         .from(categories)
         .where(eq(categories.name, params.categoryName));
-      const categoryId = cat?.id ?? 9; // Miscellaneous fallback
+      const categoryId = cat?.id ?? 9;
 
       const [vendor] = await ctx.db
         .insert(vendors)
@@ -68,7 +56,7 @@ function makeCreateVendorTool(ctx: AgentContext) {
   });
 }
 
-const SYSTEM_PROMPT = `You are a wedding vendor research assistant. Your job is to find and document wedding vendors matching the user's query.
+const SYSTEM_PROMPT = `You are a wedding vendor research assistant. Your job is to find and document wedding vendors matching the user's queries.
 
 ## Process
 1. Search the web for vendors matching the query
@@ -84,111 +72,76 @@ const SYSTEM_PROMPT = `You are a wedding vendor research assistant. Your job is 
 - If a page is JavaScript-heavy and the scraper returns little content, try the browser tool
 - If you find a PDF (menu, brochure, price list), parse it for details
 - Do not create duplicate vendors
+- When comparing vendors, always lead with pricing information — it's the #1 thing users care about
+- After finding multiple vendors, provide a brief comparison summary highlighting key differences
 
 ## Categories
 Venue/Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency`;
 
+const RESEARCH_TOOLS = ["search", "scrape", "browse", "parsePdf"];
+
 export const researchAgent: BaseAgent = {
   name: "research",
+  tools: RESEARCH_TOOLS,
 
   async run(ctx: AgentContext, input: unknown): Promise<AgentResult> {
-    const { query } = input as { query: string };
-    ctx.emit("starting", `Researching: ${query}`);
+    const { messages } = input as { messages: ModelMessage[] };
+    ctx.emit("starting", "Researching...");
 
+    // Build tool set: static tools from registry + dynamic createVendor
+    const staticTools = ctx.toolRegistry.getToolSet(RESEARCH_TOOLS);
     const createVendorTool = makeCreateVendorTool(ctx);
 
+    // Wrap all tools with permission checks
+    const tools: Record<string, any> = {};
+    for (const [name, t] of Object.entries(staticTools)) {
+      tools[name] = wrapToolWithPermission(t, name, ctx.permissionManager, ctx.permissionCallbacks);
+    }
+    tools.createVendor = wrapToolWithPermission(
+      createVendorTool,
+      "createVendor",
+      ctx.permissionManager,
+      ctx.permissionCallbacks,
+    );
+
     const model = await getModel();
-    const { text, toolCalls } = await generateText({
+    const { text, steps } = await generateText({
       model,
       system: SYSTEM_PROMPT,
-      prompt: query,
-      tools: {
-        search: searchTool,
-        scrape: scraperTool,
-        browse: browserTool,
-        parsePdf: pdfTool,
-        createVendor: createVendorTool,
-      },
-      maxSteps: 15,
+      messages,
+      tools,
+      stopWhen: stepCountIs(15),
       abortSignal: ctx.signal,
       onStepFinish: ({ toolCalls: stepTools }) => {
         for (const tc of stepTools) {
-          ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.args).slice(0, 100)}`);
+          ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 100)}`);
         }
       },
     });
 
-    const vendorsCreated = toolCalls.filter((tc) => tc.toolName === "createVendor").length;
+    // Collect all tool calls and vendor IDs from steps
+    const allToolCalls: Array<{ toolName: string; args: unknown; result: unknown }> = [];
+    const vendorIds: number[] = [];
+    for (const step of steps) {
+      for (const tc of step.toolCalls) {
+        // Find matching result
+        const tr = step.toolResults.find(
+          (r: any) => r.toolCallId === tc.toolCallId,
+        );
+        allToolCalls.push({ toolName: tc.toolName, args: tc.input, result: tr?.output });
+        if (tc.toolName === "createVendor" && tr?.output && typeof tr.output === "object") {
+          const r = tr.output as { vendorId?: number };
+          if (r.vendorId) vendorIds.push(r.vendorId);
+        }
+      }
+    }
 
+    const vendorsCreated = vendorIds.length;
     ctx.emit("complete", `Created ${vendorsCreated} vendors`);
 
     return {
-      summary:
-        vendorsCreated > 0
-          ? `Found and added ${vendorsCreated} vendor${vendorsCreated !== 1 ? "s" : ""} for "${query}"`
-          : `Research complete for "${query}" — ${text?.slice(0, 200) ?? "no results"}`,
-      data: { vendorsCreated },
+      summary: text ?? `Created ${vendorsCreated} vendor(s)`,
+      data: { vendorsCreated, vendorIds, toolCalls: allToolCalls },
     };
   },
 };
-
-// Also export mock for testing without API keys
-export const mockResearchAgent: BaseAgent = {
-  name: "research",
-
-  async run(ctx: AgentContext, input: unknown): Promise<AgentResult> {
-    const { query } = input as { query: string };
-
-    ctx.emit("starting", `Researching: ${query}`);
-    await delay(300, ctx.signal);
-    ctx.emit("searching", `Searching web for "${query}"`);
-    await delay(300, ctx.signal);
-    ctx.emit("found", "Found 2 potential vendors");
-
-    const mockVendors = [
-      {
-        categoryId: 1,
-        name: `${query} - Villa Elegante`,
-        location: "Ischia, Italy",
-        status: "researched" as const,
-        description: `Top-rated venue found while researching "${query}"`,
-      },
-      {
-        categoryId: 1,
-        name: `${query} - Garden Resort`,
-        location: "Ischia, Italy",
-        status: "researched" as const,
-        description: `Alternative venue option for "${query}"`,
-      },
-    ];
-
-    const created = [];
-    for (const vendor of mockVendors) {
-      ctx.emit("creating-vendor", `Adding vendor: ${vendor.name}`);
-      const [row] = await ctx.db.insert(vendors).values(vendor).returning();
-      created.push(row);
-    }
-
-    ctx.emit("complete", `Created ${created.length} vendors`);
-
-    return {
-      summary: `Found and added ${created.length} vendors for "${query}"`,
-      data: { vendorIds: created.map((v) => v.id) },
-    };
-  },
-};
-
-function delay(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timer);
-        reject(new Error("Aborted"));
-      },
-      { once: true },
-    );
-  });
-}
-

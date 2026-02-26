@@ -3,12 +3,18 @@ import type { Orchestrator } from "../agents/orchestrator.js";
 
 export function registerAgentHandlers(router: Router, orchestrator: Orchestrator) {
   router.register("agent.research", async (_db, params) => {
-    const { query } = params as { query: string };
-    if (!query || typeof query !== "string") {
-      throw new Error("query is required");
+    const { threadId, messages } = params as { threadId: number; messages: unknown[] };
+    if (!threadId || !messages) {
+      throw new Error("threadId and messages are required");
     }
-    const { taskId, sessionKey } = await orchestrator.dispatch("research", { query });
+    const { taskId, sessionKey } = await orchestrator.dispatch("research", { threadId, messages });
     return { taskId, sessionKey };
+  });
+
+  router.register("research.permissionResponse", async (_db, params) => {
+    const { requestId, response } = params as { requestId: string; response: string };
+    orchestrator.resolvePermission(requestId, response as any);
+    return { ok: true };
   });
 
   router.register("agent.outreach", async (_db, params) => {

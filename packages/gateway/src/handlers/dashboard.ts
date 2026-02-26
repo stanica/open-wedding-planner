@@ -45,14 +45,14 @@ export function registerDashboardHandlers(router: Router) {
     // Budget summary
     const budgetRows = await db
       .select({
-        totalAllocated: sql<number>`coalesce(sum(${budgetEntries.allocated}), 0)`,
-        totalActual: sql<number>`coalesce(sum(${budgetEntries.actual}), 0)`,
-        totalPaid: sql<number>`coalesce(sum(${budgetEntries.paid}), 0)`,
+        totalAllocated: sql<number>`coalesce(sum(${budgetEntries.highEstimate}), 0)`,
+        totalActual: sql<number>`coalesce(sum(${budgetEntries.estimatedActual}), 0)`,
+        totalPaid: sql<number>`coalesce(sum(${budgetEntries.amountPaid}), 0)`,
       })
       .from(budgetEntries);
 
     const [config] = await db.select().from(weddingConfig);
-    const totalBudget = config?.totalBudget ?? 0;
+    const totalBudget = config?.budgetTotal ?? 0;
 
     // Recent activity (last 10 agent tasks)
     const recentTasks = await db

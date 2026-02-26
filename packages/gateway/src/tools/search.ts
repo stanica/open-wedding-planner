@@ -20,7 +20,7 @@ export function setSearchProvider(provider: SearchProvider) {
 export const searchTool = tool({
   description:
     "Search the web for wedding vendors, venues, services, or related information. Returns a list of search results with titles, URLs, and snippets.",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe("The search query"),
     maxResults: z
       .number()
@@ -30,7 +30,14 @@ export const searchTool = tool({
   }),
   execute: async ({ query, maxResults }) => {
     if (!searchProvider) {
-      throw new Error("No search provider configured");
+      return [
+        {
+          title: "Search unavailable",
+          url: "",
+          snippet:
+            "No search provider is configured. Use the browse or scrape tools to visit specific websites directly instead.",
+        },
+      ];
     }
     const results = await searchProvider.search(query, maxResults);
     return results;

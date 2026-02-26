@@ -11,15 +11,16 @@ import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import { Orchestrator } from "./agents/orchestrator.js";
-import { researchAgent, mockResearchAgent } from "./agents/research.js";
-import { heartbeatAgent, mockHeartbeatAgent } from "./agents/heartbeat.js";
-import { outreachAgent, mockOutreachAgent } from "./agents/outreach.js";
-import { parserAgent, mockParserAgent } from "./agents/parser.js";
-import { translationAgent, mockTranslationAgent } from "./agents/translation.js";
+import { researchAgent } from "./agents/research.js";
+import { heartbeatAgent } from "./agents/heartbeat.js";
+import { outreachAgent } from "./agents/outreach.js";
+import { parserAgent } from "./agents/parser.js";
+import { translationAgent } from "./agents/translation.js";
 import { createEmbeddingsTable } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
+import { createToolRegistry } from "./tools/index.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
-import { hasAIProvider, setAIConfig } from "./agents/model-provider.js";
+import { setAIConfig } from "./agents/model-provider.js";
 import { aiConfig } from "./db/schema.js";
 import {
   DEFAULT_GATEWAY_PORT,
@@ -91,21 +92,25 @@ export async function startGateway(options: GatewayOptions = {}) {
     }
   }
 
+  const toolRegistry = createToolRegistry();
   const orchestrator = new Orchestrator(db, (event) => {
-    wsServer.broadcast({ type: "event", seq: Date.now(), event });
-  });
-  const useRealAgents = hasAIProvider(proxyManager.isRunning());
-  orchestrator.registerAgent(useRealAgents ? researchAgent : mockResearchAgent);
-  orchestrator.registerAgent(useRealAgents ? heartbeatAgent : mockHeartbeatAgent);
-  orchestrator.registerAgent(useRealAgents ? outreachAgent : mockOutreachAgent);
-  orchestrator.registerAgent(useRealAgents ? parserAgent : mockParserAgent);
-  orchestrator.registerAgent(useRealAgents ? translationAgent : mockTranslationAgent);
+    wsServer.broadcast(event);
+  }, toolRegistry);
+  orchestrator.registerAgent(researchAgent);
+  orchestrator.registerAgent(heartbeatAgent);
+  orchestrator.registerAgent(outreachAgent);
+  orchestrator.registerAgent(parserAgent);
+  orchestrator.registerAgent(translationAgent);
   registerAgentHandlers(router, orchestrator);
+
+  router.register("tools.list", async () => {
+    return toolRegistry.listAll();
+  });
 
   // 9. Start heartbeat scheduler
   const heartbeat = new HeartbeatScheduler(
     orchestrator,
-    (event) => wsServer.broadcast({ type: "event", seq: Date.now(), event }),
+    (event) => wsServer.broadcast(event),
   );
   heartbeat.start();
 

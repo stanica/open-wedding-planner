@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { searchTool, setSearchProvider } from "../../src/tools/search.js";
-import type { SearchProvider } from "../../src/tools/search.js";
+import type { SearchProvider, SearchResult } from "../../src/tools/search.js";
 
 const mockProvider: SearchProvider = {
   async search(query: string, maxResults = 5) {
@@ -25,30 +25,30 @@ describe("searchTool", () => {
   });
 
   it("returns search results", async () => {
-    const results = await searchTool.execute(
+    const results = (await searchTool.execute!(
       { query: "wedding venues Ischia", maxResults: 5 },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-    );
+    )) as SearchResult[];
     expect(results).toHaveLength(2);
     expect(results[0].title).toContain("wedding venues Ischia");
     expect(results[0].url).toBe("https://example.com/1");
   });
 
   it("respects maxResults", async () => {
-    const results = await searchTool.execute(
+    const results = (await searchTool.execute!(
       { query: "test", maxResults: 1 },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-    );
+    )) as SearchResult[];
     expect(results).toHaveLength(1);
   });
 
-  it("throws without provider", async () => {
+  it("returns fallback message without provider", async () => {
     setSearchProvider(null as unknown as SearchProvider);
-    await expect(
-      searchTool.execute(
-        { query: "test", maxResults: 5 },
-        { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-      ),
-    ).rejects.toThrow("No search provider configured");
+    const results = (await searchTool.execute!(
+      { query: "test", maxResults: 5 },
+      { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
+    )) as SearchResult[];
+    expect(results).toHaveLength(1);
+    expect(results[0].title).toBe("Search unavailable");
   });
 });
