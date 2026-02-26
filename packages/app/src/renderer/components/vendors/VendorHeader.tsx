@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Globe, Mail, Phone } from "lucide-react";
+import { ArrowLeft, MapPin, Globe, Mail, Phone, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VendorStatusBadge } from "./VendorStatusBadge";
 import { VendorActions } from "./VendorActions";
@@ -17,9 +17,11 @@ interface Vendor {
 export function VendorHeader({
   vendor,
   onStatusChange,
+  onDelete,
 }: {
   vendor: Vendor;
   onStatusChange: (status: string) => void;
+  onDelete: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -72,7 +74,16 @@ export function VendorHeader({
           )}
         </div>
 
-        <VendorActions vendor={vendor} onStatusChange={onStatusChange} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </button>
+          <VendorActions vendor={vendor} onStatusChange={onStatusChange} />
+        </div>
       </div>
     </div>
   );
