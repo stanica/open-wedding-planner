@@ -78,9 +78,11 @@ describe("ai-config handlers", () => {
     expect(result).toHaveProperty("proxyStatus");
   });
 
-  it("returns proxy status from ai-config.get", async () => {
+  it("returns proxy status and available models from ai-config.get", async () => {
     const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
     expect(result).toHaveProperty("proxyStatus");
+    expect(result).toHaveProperty("availableModels");
+    expect(result.availableModels).toEqual([]);
   });
 
   it("captures proxy start error without failing the update", async () => {

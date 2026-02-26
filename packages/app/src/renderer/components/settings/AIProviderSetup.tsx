@@ -13,17 +13,13 @@ interface AIConfig {
   proxyUrl: string;
   hasApiKey: boolean;
   proxyStatus: ProxyStatus;
+  availableModels: string[];
 }
-
-const MODELS = [
-  "claude-sonnet-4-20250514",
-  "claude-haiku-4-5-20251001",
-  "claude-opus-4-20250514",
-];
 
 export function AIProviderSetup() {
   const [config, setConfig] = useState<AIConfig | null>(null);
-  const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [model, setModel] = useState("");
+  const [models, setModels] = useState<string[]>([]);
   const [provider, setProvider] = useState<"api-key" | "claude-max">(
     "api-key",
   );
@@ -43,6 +39,9 @@ export function AIProviderSetup() {
         setProvider(cfg.provider);
         setModel(cfg.model);
         setProxyStatus(cfg.proxyStatus);
+        if (cfg.availableModels.length > 0) {
+          setModels(cfg.availableModels);
+        }
       })
       .catch(() => {});
   }, []);
@@ -61,11 +60,12 @@ export function AIProviderSetup() {
       if (result.proxyError) {
         setProxyError(result.proxyError);
       }
-      setConfig((prev) =>
-        prev
-          ? { ...prev, provider, model, proxyStatus: result.proxyStatus }
-          : prev,
-      );
+      // Refetch config to get updated available models (proxy may have just started)
+      const cfg = await wsClient.request<AIConfig>("ai-config.get");
+      setConfig(cfg);
+      if (cfg.availableModels.length > 0) {
+        setModels(cfg.availableModels);
+      }
     } finally {
       setSaving(false);
     }
@@ -183,17 +183,30 @@ export function AIProviderSetup() {
         {/* Model selector */}
         <div className="space-y-2">
           <label className="block text-sm text-gray-400">Model</label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
-          >
-            {MODELS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+          {models.length > 0 ? (
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            >
+              {models.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+              {model && !models.includes(model) && (
+                <option value={model}>{model}</option>
+              )}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder="e.g. claude-sonnet-4-20250514"
+              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+            />
+          )}
         </div>
 
         {/* Save button */}

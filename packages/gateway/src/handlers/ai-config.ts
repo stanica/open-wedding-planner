@@ -24,9 +24,30 @@ export function registerAIConfigHandlers(
           ...getAIConfig(),
           hasApiKey: !!process.env.ANTHROPIC_API_KEY,
         };
+
+    // Fetch available models from proxy if running
+    let availableModels: string[] = [];
+    const status = proxyManager.getStatus();
+    if (status.running && status.url) {
+      try {
+        const res = await fetch(`${status.url}/models`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          availableModels = (data?.data ?? []).map(
+            (m: { id: string }) => m.id,
+          );
+        }
+      } catch {
+        // Proxy not responding, return empty list
+      }
+    }
+
     return {
       ...config,
-      proxyStatus: proxyManager.getStatus(),
+      proxyStatus: status,
+      availableModels,
     };
   });
 
