@@ -1,4 +1,4 @@
-import { fork, type ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { GATEWAY_READY_PREFIX } from "@wedding-planner/shared";
 
@@ -12,9 +12,16 @@ export function spawnGateway(): Promise<number> {
       "gateway/dist/index.js",
     );
 
-    gatewayProcess = fork(gatewayPath, [], {
-      stdio: ["pipe", "pipe", "pipe", "ipc"],
-      env: { ...process.env },
+    // Use system node instead of Electron binary so native modules
+    // (better-sqlite3, etc.) work with the correct NODE_MODULE_VERSION
+    const nodePath = process.env.NODE_PATH_OVERRIDE || "node";
+
+    gatewayProcess = spawn(nodePath, [gatewayPath], {
+      stdio: ["pipe", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: undefined,
+      },
     });
 
     const timeout = setTimeout(() => {

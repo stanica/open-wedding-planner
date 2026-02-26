@@ -2,17 +2,25 @@
   "name": "wedding-planner",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "engines": {
-    "node": ">=20",
-    "pnpm": ">=8"
+    "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
+    "dev:shared": "npm run dev -w @wedding-planner/shared",
+    "dev:gateway": "npm run dev -w @wedding-planner/gateway",
+    "dev:app": "npm run dev -w @wedding-planner/app",
+    "dev": "npm run build -w @wedding-planner/shared && npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
     "test": "vitest run",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
+    "electron": "^40.6.1",
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

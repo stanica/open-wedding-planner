@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createRequire } from "node:module";
+import path from "node:path";
 
 export interface ProxyStatus {
   running: boolean;
@@ -26,14 +27,12 @@ export class ProxyManager {
     }
 
     const binPath = this.resolveBin();
+    let settled = false;
 
     return new Promise<string>((resolve, reject) => {
       const child = spawn(process.execPath, [binPath], {
         stdio: ["pipe", "pipe", "pipe"],
-        env: {
-          ...process.env,
-          PORT: String(port),
-        },
+        env: { ...process.env, PORT: String(port) },
       });
 
       this.process = child;
@@ -48,6 +47,8 @@ export class ProxyManager {
       });
 
       child.on("error", (err) => {
+        if (settled) return;
+        settled = true;
         this.lastError = err.message;
         this.process = null;
         this.proxyUrl = null;
@@ -62,14 +63,17 @@ export class ProxyManager {
         this.proxyUrl = null;
       });
 
-      // Poll for health
       const baseUrl = `http://localhost:${port}/v1`;
       this.waitForHealthy(baseUrl)
         .then(() => {
+          if (settled) return;
+          settled = true;
           this.proxyUrl = baseUrl;
           resolve(baseUrl);
         })
         .catch((err) => {
+          if (settled) return;
+          settled = true;
           this.lastError = err.message;
           this.stop();
           reject(err);
@@ -121,10 +125,15 @@ export class ProxyManager {
    */
   private resolveBin(): string {
     const require = createRequire(import.meta.url);
-    const pkgJson = require.resolve("claude-max-api-proxy/package.json");
-    // pkgJson is e.g. .../node_modules/claude-max-api-proxy/package.json
-    const pkgDir = pkgJson.replace(/\/package\.json$/, "");
-    return `${pkgDir}/dist/server/standalone.js`;
+    const pkgJsonPath = require.resolve("claude-max-api-proxy/package.json");
+    const pkg = require("claude-max-api-proxy/package.json");
+    const binEntry = typeof pkg.bin === "string"
+      ? pkg.bin
+      : pkg.bin?.["claude-max-api"];
+    if (!binEntry) {
+      throw new Error("claude-max-api-proxy package has no bin entry");
+    }
+    return path.join(path.dirname(pkgJsonPath), binEntry);
   }
 
   private async waitForHealthy(baseUrl: string): Promise<void> {

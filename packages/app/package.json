@@ -5,13 +5,13 @@
   "description": "AI-powered wedding planning assistant",
   "main": "./out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "unset ELECTRON_RUN_AS_NODE && electron-vite dev",
     "build": "electron-vite build",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "package": "electron-vite build && electron-builder --config electron-builder.yml"
   },
   "dependencies": {
-    "@wedding-planner/shared": "workspace:^",
+    "@wedding-planner/shared": "*",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
     "react": "^19.2.4",
