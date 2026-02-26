@@ -11,6 +11,7 @@ import { ResearchView } from "./components/research/ResearchView";
 import { OutreachView } from "./components/outreach/OutreachView";
 import { InboxView } from "./components/inbox/InboxView";
 import { TimelineView } from "./components/timeline/TimelineView";
+import { DebugConsole } from "./components/debug/DebugConsole";
 
 export function App() {
   useEffect(() => {
@@ -21,6 +22,7 @@ export function App() {
   return (
     <HashRouter>
       <Routes>
+        <Route path="debug" element={<DebugConsole />} />
         <Route element={<AppShell />}>
           <Route index element={<DashboardView />} />
           <Route path="research" element={<ResearchView />} />
