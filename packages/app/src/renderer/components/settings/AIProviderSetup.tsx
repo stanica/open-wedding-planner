@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { wsClient } from "../../lib/ws-client";
 
+interface ProxyStatus {
+  running: boolean;
+  url: string | null;
+  error: string | null;
+}
+
 interface AIConfig {
   provider: "api-key" | "claude-max";
   model: string;
   proxyUrl: string;
   hasApiKey: boolean;
+  proxyStatus: ProxyStatus;
 }
 
 const MODELS = [
@@ -16,15 +23,17 @@ const MODELS = [
 
 export function AIProviderSetup() {
   const [config, setConfig] = useState<AIConfig | null>(null);
-  const [proxyUrl, setProxyUrl] = useState("http://localhost:3456/v1");
   const [model, setModel] = useState("claude-sonnet-4-20250514");
-  const [provider, setProvider] = useState<"api-key" | "claude-max">("api-key");
-  const [checking, setChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState<{
-    ok: boolean;
-    error?: string;
-  } | null>(null);
+  const [provider, setProvider] = useState<"api-key" | "claude-max">(
+    "api-key",
+  );
   const [saving, setSaving] = useState(false);
+  const [proxyStatus, setProxyStatus] = useState<ProxyStatus>({
+    running: false,
+    url: null,
+    error: null,
+  });
+  const [proxyError, setProxyError] = useState<string | null>(null);
 
   useEffect(() => {
     wsClient
@@ -33,48 +42,38 @@ export function AIProviderSetup() {
         setConfig(cfg);
         setProvider(cfg.provider);
         setModel(cfg.model);
-        setProxyUrl(cfg.proxyUrl);
+        setProxyStatus(cfg.proxyStatus);
       })
       .catch(() => {});
   }, []);
 
   async function handleSave() {
     setSaving(true);
+    setProxyError(null);
     try {
-      const updated = await wsClient.request<AIConfig>("ai-config.update", {
-        provider,
-        model,
-        proxyUrl,
-      });
-      setConfig(updated);
-      setCheckResult(null);
+      const result = await wsClient.request<{
+        ok: boolean;
+        proxyStatus: ProxyStatus;
+        proxyError?: string;
+      }>("ai-config.update", { provider, model });
+
+      setProxyStatus(result.proxyStatus);
+      if (result.proxyError) {
+        setProxyError(result.proxyError);
+      }
+      setConfig((prev) =>
+        prev
+          ? { ...prev, provider, model, proxyStatus: result.proxyStatus }
+          : prev,
+      );
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleCheck() {
-    setChecking(true);
-    setCheckResult(null);
-    try {
-      const result = await wsClient.request<{ ok: boolean; error?: string }>(
-        "ai-config.check",
-        { proxyUrl },
-      );
-      setCheckResult(result);
-    } catch (err) {
-      setCheckResult({ ok: false, error: String(err) });
-    } finally {
-      setChecking(false);
-    }
-  }
-
   if (!config) return null;
 
-  const dirty =
-    provider !== config.provider ||
-    model !== config.model ||
-    proxyUrl !== config.proxyUrl;
+  const dirty = provider !== config.provider || model !== config.model;
 
   return (
     <div>
@@ -122,48 +121,62 @@ export function AIProviderSetup() {
                 Claude Max Subscription
               </p>
               <p className="text-xs text-gray-400">
-                Uses claude-max-api-proxy (no API costs)
+                Uses your Claude subscription (no API costs)
               </p>
             </div>
           </label>
         </div>
 
-        {/* Proxy URL (only for claude-max) */}
+        {/* Claude Max status and instructions */}
         {provider === "claude-max" && (
-          <div className="space-y-2">
-            <label className="block text-sm text-gray-400">Proxy URL</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={proxyUrl}
-                onChange={(e) => setProxyUrl(e.target.value)}
-                className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
-                placeholder="http://localhost:3456/v1"
+          <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+            {/* Proxy status */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  proxyStatus.running
+                    ? "bg-green-400"
+                    : proxyError || proxyStatus.error
+                      ? "bg-red-400"
+                      : "bg-gray-500"
+                }`}
               />
-              <button
-                onClick={handleCheck}
-                disabled={checking}
-                className="rounded-md bg-gray-700 px-3 py-2 text-xs font-medium text-white hover:bg-gray-600 disabled:opacity-50"
-              >
-                {checking ? "Checking..." : "Test"}
-              </button>
+              <p className="text-xs text-gray-400">
+                {proxyStatus.running
+                  ? "Proxy running"
+                  : saving
+                    ? "Starting proxy..."
+                    : "Proxy not running"}
+              </p>
             </div>
-            {checkResult && (
-              <p
-                className={`text-xs ${checkResult.ok ? "text-green-400" : "text-red-400"}`}
-              >
-                {checkResult.ok
-                  ? "Proxy is reachable"
-                  : `Connection failed: ${checkResult.error ?? "unknown error"}`}
+
+            {/* Error message */}
+            {(proxyError || proxyStatus.error) && (
+              <p className="text-xs text-red-400">
+                {proxyError ?? proxyStatus.error}
               </p>
             )}
-            <p className="text-xs text-gray-500">
-              Run{" "}
-              <code className="rounded bg-white/10 px-1">
-                npx claude-max-api-proxy
-              </code>{" "}
-              to start the proxy
-            </p>
+
+            {/* Prerequisites */}
+            <div className="border-t border-white/5 pt-2 mt-2">
+              <p className="text-xs font-medium text-gray-300 mb-1">
+                Requires Claude Code CLI
+              </p>
+              <ol className="text-xs text-gray-500 space-y-1 list-decimal list-inside">
+                <li>
+                  Install:{" "}
+                  <code className="rounded bg-white/10 px-1">
+                    npm install -g @anthropic-ai/claude-code
+                  </code>
+                </li>
+                <li>
+                  Authenticate:{" "}
+                  <code className="rounded bg-white/10 px-1">
+                    claude auth login
+                  </code>
+                </li>
+              </ol>
+            </div>
           </div>
         )}
 
