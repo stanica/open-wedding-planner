@@ -22,6 +22,8 @@ class WsClient {
   private messageListeners = new Set<(direction: "sent" | "received", msg: unknown) => void>();
   private requestId = 0;
   private shouldReconnect = true;
+  private sendQueue: ClientMessage[] = [];
+  private connected = false;
 
   async connect() {
     this.port = await window.electronAPI.getGatewayPort();
@@ -43,6 +45,7 @@ class WsClient {
     };
 
     this.ws.onclose = () => {
+      this.connected = false;
       useGatewayStore.getState().setConnected(false);
       if (this.shouldReconnect) {
         setTimeout(() => this.doConnect(), this.reconnectDelay);
@@ -61,11 +64,14 @@ class WsClient {
   private handleMessage(msg: ServerMessage) {
     switch (msg.type) {
       case "challenge":
-        this.send({ type: "challenge-response", token: msg.token });
+        // Send directly — handshake must bypass the queue
+        this.sendRaw({ type: "challenge-response", token: msg.token });
         break;
 
       case "hello-ok":
         this.reconnectDelay = 1000;
+        this.connected = true;
+        this.flushQueue();
         useGatewayStore.getState().setConnected(true);
         useGatewayStore.getState().setState(msg.state);
         break;
@@ -95,12 +101,28 @@ class WsClient {
     }
   }
 
-  private send(msg: ClientMessage) {
+  private sendRaw(msg: ClientMessage) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
       for (const listener of this.messageListeners) {
         listener("sent", msg);
       }
+    }
+  }
+
+  private send(msg: ClientMessage) {
+    if (this.connected && this.ws?.readyState === WebSocket.OPEN) {
+      this.sendRaw(msg);
+    } else {
+      // Queue requests until the connection handshake completes
+      this.sendQueue.push(msg);
+    }
+  }
+
+  private flushQueue() {
+    const queued = this.sendQueue.splice(0);
+    for (const msg of queued) {
+      this.send(msg);
     }
   }
 
