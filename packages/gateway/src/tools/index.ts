@@ -3,6 +3,10 @@ import { searchTool } from "./search.js";
 import { scraperTool } from "./scraper.js";
 import { browserTool } from "./browser.js";
 import { pdfTool } from "./pdf.js";
+import { createCmdTool } from "./cmd.js";
+import { createDbQueryTool } from "./db-query.js";
+import { createDbSchemaTool } from "./db-schema.js";
+import { makeCreateVendorTool } from "./create-vendor.js";
 
 export function createToolRegistry(): ToolRegistry {
   const registry = new ToolRegistry();
@@ -33,6 +37,39 @@ export function createToolRegistry(): ToolRegistry {
     description: "Download and extract text from a PDF document",
     category: "web",
     tool: pdfTool,
+  });
+
+  registry.registerFactory("cmd", {
+    description: "Execute a command-line program in the workspace directory",
+    category: "system",
+    create: (ctx: unknown) => {
+      const { workspaceDir, permissionCallbacks } = ctx as any;
+      return createCmdTool(workspaceDir, permissionCallbacks);
+    },
+  });
+
+  registry.registerFactory("dbQuery", {
+    description: "Execute a SQL query against the application database",
+    category: "database",
+    create: (ctx: unknown) => {
+      const { sqlite, permissionCallbacks } = ctx as any;
+      return createDbQueryTool(sqlite, permissionCallbacks);
+    },
+  });
+
+  registry.registerFactory("dbSchema", {
+    description: "Inspect the database schema (tables, columns, foreign keys)",
+    category: "database",
+    create: (ctx: unknown) => {
+      const { sqlite } = ctx as any;
+      return createDbSchemaTool(sqlite);
+    },
+  });
+
+  registry.registerFactory("createVendor", {
+    description: "Create a new vendor record in the database",
+    category: "database",
+    create: (ctx: unknown) => makeCreateVendorTool(ctx as any),
   });
 
   return registry;
