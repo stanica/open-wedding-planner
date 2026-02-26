@@ -27,6 +27,10 @@ function makeCreateVendorTool(ctx: AgentContext) {
         .string()
         .nullable()
         .describe("Brief description of services and what was found"),
+      imageUrl: z
+        .string()
+        .nullable()
+        .describe("URL of a representative image (e.g. from og:image meta tag)"),
     }),
     execute: async (params) => {
       ctx.emit("creating-vendor", `Adding vendor: ${params.name}`);
@@ -47,6 +51,7 @@ function makeCreateVendorTool(ctx: AgentContext) {
           contactEmail: params.contactEmail,
           contactPhone: params.contactPhone,
           description: params.description,
+          imageUrl: params.imageUrl,
           status: "researched",
         })
         .returning();
@@ -69,6 +74,7 @@ const SYSTEM_PROMPT = `You are a wedding vendor research assistant. Your job is 
 - Extract real contact information when available (email, phone, website)
 - Write clear descriptions summarizing what the vendor offers
 - Pick the most appropriate category for each vendor
+- When scraping a vendor's website, note the image URL from the scrape results (meta.imageUrl) and pass it to createVendor
 - If a page is JavaScript-heavy and the scraper returns little content, try the browser tool
 - If you find a PDF (menu, brochure, price list), parse it for details
 - Do not create duplicate vendors

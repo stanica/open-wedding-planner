@@ -7,6 +7,7 @@ const MOCK_HTML = `
 <head>
   <title>Villa Elegante - Wedding Venue</title>
   <meta name="description" content="Beautiful wedding venue in Ischia" />
+  <meta property="og:image" content="https://villaelegante.it/images/hero.jpg" />
 </head>
 <body>
   <header><nav>Menu items</nav></header>
@@ -41,6 +42,13 @@ describe("scrapeHtml", () => {
   it("extracts meta tags", () => {
     const result = scrapeHtml("https://example.com", MOCK_HTML);
     expect(result.meta.description).toBe("Beautiful wedding venue in Ischia");
+    expect(result.meta.imageUrl).toBe("https://villaelegante.it/images/hero.jpg");
+  });
+
+  it("returns null imageUrl when og:image is missing", () => {
+    const html = `<html><head><title>No OG</title></head><body>Hello</body></html>`;
+    const result = scrapeHtml("https://example.com", html);
+    expect(result.meta.imageUrl).toBeNull();
   });
 });
 

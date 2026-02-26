@@ -12,6 +12,7 @@ interface Vendor {
   status: string;
   description: string | null;
   notes: string | null;
+  imageUrl: string | null;
 }
 
 interface Category {

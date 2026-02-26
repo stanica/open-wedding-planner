@@ -14,6 +14,7 @@ export interface ScrapedPage {
   meta: {
     description: string | null;
     keywords: string | null;
+    imageUrl: string | null;
   };
 }
 
@@ -56,6 +57,7 @@ export function scrapeHtml(url: string, html: string): ScrapedPage {
   const meta = {
     description: $('meta[name="description"]').attr("content") ?? null,
     keywords: $('meta[name="keywords"]').attr("content") ?? null,
+    imageUrl: $('meta[property="og:image"]').attr("content") ?? null,
   };
 
   return { url, title, textContent, contactInfo, meta };

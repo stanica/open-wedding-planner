@@ -1,6 +1,7 @@
 import { WeddingConfigForm } from "./WeddingConfigForm";
 import { IntegrationStatus } from "./IntegrationStatus";
 import { AIProviderSetup } from "./AIProviderSetup";
+import { SearchConfig } from "./SearchConfig";
 import { ToolPermissions } from "./ToolPermissions";
 
 export function SettingsView() {
@@ -10,6 +11,8 @@ export function SettingsView() {
       <WeddingConfigForm />
       <hr className="border-white/10" />
       <AIProviderSetup />
+      <hr className="border-white/10" />
+      <SearchConfig />
       <hr className="border-white/10" />
       <ToolPermissions />
       <hr className="border-white/10" />

@@ -38,6 +38,7 @@ export const vendors = sqliteTable("vendors", {
   description: text("description"),
   notes: text("notes"),
   sourceUrl: text("source_url"),
+  imageUrl: text("image_url"),
   threadId: integer("thread_id"),
   status: text("status").notNull().default("researched"),
   createdAt: text("created_at")
@@ -214,6 +215,15 @@ export const toolPermissions = sqliteTable("tool_permissions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   toolName: text("tool_name").notNull().unique(),
   decision: text("decision").notNull().default("prompt"),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
+export const searchConfig = sqliteTable("search_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  provider: text("provider").notNull().default("duckduckgo"),
+  apiKey: text("api_key"),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`(datetime('now'))`),

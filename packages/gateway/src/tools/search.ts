@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import * as cheerio from "cheerio";
+import { BraveSearchProvider } from "./brave-search.js";
 
 export interface SearchResult {
   title: string;
@@ -12,10 +13,21 @@ export interface SearchProvider {
   search(query: string, maxResults?: number): Promise<SearchResult[]>;
 }
 
-let searchProvider: SearchProvider | null = null;
+export type SearchProviderType = "brave" | "duckduckgo";
 
-export function setSearchProvider(provider: SearchProvider) {
-  searchProvider = provider;
+export interface SearchConfig {
+  provider: SearchProviderType;
+  apiKey?: string | null;
+}
+
+let currentConfig: SearchConfig = { provider: "duckduckgo" };
+
+export function setSearchConfig(config: SearchConfig): void {
+  currentConfig = { ...config };
+}
+
+export function getSearchConfig(): SearchConfig {
+  return { ...currentConfig };
 }
 
 /** Default search provider using DuckDuckGo HTML results (no API key needed) */
@@ -47,6 +59,13 @@ async function duckDuckGoSearch(query: string, maxResults = 5): Promise<SearchRe
   return results;
 }
 
+function getActiveProvider(): SearchProvider {
+  if (currentConfig.provider === "brave" && currentConfig.apiKey) {
+    return new BraveSearchProvider(currentConfig.apiKey);
+  }
+  return { search: duckDuckGoSearch };
+}
+
 export const searchTool = tool({
   description:
     "Search the web for wedding vendors, venues, services, or related information. Returns a list of search results with titles, URLs, and snippets.",
@@ -59,7 +78,7 @@ export const searchTool = tool({
       .describe("Maximum number of results to return"),
   }),
   execute: async ({ query, maxResults }) => {
-    const provider = searchProvider ?? { search: duckDuckGoSearch };
+    const provider = getActiveProvider();
     return provider.search(query, maxResults);
   },
 });

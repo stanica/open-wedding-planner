@@ -21,7 +21,8 @@ import { registerAgentHandlers } from "./handlers/agents.js";
 import { createToolRegistry } from "./tools/index.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
 import { setAIConfig } from "./agents/model-provider.js";
-import { aiConfig } from "./db/schema.js";
+import { setSearchConfig, type SearchProviderType } from "./tools/search.js";
+import { aiConfig, searchConfig } from "./db/schema.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -80,6 +81,15 @@ export async function startGateway(options: GatewayOptions = {}) {
       provider: savedAiConfig.provider as "api-key" | "claude-max",
       model: savedAiConfig.model,
       proxyUrl: savedAiConfig.proxyUrl,
+    });
+  }
+
+  // 8b. Load saved search config
+  const [savedSearchConfig] = await db.select().from(searchConfig).limit(1);
+  if (savedSearchConfig) {
+    setSearchConfig({
+      provider: savedSearchConfig.provider as SearchProviderType,
+      apiKey: savedSearchConfig.apiKey,
     });
   }
 

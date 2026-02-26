@@ -12,6 +12,7 @@ import { registerResearchNoteHandlers } from "./research-notes.js";
 import { registerDashboardHandlers } from "./dashboard.js";
 import { registerAIConfigHandlers } from "./ai-config.js";
 import { registerToolPermissionHandlers } from "./tool-permissions.js";
+import { registerSearchConfigHandlers } from "./search-config.js";
 import { registerResearchThreadHandlers } from "./research-threads.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
@@ -29,6 +30,7 @@ export function registerAllHandlers(router: Router, proxyManager: ProxyManager) 
   registerDashboardHandlers(router);
   registerAIConfigHandlers(router, proxyManager);
   registerToolPermissionHandlers(router);
+  registerSearchConfigHandlers(router);
   registerResearchThreadHandlers(router);
 
   router.register("import.budget-csv", async (db, params) => {

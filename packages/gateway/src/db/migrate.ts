@@ -17,6 +17,12 @@ export function pushSchema(sqlite: Database.Database) {
     // Column already exists — ignore
   }
 
+  try {
+    sqlite.exec(`ALTER TABLE vendors ADD COLUMN image_url TEXT`);
+  } catch {
+    // Column already exists — ignore
+  }
+
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS wedding_config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,6 +59,7 @@ export function pushSchema(sqlite: Database.Database) {
       description TEXT,
       notes TEXT,
       source_url TEXT,
+      image_url TEXT,
       thread_id INTEGER,
       status TEXT NOT NULL DEFAULT 'researched',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -193,6 +200,13 @@ export function pushSchema(sqlite: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tool_name TEXT NOT NULL UNIQUE,
       decision TEXT NOT NULL DEFAULT 'prompt',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS search_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL DEFAULT 'duckduckgo',
+      api_key TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);

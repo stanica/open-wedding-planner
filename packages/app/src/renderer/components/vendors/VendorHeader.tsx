@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowLeft, MapPin, Globe, Mail, Phone, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VendorStatusBadge } from "./VendorStatusBadge";
@@ -12,6 +13,7 @@ interface Vendor {
   contactPhone: string | null;
   status: string;
   description: string | null;
+  imageUrl: string | null;
 }
 
 export function VendorHeader({
@@ -24,6 +26,8 @@ export function VendorHeader({
   onDelete: () => void;
 }) {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
+  const showImage = vendor.imageUrl && !imgError;
 
   return (
     <div className="space-y-4">
@@ -36,11 +40,20 @@ export function VendorHeader({
       </button>
 
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{vendor.name}</h1>
-            <VendorStatusBadge status={vendor.status} />
-          </div>
+        <div className="flex gap-4">
+          {showImage && (
+            <img
+              src={vendor.imageUrl!}
+              alt=""
+              onError={() => setImgError(true)}
+              className="h-20 w-20 rounded-lg object-cover shrink-0"
+            />
+          )}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold">{vendor.name}</h1>
+              <VendorStatusBadge status={vendor.status} />
+            </div>
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             {vendor.location && (
@@ -72,6 +85,7 @@ export function VendorHeader({
           {vendor.description && (
             <p className="text-sm text-gray-400 max-w-2xl">{vendor.description}</p>
           )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
