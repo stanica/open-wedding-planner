@@ -8,6 +8,7 @@ import { registerQuoteHandlers } from "./quotes.js";
 import { registerBudgetHandlers } from "./budget.js";
 import { registerTaskHandlers } from "./tasks.js";
 import { registerCommunicationHandlers } from "./communications.js";
+import { registerResearchNoteHandlers } from "./research-notes.js";
 import { registerDashboardHandlers } from "./dashboard.js";
 import { registerAIConfigHandlers } from "./ai-config.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
@@ -22,6 +23,7 @@ export function registerAllHandlers(router: Router, proxyManager: ProxyManager) 
   registerBudgetHandlers(router);
   registerTaskHandlers(router);
   registerCommunicationHandlers(router);
+  registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
   registerAIConfigHandlers(router, proxyManager);
 
