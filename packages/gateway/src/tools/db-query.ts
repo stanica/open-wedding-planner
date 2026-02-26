@@ -6,13 +6,29 @@ import type { PermissionCallbacks } from "./permission-wrapper.js";
 const MAX_ROWS = 100;
 const SQL_BLACKLIST = ["DROP", "ALTER", "PRAGMA", "ATTACH", "DETACH"];
 
+function stripLeadingComments(sql: string): string {
+  let s = sql.trimStart();
+  while (true) {
+    if (s.startsWith("--")) {
+      const nl = s.indexOf("\n");
+      s = (nl === -1 ? "" : s.slice(nl + 1)).trimStart();
+    } else if (s.startsWith("/*")) {
+      const end = s.indexOf("*/");
+      s = (end === -1 ? "" : s.slice(end + 2)).trimStart();
+    } else {
+      break;
+    }
+  }
+  return s;
+}
+
 export function isBlacklistedSql(sql: string): boolean {
-  const trimmed = sql.trimStart().toUpperCase();
+  const trimmed = stripLeadingComments(sql).toUpperCase();
   return SQL_BLACKLIST.some((keyword) => trimmed.startsWith(keyword));
 }
 
 function getBlacklistedKeyword(sql: string): string {
-  const trimmed = sql.trimStart().toUpperCase();
+  const trimmed = stripLeadingComments(sql).toUpperCase();
   return SQL_BLACKLIST.find((keyword) => trimmed.startsWith(keyword)) ?? "UNKNOWN";
 }
 

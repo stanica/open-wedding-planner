@@ -25,6 +25,12 @@ describe("isBlacklistedSql", () => {
     expect(isBlacklistedSql("ATTACH DATABASE ':memory:' AS db2")).toBe(true);
   });
 
+  it("detects blacklisted SQL hidden behind comments", () => {
+    expect(isBlacklistedSql("-- innocent comment\nDROP TABLE vendors")).toBe(true);
+    expect(isBlacklistedSql("/* comment */ DROP TABLE vendors")).toBe(true);
+    expect(isBlacklistedSql("  -- comment\n  /* another */ ALTER TABLE vendors ADD COLUMN foo TEXT")).toBe(true);
+  });
+
   it("allows SELECT statements", () => {
     expect(isBlacklistedSql("SELECT * FROM vendors")).toBe(false);
   });

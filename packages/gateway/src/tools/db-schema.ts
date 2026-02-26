@@ -26,10 +26,14 @@ export function createDbSchemaTool(sqlite: Database.Database) {
     }),
     execute: async ({ table }) => {
       if (table) {
-        const columns = sqlite.pragma(`table_info("${table}")`) as ColumnInfo[];
-        if (columns.length === 0) {
+        // Validate table name against sqlite_master to prevent injection
+        const exists = sqlite
+          .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?")
+          .get(table);
+        if (!exists) {
           return { error: `Table "${table}" not found` };
         }
+        const columns = sqlite.pragma(`table_info("${table}")`) as ColumnInfo[];
         const fks = sqlite.pragma(`foreign_key_list("${table}")`) as ForeignKeyInfo[];
         return {
           tables: [{

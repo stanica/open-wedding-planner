@@ -47,12 +47,17 @@ export class AgentRunner {
       },
     });
 
-    // Collect all tool calls from steps
+    // Collect all tool calls and extract vendorIds from createVendor results
     const allToolCalls: Array<{ toolName: string; args: unknown; result: unknown }> = [];
+    const vendorIds: number[] = [];
     for (const step of steps) {
       for (const tc of step.toolCalls) {
         const tr = step.toolResults.find((r: any) => r.toolCallId === tc.toolCallId);
         allToolCalls.push({ toolName: tc.toolName, args: tc.input, result: tr?.output });
+        if (tc.toolName === "createVendor" && tr?.output && typeof tr.output === "object") {
+          const r = tr.output as { vendorId?: number };
+          if (r.vendorId) vendorIds.push(r.vendorId);
+        }
       }
     }
 
@@ -60,7 +65,7 @@ export class AgentRunner {
 
     return {
       summary: text || `${config.name} completed`,
-      data: { toolCalls: allToolCalls },
+      data: { toolCalls: allToolCalls, vendorIds },
     };
   }
 }
