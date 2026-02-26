@@ -74,7 +74,7 @@ export function ResearchView() {
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, liveToolCalls, pendingPermissions]);
+  }, [messages, liveToolCalls, pendingPermissions, researching, activeSession]);
 
   // WebSocket event handler
   const handleEvent = useCallback(
@@ -243,20 +243,27 @@ export function ResearchView() {
                 />
               ))}
 
-              {/* Live tool activity while agent is running */}
-              {activeSession && liveToolCalls.length > 0 && (
+              {/* Live agent activity */}
+              {(researching || activeSession) && (
                 <div className="py-4">
                   <span className="text-xs font-medium text-purple-400">Assistant</span>
-                  <div className="mt-1">
-                    {liveToolCalls.map((tc, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-2 text-xs text-gray-500 my-0.5"
-                      >
-                        <span className="animate-pulse">*</span>
-                        <span>{tc.detail}</span>
+                  <div className="mt-2 flex flex-col gap-1">
+                    {liveToolCalls.length > 0 ? (
+                      liveToolCalls.map((tc, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-xs text-gray-500"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
+                          <span>{tc.detail}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
+                        <span>Thinking...</span>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
@@ -284,7 +291,7 @@ export function ResearchView() {
         </div>
 
         {/* Compose box */}
-        <ComposeBox onSend={handleSend} disabled={!!activeSession} />
+        <ComposeBox onSend={handleSend} disabled={researching || !!activeSession} />
       </div>
     </div>
   );
