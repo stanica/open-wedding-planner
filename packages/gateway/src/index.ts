@@ -122,10 +122,9 @@ export async function startGateway(options: GatewayOptions = {}) {
     sqlite.close();
   }
 
+  // Safety net: "exit" handler is synchronous-only, so use killSync
   process.on("exit", () => {
-    if (proxyManager.isRunning()) {
-      proxyManager.stop();
-    }
+    proxyManager.killSync();
   });
 
   return stop;

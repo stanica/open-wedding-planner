@@ -106,6 +106,20 @@ export class ProxyManager {
     });
   }
 
+  /**
+   * Synchronously kill the proxy process. Use in process.on('exit')
+   * where async operations cannot complete.
+   */
+  killSync(): void {
+    try {
+      this.process?.kill("SIGKILL");
+    } catch {
+      // process may already be dead
+    }
+    this.process = null;
+    this.proxyUrl = null;
+  }
+
   isRunning(): boolean {
     return this.process !== null && !this.process.killed;
   }
