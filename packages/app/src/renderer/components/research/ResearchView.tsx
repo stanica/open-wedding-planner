@@ -34,7 +34,12 @@ interface PendingPermission {
 
 export function ResearchView() {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
-  const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [activeSession, _setActiveSession] = useState<string | null>(null);
+  const activeSessionRef = useRef<string | null>(null);
+  const setActiveSession = (v: string | null) => {
+    activeSessionRef.current = v;
+    _setActiveSession(v);
+  };
   const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
   const [liveToolCalls, setLiveToolCalls] = useState<Array<{ toolName: string; detail: string }>>(
     [],
@@ -76,10 +81,12 @@ export function ResearchView() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, liveToolCalls, pendingPermissions, researching, activeSession]);
 
-  // WebSocket event handler
-  const handleEvent = useCallback(
-    (event: GatewayEvent) => {
-      if (event.name === "agent-activity" && event.data.sessionKey === activeSession) {
+  // WebSocket event handler — uses ref to avoid stale closure for activeSession
+  useEffect(() => {
+    return wsClient.onEvent((event: GatewayEvent) => {
+      const session = activeSessionRef.current;
+
+      if (event.name === "agent-activity" && event.data.sessionKey === session) {
         if (event.data.action === "tool-call" && event.data.detail) {
           setLiveToolCalls((prev) => [
             ...prev,
@@ -88,7 +95,7 @@ export function ResearchView() {
         }
       }
 
-      if (event.name === "agent-complete" && activeSession) {
+      if (event.name === "agent-complete" && session) {
         setActiveSession(null);
         setLiveToolCalls([]);
         refetchMessages();
@@ -97,7 +104,7 @@ export function ResearchView() {
 
       if (event.name === "research.permissionRequest") {
         const data = event.data;
-        if (data.sessionKey === activeSession) {
+        if (data.sessionKey === session) {
           setPendingPermissions((prev) => [
             ...prev,
             {
@@ -109,13 +116,8 @@ export function ResearchView() {
           ]);
         }
       }
-    },
-    [activeSession, refetchMessages, refetchThreads],
-  );
-
-  useEffect(() => {
-    return wsClient.onEvent(handleEvent);
-  }, [handleEvent]);
+    });
+  }, [refetchMessages, refetchThreads]);
 
   // Handlers
   async function handleCreateThread() {

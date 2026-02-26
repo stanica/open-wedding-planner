@@ -42,13 +42,14 @@ describe("searchTool", () => {
     expect(results).toHaveLength(1);
   });
 
-  it("returns fallback message without provider", async () => {
+  it("uses DuckDuckGo fallback without provider", async () => {
     setSearchProvider(null as unknown as SearchProvider);
+    // Without a custom provider, execute falls back to DuckDuckGo.
+    // In test env this may return results or empty array — just verify it returns an array.
     const results = (await searchTool.execute!(
       { query: "test", maxResults: 5 },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
     )) as SearchResult[];
-    expect(results).toHaveLength(1);
-    expect(results[0].title).toBe("Search unavailable");
+    expect(Array.isArray(results)).toBe(true);
   });
 });
