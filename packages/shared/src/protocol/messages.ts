@@ -24,7 +24,7 @@ export interface GatewayStateSnapshot {
   };
 }
 
-export type ChannelStatus = "disconnected" | "connecting" | "connected" | "error";
+export type ChannelStatus = "disconnected" | "connecting" | "connected" | "error" | "failed";
 
 export type GatewayEvent =
   | { name: "vendor-created"; data: { vendor: Vendor } }
@@ -33,4 +33,7 @@ export type GatewayEvent =
   | { name: "agent-complete"; data: { taskId: string; summary: string } }
   | { name: "communication-received"; data: { vendorId: number; channel: string } }
   | { name: "draft-ready"; data: { communicationId: number; vendorName: string } }
-  | { name: "channel-status"; data: { channel: string; status: ChannelStatus } };
+  | { name: "channel-status"; data: { channel: string; status: ChannelStatus } }
+  | { name: "research.messageComplete"; data: { threadId: number; message?: unknown } }
+  | { name: "research.toolActivity"; data: { threadId: number; sessionKey: string; toolName: string; phase: "start" | "result"; detail?: string; result?: unknown } }
+  | { name: "research.permissionRequest"; data: { sessionKey: string; requestId: string; toolName: string; toolDescription: string } };
