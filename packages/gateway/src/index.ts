@@ -11,11 +11,8 @@ import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import { Orchestrator } from "./agents/orchestrator.js";
-import { researchAgent } from "./agents/research.js";
 import { heartbeatAgent } from "./agents/heartbeat.js";
-import { outreachAgent } from "./agents/outreach.js";
-import { parserAgent } from "./agents/parser.js";
-import { translationAgent } from "./agents/translation.js";
+import { TASK_CONFIGS } from "./agents/task-configs.js";
 import { createEmbeddingsTable } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
 import { createToolRegistry } from "./tools/index.js";
@@ -105,12 +102,12 @@ export async function startGateway(options: GatewayOptions = {}) {
   const toolRegistry = createToolRegistry();
   const orchestrator = new Orchestrator(db, (event) => {
     wsServer.broadcast(event);
-  }, toolRegistry);
-  orchestrator.registerAgent(researchAgent);
+  }, toolRegistry, undefined, sqlite);
+
+  for (const config of TASK_CONFIGS) {
+    orchestrator.registerConfig(config);
+  }
   orchestrator.registerAgent(heartbeatAgent);
-  orchestrator.registerAgent(outreachAgent);
-  orchestrator.registerAgent(parserAgent);
-  orchestrator.registerAgent(translationAgent);
   registerAgentHandlers(router, orchestrator);
 
   router.register("tools.list", async () => {

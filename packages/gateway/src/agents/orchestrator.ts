@@ -1,17 +1,21 @@
 import { randomUUID } from "crypto";
 import { eq, sql } from "drizzle-orm";
+import type { ModelMessage } from "ai";
 import { agentTasks, researchMessages } from "../db/schema.js";
 import { CommandQueue } from "../infra/command-queue.js";
 import { SessionManager } from "../infra/sessions.js";
 import { TurnCounter } from "./safety/turn-limits.js";
 import { LoopDetector } from "./safety/loop-detection.js";
 import { withTimeout, TimeoutError } from "./safety/timeout.js";
-import type { BaseAgent, AgentContext } from "./base-agent.js";
+import { AgentRunner } from "./runner.js";
+import type { ToolFactoryContext } from "./runner.js";
+import type { BaseAgent, AgentContext, TaskConfig } from "./base-agent.js";
 import type { Db } from "../infra/router.js";
 import type { GatewayEvent } from "@wedding-planner/shared";
 import type { ToolRegistry } from "../tools/registry.js";
 import { PermissionManager } from "../tools/permission-wrapper.js";
 import type { UserResponse } from "../tools/permission-wrapper.js";
+import { getWorkspaceDir } from "../config/paths.js";
 
 export interface OrchestratorConfig {
   maxTurns?: number;
@@ -25,6 +29,7 @@ const DEFAULTS: Required<OrchestratorConfig> = {
 
 export class Orchestrator {
   private agents = new Map<string, BaseAgent>();
+  private configs = new Map<string, TaskConfig>();
   private queue: CommandQueue;
   private sessions: SessionManager;
   private config: Required<OrchestratorConfig>;
@@ -33,12 +38,14 @@ export class Orchestrator {
   private toolRegistry: ToolRegistry;
   private permissionManager: PermissionManager;
   private pendingPermissions = new Map<string, { resolve: (response: UserResponse) => void }>();
+  private sqlite: unknown;
 
   constructor(
     db: Db,
     broadcast: (event: GatewayEvent) => void,
     toolRegistry: ToolRegistry,
     config?: OrchestratorConfig,
+    sqlite?: unknown,
   ) {
     this.db = db;
     this.broadcast = broadcast;
@@ -47,10 +54,15 @@ export class Orchestrator {
     this.queue = new CommandQueue();
     this.sessions = new SessionManager(db);
     this.permissionManager = new PermissionManager(db);
+    this.sqlite = sqlite;
   }
 
   registerAgent(agent: BaseAgent): void {
     this.agents.set(agent.name, agent);
+  }
+
+  registerConfig(taskConfig: TaskConfig): void {
+    this.configs.set(taskConfig.name, taskConfig);
   }
 
   async dispatch(
@@ -58,8 +70,9 @@ export class Orchestrator {
     input: unknown,
     options?: { lane?: string; vendorId?: number; categoryId?: number },
   ): Promise<{ taskId: string; sessionKey: string }> {
+    const taskConfig = this.configs.get(agentName);
     const agent = this.agents.get(agentName);
-    if (!agent) throw new Error(`Unknown agent: ${agentName}`);
+    if (!taskConfig && !agent) throw new Error(`Unknown agent/config: ${agentName}`);
 
     const taskId = randomUUID();
     const sessionKey = `${agentName}-${taskId}`;
@@ -80,14 +93,15 @@ export class Orchestrator {
 
     // Enqueue execution
     this.queue.enqueue(lane, taskId, () =>
-      this.execute(agent, taskId, sessionKey, input),
+      this.execute(taskConfig ?? null, agent ?? null, taskId, sessionKey, input),
     );
 
     return { taskId, sessionKey };
   }
 
   private async execute(
-    agent: BaseAgent,
+    taskConfig: TaskConfig | null,
+    agent: BaseAgent | null,
     taskId: string,
     sessionKey: string,
     input: unknown,
@@ -148,7 +162,28 @@ export class Orchestrator {
             permissionManager: this.permissionManager,
             permissionCallbacks,
           };
-          return agent.run(ctx, input);
+
+          if (taskConfig) {
+            // Use AgentRunner for TaskConfig-based agents
+            const toolCtx: ToolFactoryContext = {
+              db: this.db,
+              emit,
+              sqlite: this.sqlite,
+              workspaceDir: getWorkspaceDir(),
+              permissionCallbacks,
+            };
+
+            const inputData = input as { messages?: ModelMessage[]; threadId?: number; [key: string]: unknown };
+            const messages: ModelMessage[] = inputData.messages ?? [{ role: "user" as const, content: JSON.stringify(input) }];
+
+            const runner = new AgentRunner();
+            return runner.run(taskConfig, ctx, messages, toolCtx);
+          } else if (agent) {
+            // Use BaseAgent directly (for heartbeat etc.)
+            return agent.run(ctx, input);
+          }
+
+          throw new Error("No task config or agent provided");
         },
         this.config.timeoutMs,
       );
