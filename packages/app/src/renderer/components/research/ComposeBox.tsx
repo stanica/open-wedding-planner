@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 
 interface ComposeBoxProps {
-  onSend: (message: string) => void;
+  onSend: (message: string) => void | Promise<void>;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -22,11 +22,16 @@ export function ComposeBox({
     }
   }, [value]);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
-    onSend(trimmed);
     setValue("");
+    try {
+      await onSend(trimmed);
+    } catch {
+      // Restore text if send failed
+      setValue(trimmed);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

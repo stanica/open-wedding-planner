@@ -148,19 +148,22 @@ export function ResearchView() {
     await createMessage({ threadId, role: "user", content });
     refetchMessages();
 
-    // Build conversation history for the agent
-    const currentMessages = messages ?? [];
-    const agentMessages = [
-      ...currentMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
-      { role: "user" as const, content },
-    ];
-
+    // Build conversation history — use fresh fetch since state may be stale
+    let history: Message[] = [];
     try {
-      const result = await startResearch({ threadId, messages: agentMessages });
-      setActiveSession(result.sessionKey);
+      history = await wsClient.request<Message[]>("research.messages.list", { threadId });
     } catch {
-      // Error starting research — will show in UI as no response
+      // Fall back to current state
+      history = messages ?? [];
     }
+
+    const agentMessages = history.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+    const result = await startResearch({ threadId, messages: agentMessages });
+    setActiveSession(result.sessionKey);
   }
 
   async function handlePermissionDecision(
