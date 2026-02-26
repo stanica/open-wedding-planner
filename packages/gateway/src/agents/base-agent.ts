@@ -22,3 +22,10 @@ export interface BaseAgent {
   readonly tools?: string[];
   run(ctx: AgentContext, input: unknown): Promise<AgentResult>;
 }
+
+export interface TaskConfig {
+  name: string;
+  systemPrompt: string;
+  tools: string[];
+  maxSteps?: number;
+}
