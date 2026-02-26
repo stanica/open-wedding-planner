@@ -7,6 +7,7 @@ import { seedCategories } from "./db/seed.js";
 import { createWsServer } from "./infra/ws-server.js";
 import { Router } from "./infra/router.js";
 import { registerAllHandlers } from "./handlers/index.js";
+import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath } from "./config/paths.js";
 import { Orchestrator } from "./agents/orchestrator.js";
@@ -53,7 +54,8 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // 5. Create router and register handlers
   const router = new Router();
-  registerAllHandlers(router);
+  const proxyManager = new ProxyManager();
+  registerAllHandlers(router, proxyManager);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
@@ -80,10 +82,19 @@ export async function startGateway(options: GatewayOptions = {}) {
     });
   }
 
+  if (savedAiConfig?.provider === "claude-max") {
+    try {
+      await proxyManager.start();
+      console.log("Claude Max proxy started");
+    } catch (err) {
+      console.error("Failed to start Claude Max proxy:", err);
+    }
+  }
+
   const orchestrator = new Orchestrator(db, (event) => {
     wsServer.broadcast({ type: "event", seq: Date.now(), event });
   });
-  const useRealAgents = hasAIProvider();
+  const useRealAgents = hasAIProvider(proxyManager.isRunning());
   orchestrator.registerAgent(useRealAgents ? researchAgent : mockResearchAgent);
   orchestrator.registerAgent(useRealAgents ? heartbeatAgent : mockHeartbeatAgent);
   orchestrator.registerAgent(useRealAgents ? outreachAgent : mockOutreachAgent);
@@ -103,12 +114,19 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // Return cleanup function
   async function stop() {
+    await proxyManager.stop();
     heartbeat.stop();
     // Drain in-flight work (max 30s)
     await orchestrator.waitForDrain(30_000);
     await wsServer.close();
     sqlite.close();
   }
+
+  process.on("exit", () => {
+    if (proxyManager.isRunning()) {
+      proxyManager.stop();
+    }
+  });
 
   return stop;
 }

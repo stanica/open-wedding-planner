@@ -48,7 +48,9 @@ export async function getModel(): Promise<LanguageModel> {
 /**
  * Check if we have a usable AI provider configured.
  */
-export function hasAIProvider(): boolean {
-  if (currentConfig.provider === "claude-max") return true;
+export function hasAIProvider(isProxyRunning?: boolean): boolean {
+  if (currentConfig.provider === "claude-max") {
+    return isProxyRunning ?? false;
+  }
   return !!process.env.ANTHROPIC_API_KEY;
 }
