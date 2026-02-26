@@ -1,98 +1,288 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { wsClient } from "../../lib/ws-client";
-import { useMutation } from "../../hooks/useRequest";
-import { ResearchInput } from "./ResearchInput";
-import { AgentActivityStream } from "./AgentActivityStream";
-import type { ActivityItem } from "./AgentActivityStream";
-import { VendorCard } from "../vendors/VendorCard";
+import { useRequest, useMutation } from "../../hooks/useRequest";
 import { useVendors } from "../../hooks/useVendors";
+import { ThreadList } from "./ThreadList";
+import { ChatMessage } from "./ChatMessage";
+import { ComposeBox } from "./ComposeBox";
+import { PermissionRequestCard } from "./PermissionRequestCard";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
+interface Thread {
+  id: number;
+  title: string;
+  categoryTags: string | null;
+  updatedAt: string;
+}
+
+interface Message {
+  id: number;
+  threadId: number;
+  role: string;
+  content: string;
+  toolCalls: string | null;
+  vendorIds: string | null;
+  createdAt: string;
+}
+
+interface PendingPermission {
+  requestId: string;
+  toolName: string;
+  toolDescription: string;
+  resolved: string | null;
+}
+
 export function ResearchView() {
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
   const [activeSession, setActiveSession] = useState<string | null>(null);
-  const [completedSummary, setCompletedSummary] = useState<string | null>(null);
-  const { mutate: startResearch, loading } = useMutation<
-    { query: string },
+  const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
+  const [liveToolCalls, setLiveToolCalls] = useState<Array<{ toolName: string; detail: string }>>(
+    [],
+  );
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Data fetching
+  const { data: threads, refetch: refetchThreads } = useRequest<Thread[]>(
+    "research.threads.list",
+  );
+  const { data: messages, refetch: refetchMessages } = useRequest<Message[]>(
+    activeThreadId ? "research.messages.list" : null,
+    activeThreadId ? { threadId: activeThreadId } : undefined,
+  );
+  const { data: allVendors } = useVendors();
+
+  // Mutations
+  const { mutate: createThread } = useMutation<{ title: string }, Thread>(
+    "research.threads.create",
+  );
+  const { mutate: deleteThread } = useMutation<{ id: number }, unknown>(
+    "research.threads.delete",
+  );
+  const { mutate: createMessage } = useMutation<
+    { threadId: number; role: string; content: string },
+    Message
+  >("research.messages.create");
+  const { mutate: startResearch, loading: researching } = useMutation<
+    { threadId: number; messages: unknown[] },
     { taskId: string; sessionKey: string }
   >("agent.research");
-  const { data: vendors, refetch: refetchVendors } = useVendors();
-  const navigate = useNavigate();
+  const { mutate: respondPermission } = useMutation<
+    { requestId: string; response: string },
+    unknown
+  >("research.permissionResponse");
 
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, liveToolCalls, pendingPermissions]);
+
+  // WebSocket event handler
   const handleEvent = useCallback(
     (event: GatewayEvent) => {
       if (event.name === "agent-activity" && event.data.sessionKey === activeSession) {
-        setActivities((prev) => [
-          ...prev,
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            action: event.data.action,
-            detail: event.data.detail,
-            timestamp: Date.now(),
-          },
-        ]);
+        if (event.data.action === "tool-call" && event.data.detail) {
+          setLiveToolCalls((prev) => [
+            ...prev,
+            { toolName: event.data.detail!.split(":")[0], detail: event.data.detail! },
+          ]);
+        }
       }
 
       if (event.name === "agent-complete" && activeSession) {
-        setCompletedSummary(event.data.summary);
         setActiveSession(null);
-        refetchVendors();
+        setLiveToolCalls([]);
+        refetchMessages();
+        refetchThreads();
+      }
+
+      if (event.name === "research.permissionRequest") {
+        const data = event.data;
+        if (data.sessionKey === activeSession) {
+          setPendingPermissions((prev) => [
+            ...prev,
+            {
+              requestId: data.requestId,
+              toolName: data.toolName,
+              toolDescription: data.toolDescription,
+              resolved: null,
+            },
+          ]);
+        }
       }
     },
-    [activeSession, refetchVendors],
+    [activeSession, refetchMessages, refetchThreads],
   );
 
   useEffect(() => {
     return wsClient.onEvent(handleEvent);
   }, [handleEvent]);
 
-  async function handleSubmit(query: string) {
-    setActivities([]);
-    setCompletedSummary(null);
+  // Handlers
+  async function handleCreateThread() {
+    const thread = await createThread({ title: "New research" });
+    setActiveThreadId(thread.id);
+    refetchThreads();
+  }
+
+  async function handleDeleteThread(threadId: number) {
+    await deleteThread({ id: threadId });
+    if (activeThreadId === threadId) {
+      setActiveThreadId(null);
+    }
+    refetchThreads();
+  }
+
+  async function handleSend(content: string) {
+    let threadId = activeThreadId;
+
+    if (!threadId) {
+      // Auto-create thread from first message
+      const title = content.length > 50 ? content.slice(0, 50) + "..." : content;
+      const thread = await createThread({ title });
+      threadId = thread.id;
+      setActiveThreadId(thread.id);
+      refetchThreads();
+    }
+
+    // Save user message
+    await createMessage({ threadId, role: "user", content });
+    refetchMessages();
+
+    // Build conversation history for the agent
+    const currentMessages = messages ?? [];
+    const agentMessages = [
+      ...currentMessages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+      { role: "user" as const, content },
+    ];
+
     try {
-      const result = await startResearch({ query });
+      const result = await startResearch({ threadId, messages: agentMessages });
       setActiveSession(result.sessionKey);
     } catch {
-      setActivities([
-        {
-          id: "error",
-          action: "error",
-          detail: "Failed to start research",
-          timestamp: Date.now(),
-        },
-      ]);
+      // Error starting research — will show in UI as no response
+    }
+  }
+
+  async function handlePermissionDecision(
+    requestId: string,
+    decision: "allow" | "always-allow" | "deny",
+  ) {
+    await respondPermission({ requestId, response: decision });
+    setPendingPermissions((prev) =>
+      prev.map((p) => (p.requestId === requestId ? { ...p, resolved: decision } : p)),
+    );
+  }
+
+  // Build vendor lookup
+  const vendorMap = new Map((allVendors ?? []).map((v) => [v.id, v]));
+
+  function getVendorsForMessage(msg: Message) {
+    if (!msg.vendorIds) return [];
+    try {
+      const ids: number[] = JSON.parse(msg.vendorIds);
+      return ids
+        .map((id) => vendorMap.get(id))
+        .filter(Boolean) as Array<{
+        id: number;
+        name: string;
+        location: string | null;
+        description: string | null;
+      }>;
+    } catch {
+      return [];
+    }
+  }
+
+  function getToolCallsForMessage(msg: Message) {
+    if (!msg.toolCalls) return [];
+    try {
+      return JSON.parse(msg.toolCalls) as Array<{
+        toolName: string;
+        args: unknown;
+        result: unknown;
+      }>;
+    } catch {
+      return [];
     }
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Research</h1>
+    <div className="flex h-full">
+      {/* Thread sidebar */}
+      <div className="w-64 shrink-0">
+        <ThreadList
+          threads={threads ?? []}
+          activeThreadId={activeThreadId}
+          onSelect={(id) => {
+            setActiveThreadId(id);
+            setActiveSession(null);
+            setLiveToolCalls([]);
+            setPendingPermissions([]);
+          }}
+          onCreate={handleCreateThread}
+          onDelete={handleDeleteThread}
+        />
+      </div>
 
-      <ResearchInput onSubmit={handleSubmit} disabled={loading || !!activeSession} />
+      {/* Chat area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6">
+          {activeThreadId && messages ? (
+            <>
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role as "user" | "assistant"}
+                  content={msg.content}
+                  toolCalls={getToolCallsForMessage(msg)}
+                  vendors={getVendorsForMessage(msg)}
+                />
+              ))}
 
-      <AgentActivityStream activities={activities} />
+              {/* Live tool activity while agent is running */}
+              {activeSession && liveToolCalls.length > 0 && (
+                <div className="py-4">
+                  <span className="text-xs font-medium text-purple-400">Assistant</span>
+                  <div className="mt-1">
+                    {liveToolCalls.map((tc, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 text-xs text-gray-500 my-0.5"
+                      >
+                        <span className="animate-pulse">*</span>
+                        <span>{tc.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      {completedSummary && (
-        <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-4 py-3">
-          <p className="text-sm text-green-400">{completedSummary}</p>
+              {/* Pending permission requests */}
+              {pendingPermissions.map((p) => (
+                <PermissionRequestCard
+                  key={p.requestId}
+                  toolName={p.toolName}
+                  toolDescription={p.toolDescription}
+                  resolved={p.resolved}
+                  onDecision={(decision) => handlePermissionDecision(p.requestId, decision)}
+                />
+              ))}
+
+              <div ref={messagesEndRef} />
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <p className="text-sm">
+                Start a new research thread or select one from the sidebar.
+              </p>
+            </div>
+          )}
         </div>
-      )}
 
-      {vendors && vendors.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Recent Vendors</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {vendors.slice(-4).map((vendor) => (
-              <VendorCard
-                key={vendor.id}
-                vendor={vendor}
-                onClick={() => navigate(`/vendors/${vendor.id}`)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+        {/* Compose box */}
+        <ComposeBox onSend={handleSend} disabled={!!activeSession} />
+      </div>
     </div>
   );
 }

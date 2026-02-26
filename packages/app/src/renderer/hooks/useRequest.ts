@@ -9,7 +9,7 @@ interface UseRequestResult<T> {
 }
 
 export function useRequest<T = unknown>(
-  method: string,
+  method: string | null | undefined,
   params?: unknown,
 ): UseRequestResult<T> {
   const [data, setData] = useState<T | null>(null);
@@ -24,6 +24,12 @@ export function useRequest<T = unknown>(
   }, []);
 
   useEffect(() => {
+    if (!method) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
