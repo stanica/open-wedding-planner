@@ -1,0 +1,57 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import * as sqliteVec from "sqlite-vec";
+import * as schema from "../../src/db/schema.js";
+import { pushSchema } from "../../src/db/migrate.js";
+import { seedCategories } from "../../src/db/seed.js";
+import { Router } from "../../src/infra/router.js";
+import { registerAllHandlers } from "../../src/handlers/index.js";
+
+function setup() {
+  const sqlite = new Database(":memory:");
+  sqliteVec.load(sqlite);
+  pushSchema(sqlite);
+  const db = drizzle(sqlite, { schema });
+  const router = new Router();
+  registerAllHandlers(router);
+  return { db, router };
+}
+
+describe("communication handlers", () => {
+  let db: ReturnType<typeof drizzle>;
+  let router: Router;
+
+  beforeEach(async () => {
+    ({ db, router } = setup());
+    await seedCategories(db);
+    await router.handle(db, "vendors.create", {
+      categoryId: 1,
+      name: "Test Vendor",
+      status: "contacted",
+    });
+  });
+
+  it("deletes a communication", async () => {
+    await db.insert(schema.communications).values({
+      vendorId: 1,
+      direction: "out",
+      channel: "email",
+      subject: "Test",
+      bodyOriginal: "Hello",
+      status: "draft",
+    });
+
+    const before = (await router.handle(db, "communications.list", {
+      vendorId: 1,
+    })) as unknown[];
+    expect(before).toHaveLength(1);
+
+    await router.handle(db, "communications.delete", { id: 1 });
+
+    const after = (await router.handle(db, "communications.list", {
+      vendorId: 1,
+    })) as unknown[];
+    expect(after).toHaveLength(0);
+  });
+});

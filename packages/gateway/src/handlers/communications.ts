@@ -87,4 +87,10 @@ export function registerCommunicationHandlers(router: Router) {
       .where(eq(communications.id, id));
     return updated;
   });
+
+  router.register("communications.delete", async (db: Db, params: unknown) => {
+    const { id } = params as { id: number };
+    await db.delete(communications).where(eq(communications.id, id));
+    return { ok: true };
+  });
 }
