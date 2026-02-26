@@ -82,4 +82,16 @@ describe("ai-config handlers", () => {
     const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
     expect(result).toHaveProperty("proxyStatus");
   });
+
+  it("captures proxy start error without failing the update", async () => {
+    (proxyManager.start as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce(new Error("Claude CLI not found"));
+
+    const result = (await router.handle(db, "ai-config.update", {
+      provider: "claude-max",
+    })) as Record<string, unknown>;
+
+    expect(result.ok).toBe(true);
+    expect(result.proxyError).toBe("Claude CLI not found");
+  });
 });

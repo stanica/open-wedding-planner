@@ -70,7 +70,11 @@ export function registerAIConfigHandlers(
           err instanceof Error ? err.message : "Failed to start proxy";
       }
     } else {
-      await proxyManager.stop();
+      try {
+        await proxyManager.stop();
+      } catch (err) {
+        proxyError = err instanceof Error ? err.message : "Failed to stop proxy";
+      }
     }
 
     return {
