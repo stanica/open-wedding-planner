@@ -100,6 +100,93 @@ describe("vendor handlers", () => {
     expect(all).toHaveLength(0);
   });
 
+  it("cascade-deletes all vendor children", async () => {
+    // Create vendor with children in every related table
+    await router.handle(db, "vendors.create", {
+      categoryId: 1,
+      name: "Vendor With Data",
+      status: "quoted",
+    });
+    const vendorId = 1;
+
+    // Add attributes
+    await router.handle(db, "vendor-attributes.set", {
+      vendorId,
+      key: "capacity",
+      value: "100",
+    });
+
+    // Add quotes with line items
+    await router.handle(db, "quotes.create", {
+      vendorId,
+      totalAmount: 5000,
+      currency: "EUR",
+      source: "email",
+      lineItems: [{ description: "Item", amount: 5000, pricingType: "flat" }],
+    });
+
+    // Add communication
+    await db.insert(schema.communications).values({
+      vendorId,
+      direction: "out",
+      channel: "email",
+      bodyOriginal: "Hello",
+      status: "draft",
+    });
+
+    // Add research note
+    await db.insert(schema.researchNotes).values({
+      vendorId,
+      content: "Test note",
+      sourceType: "web",
+    });
+
+    // Add budget entry referencing vendor
+    await router.handle(db, "budget.create", {
+      categoryId: 1,
+      vendorId,
+      description: "Venue deposit",
+      estimatedActual: 1000,
+    });
+
+    // Add task referencing vendor
+    await router.handle(db, "tasks.create", {
+      title: "Contact venue",
+      vendorId,
+      status: "pending",
+    });
+
+    // Delete vendor
+    await router.handle(db, "vendors.delete", { id: vendorId });
+
+    // Verify vendor is gone
+    const vendors = (await router.handle(db, "vendors.list", {})) as unknown[];
+    expect(vendors).toHaveLength(0);
+
+    // Verify children are gone
+    const attrs = (await router.handle(db, "vendor-attributes.list", { vendorId })) as unknown[];
+    expect(attrs).toHaveLength(0);
+
+    const quotes = (await router.handle(db, "quotes.list", { vendorId })) as unknown[];
+    expect(quotes).toHaveLength(0);
+
+    const comms = (await router.handle(db, "communications.list", { vendorId })) as unknown[];
+    expect(comms).toHaveLength(0);
+
+    const notes = (await router.handle(db, "research-notes.list", { vendorId })) as unknown[];
+    expect(notes).toHaveLength(0);
+
+    // Verify budget entry still exists but vendorId is null
+    const budget = (await router.handle(db, "budget.list", {})) as Array<Record<string, unknown>>;
+    expect(budget).toHaveLength(1);
+    expect(budget[0].vendorId).toBeNull();
+
+    // Verify task still exists but vendorId is null
+    const taskList = (await router.handle(db, "tasks.list", {})) as Array<Record<string, unknown>>;
+    expect(taskList).toHaveLength(1);
+    expect(taskList[0].vendorId).toBeNull();
+  });
+
   it("manages vendor attributes", async () => {
     await router.handle(db, "vendors.create", {
       categoryId: 1,

@@ -1,5 +1,15 @@
-import { eq, and, sql } from "drizzle-orm";
-import { vendors } from "../db/schema.js";
+import { eq, and, sql, inArray } from "drizzle-orm";
+import {
+  vendors,
+  vendorAttributes,
+  quotes,
+  quoteLineItems,
+  communications,
+  researchNotes,
+  budgetEntries,
+  tasks,
+  agentTasks,
+} from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 
 export function registerVendorHandlers(router: Router) {
@@ -43,7 +53,37 @@ export function registerVendorHandlers(router: Router) {
 
   router.register("vendors.delete", async (db: Db, params: unknown) => {
     const { id } = params as { id: number };
-    await db.delete(vendors).where(eq(vendors.id, id));
+
+    // Get all quote IDs for this vendor so we can delete their line items
+    const vendorQuotes = await db
+      .select({ id: quotes.id })
+      .from(quotes)
+      .where(eq(quotes.vendorId, id));
+    const quoteIds = vendorQuotes.map((q) => q.id);
+
+    // Delete in dependency order within a transaction
+    // Note: better-sqlite3 transactions are synchronous — no async/await inside
+    db.transaction((tx) => {
+      // Delete quote line items
+      if (quoteIds.length > 0) {
+        tx.delete(quoteLineItems).where(inArray(quoteLineItems.quoteId, quoteIds)).run();
+      }
+      // Delete quotes
+      tx.delete(quotes).where(eq(quotes.vendorId, id)).run();
+      // Delete vendor attributes
+      tx.delete(vendorAttributes).where(eq(vendorAttributes.vendorId, id)).run();
+      // Delete communications
+      tx.delete(communications).where(eq(communications.vendorId, id)).run();
+      // Delete research notes
+      tx.delete(researchNotes).where(eq(researchNotes.vendorId, id)).run();
+      // Nullify optional vendor references
+      tx.update(budgetEntries).set({ vendorId: null }).where(eq(budgetEntries.vendorId, id)).run();
+      tx.update(tasks).set({ vendorId: null }).where(eq(tasks.vendorId, id)).run();
+      tx.update(agentTasks).set({ vendorId: null }).where(eq(agentTasks.vendorId, id)).run();
+      // Delete the vendor
+      tx.delete(vendors).where(eq(vendors.id, id)).run();
+    });
+
     return { ok: true };
   });
 }
