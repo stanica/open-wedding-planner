@@ -1,23 +1,32 @@
 import { aiConfig } from "../db/schema.js";
-import { setAIConfig, getAIConfig, type AIProviderConfig } from "../agents/model-provider.js";
+import {
+  setAIConfig,
+  getAIConfig,
+  type AIProviderConfig,
+} from "../agents/model-provider.js";
 import type { Router, Db } from "../infra/router.js";
+import type { ProxyManager } from "../infra/proxy-manager.js";
 
-export function registerAIConfigHandlers(router: Router) {
+export function registerAIConfigHandlers(
+  router: Router,
+  proxyManager: ProxyManager,
+) {
   router.register("ai-config.get", async (db: Db) => {
     const [row] = await db.select().from(aiConfig);
-    if (row) {
-      return {
-        provider: row.provider,
-        model: row.model,
-        proxyUrl: row.proxyUrl,
-        hasApiKey: !!process.env.ANTHROPIC_API_KEY,
-      };
-    }
-    // Return defaults
-    const defaults = getAIConfig();
+    const config = row
+      ? {
+          provider: row.provider,
+          model: row.model,
+          proxyUrl: row.proxyUrl,
+          hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+        }
+      : {
+          ...getAIConfig(),
+          hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+        };
     return {
-      ...defaults,
-      hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+      ...config,
+      proxyStatus: proxyManager.getStatus(),
     };
   });
 
@@ -26,13 +35,11 @@ export function registerAIConfigHandlers(router: Router) {
     const [existing] = await db.select().from(aiConfig);
 
     if (existing) {
-      await db
-        .update(aiConfig)
-        .set({
-          provider: data.provider ?? existing.provider,
-          model: data.model ?? existing.model,
-          proxyUrl: data.proxyUrl ?? existing.proxyUrl,
-        });
+      await db.update(aiConfig).set({
+        provider: data.provider ?? existing.provider,
+        model: data.model ?? existing.model,
+        proxyUrl: data.proxyUrl ?? existing.proxyUrl,
+      });
     } else {
       await db.insert(aiConfig).values({
         provider: data.provider ?? "api-key",
@@ -51,7 +58,26 @@ export function registerAIConfigHandlers(router: Router) {
       });
     }
 
-    return { ok: true };
+    // Manage proxy lifecycle based on provider change
+    const newProvider = updated?.provider ?? data.provider;
+    let proxyError: string | null = null;
+
+    if (newProvider === "claude-max") {
+      try {
+        await proxyManager.start();
+      } catch (err) {
+        proxyError =
+          err instanceof Error ? err.message : "Failed to start proxy";
+      }
+    } else {
+      await proxyManager.stop();
+    }
+
+    return {
+      ok: true,
+      proxyStatus: proxyManager.getStatus(),
+      proxyError,
+    };
   });
 
   router.register("ai-config.check", async (_db: Db, params: unknown) => {

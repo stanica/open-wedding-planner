@@ -1,4 +1,5 @@
 import type { Router } from "../infra/router.js";
+import type { ProxyManager } from "../infra/proxy-manager.js";
 import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
@@ -12,7 +13,7 @@ import { registerAIConfigHandlers } from "./ai-config.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 
-export function registerAllHandlers(router: Router) {
+export function registerAllHandlers(router: Router, proxyManager: ProxyManager) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
   registerVendorHandlers(router);
@@ -22,7 +23,7 @@ export function registerAllHandlers(router: Router) {
   registerTaskHandlers(router);
   registerCommunicationHandlers(router);
   registerDashboardHandlers(router);
-  registerAIConfigHandlers(router);
+  registerAIConfigHandlers(router, proxyManager);
 
   router.register("import.budget-csv", async (db, params) => {
     const { content } = params as { content: string };
