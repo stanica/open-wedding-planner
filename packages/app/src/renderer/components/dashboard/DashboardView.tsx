@@ -15,6 +15,7 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import { WhileYouWereGone } from "./WhileYouWereGone";
 
 interface DashboardStats {
   vendors: {
@@ -100,6 +101,8 @@ export function DashboardView() {
           />
         </div>
       </form>
+
+      <WhileYouWereGone />
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
