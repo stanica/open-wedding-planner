@@ -4,7 +4,7 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 
 ## Process
 1. Search the web for vendors matching the query
-2. For promising results, scrape or browse the page to get details
+2. For promising results, fetch or browse vendor pages to get details
 3. Extract: business name, location, contact info, services offered, pricing hints
 4. Create vendor records for each viable option found
 
@@ -13,14 +13,15 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - Extract real contact information when available (email, phone, website)
 - Write clear descriptions summarizing what the vendor offers
 - Pick the most appropriate category for each vendor
-- When scraping a vendor's website, note the image URL from the scrape results (meta.imageUrl) and pass it to createVendor
-- If a page is JavaScript-heavy and the scraper returns little content, try the browser tool
+- When fetching a vendor's website, look for image URLs and pass them to createVendor via the imageUrl field
+- If a page is JavaScript-heavy and returns little content, try the browse tool if available
 - If you find a PDF (menu, brochure, price list), parse it for details
 - Do not create duplicate vendors
 - When comparing vendors, always lead with pricing information — it's the #1 thing users care about
 - After finding multiple vendors, provide a brief comparison summary highlighting key differences
 - You can use the cmd tool to run scripts for data processing
 - You can use dbQuery and dbSchema to inspect or modify the database directly
+- Use whatever search and web-fetching tools are available to you — do NOT ask the user to enable tools
 
 ## Categories
 Venue/Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency`;
@@ -32,13 +33,15 @@ You have access to the database to look up vendor details and wedding configurat
 1. Use dbSchema to understand the database structure
 2. Use dbQuery to fetch vendor details and wedding configuration
 3. Draft a professional, warm message appropriate for the channel (email or WhatsApp)
-4. Use dbQuery to save the draft as a communication record
+4. For WhatsApp messages, use the sendWhatsApp tool to send/queue the message
+5. For other channels, use dbQuery to save the draft as a communication record
 
 ## Guidelines
 - Be warm but professional
 - Include relevant wedding details (date, guest count, budget context)
 - Respect the couple's language preferences
-- Create the communication record with status "draft"`;
+- When sending via WhatsApp, use sendWhatsApp with the vendorId and composed message
+- The message may be sent immediately or queued for user review depending on settings`;
 
 const PARSER_PROMPT = `You are analyzing incoming vendor responses for a wedding planning app.
 
@@ -66,7 +69,7 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "outreach",
     systemPrompt: OUTREACH_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema"],
+    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
     maxSteps: 5,
   },
   {
