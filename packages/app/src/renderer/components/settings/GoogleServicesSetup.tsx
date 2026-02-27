@@ -30,6 +30,7 @@ export function GoogleServicesSetup() {
   const [step, setStep] = useState<"credentials" | "services" | "ready">("credentials");
   const [pasteMode, setPasteMode] = useState(false);
   const [pastedJson, setPastedJson] = useState("");
+  const [credError, setCredError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status?.hasCredentials && !status.connected) {
@@ -40,20 +41,39 @@ export function GoogleServicesSetup() {
   }, [status]);
 
   async function handleCredentialsFile() {
+    setCredError(null);
     const result = await window.electronAPI.showOpenDialog({
       filters: [{ name: "JSON", extensions: ["json"] }],
       properties: ["openFile"],
     });
     if (result.canceled || !result.filePaths[0]) return;
 
-    await setCredentials({ credentialsPath: result.filePaths[0] });
-    refetch();
+    try {
+      await setCredentials({ credentialsPath: result.filePaths[0] });
+      refetch();
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : "Failed to save credentials");
+    }
   }
 
   async function handlePasteCredentials() {
     if (!pastedJson.trim()) return;
-    await setCredentials({ credentialsJson: pastedJson.trim() });
-    refetch();
+    setCredError(null);
+
+    // Validate JSON client-side first
+    try {
+      JSON.parse(pastedJson.trim());
+    } catch {
+      setCredError("Invalid JSON. Make sure you copied the entire client_secret file contents.");
+      return;
+    }
+
+    try {
+      await setCredentials({ credentialsJson: pastedJson.trim() });
+      refetch();
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : "Failed to save credentials");
+    }
   }
 
   async function handleConnect() {
@@ -113,6 +133,11 @@ export function GoogleServicesSetup() {
             </button>
             .
           </p>
+          {credError && (
+            <p className="text-xs text-red-400 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+              {credError}
+            </p>
+          )}
           {pasteMode ? (
             <div className="space-y-2">
               <textarea
