@@ -62,8 +62,6 @@ export function WhileYouWereGone() {
     data.drafts.length > 0 ||
     data.sent.length > 0;
 
-  if (!hasActivity) return null;
-
   async function handleApprove(id: number) {
     await approve({ id });
     refetch();
@@ -86,6 +84,27 @@ export function WhileYouWereGone() {
         )}
       </div>
 
+      {!hasActivity ? (
+        <Card>
+          <CardContent>
+            <p className="text-sm text-gray-400">
+              {data.heartbeatEnabled
+                ? "No activity yet. The scheduled research agent will run automatically and results will appear here."
+                : (
+                  <>
+                    Set up scheduled research to have an AI agent automatically find vendors while you're away.{" "}
+                    <button
+                      onClick={() => navigate("/settings")}
+                      className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+                    >
+                      Enable in Settings
+                    </button>
+                  </>
+                )}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
       <div className="space-y-3">
         {/* Research summaries */}
         {data.tasks.length > 0 && (
@@ -227,6 +246,7 @@ export function WhileYouWereGone() {
           </Card>
         )}
       </div>
+      )}
     </div>
   );
 }
