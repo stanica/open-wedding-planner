@@ -1,3 +1,4 @@
+import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
@@ -10,6 +11,7 @@ import { registerAllHandlers } from "./handlers/index.js";
 import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import { getDbPath, getDataDir, getDeliveryQueueDir } from "./config/paths.js";
+import { GogManager } from "./infra/gog-manager.js";
 import { WhatsAppChannel } from "./channels/whatsapp.js";
 import { DeliveryQueue } from "./infra/delivery-queue.js";
 import { registerWhatsAppAuthHandlers } from "./handlers/whatsapp-auth.js";
@@ -60,7 +62,12 @@ export async function startGateway(options: GatewayOptions = {}) {
   const proxyManager = new ProxyManager();
   const deliveryQueue = new DeliveryQueue(getDeliveryQueueDir());
   deliveryQueue.recover();
-  registerAllHandlers(router, proxyManager, deliveryQueue);
+
+  // 5b. Create gog manager
+  const gogBinDir = path.join(getDataDir(), "bin");
+  const gogManager = new GogManager(gogBinDir);
+
+  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
@@ -133,11 +140,28 @@ export async function startGateway(options: GatewayOptions = {}) {
     return rows.length > 0 && rows[0].whatsapp_auto_send === 1;
   };
 
+  const googleAutoSendGetter = () => {
+    const rows = sqlite
+      .prepare("SELECT auto_send FROM google_config LIMIT 1")
+      .all() as any[];
+    return rows.length > 0 && rows[0].auto_send === 1;
+  };
+
+  const getGoogleConfig = () => {
+    const rows = sqlite
+      .prepare("SELECT account_email, services FROM google_config LIMIT 1")
+      .all() as any[];
+    return rows[0] ?? null;
+  };
+
   const orchestrator = new Orchestrator(db, (event) => {
     wsServer.broadcast(event);
   }, toolRegistry, undefined, sqlite, {
     deliveryQueue,
     getAutoSend: autoSendGetter,
+    gogManager,
+    getGoogleAutoSend: googleAutoSendGetter,
+    getGoogleConfig,
   });
 
   for (const config of TASK_CONFIGS) {

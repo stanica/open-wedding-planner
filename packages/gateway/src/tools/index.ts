@@ -99,9 +99,10 @@ export function createToolRegistry(): ToolRegistry {
     description: "Run Google Workspace commands via gog CLI",
     category: "messaging",
     create: (ctx: unknown) => {
-      const { gogManager, googleAccountEmail, googleServices, getGoogleAutoSend, permissionCallbacks } =
+      const { gogManager, getGoogleConfig, getGoogleAutoSend, permissionCallbacks } =
         ctx as any;
-      if (!gogManager || !googleAccountEmail) {
+      const googleConfig = getGoogleConfig?.();
+      if (!gogManager || !googleConfig?.account_email) {
         return tool({
           description: "Google services are not connected. Ask the user to connect in Settings.",
           inputSchema: z.object({}),
@@ -110,8 +111,8 @@ export function createToolRegistry(): ToolRegistry {
       }
       return makeGogTool({
         gogManager,
-        accountEmail: googleAccountEmail,
-        services: googleServices ?? "gmail",
+        accountEmail: googleConfig.account_email,
+        services: googleConfig.services ?? "gmail",
         getAutoSend: getGoogleAutoSend ?? (() => false),
         permissionCallbacks,
       });

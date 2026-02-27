@@ -34,13 +34,16 @@ You have access to the database to look up vendor details and wedding configurat
 2. Use dbQuery to fetch vendor details and wedding configuration
 3. Draft a professional, warm message appropriate for the channel (email or WhatsApp)
 4. For WhatsApp messages, use the sendWhatsApp tool to send/queue the message
-5. For other channels, use dbQuery to save the draft as a communication record
+5. For email, use the gog tool to send via Gmail: gog gmail send --to <email> --subject <subject> --body <body>
+6. For other channels, use dbQuery to save the draft as a communication record
 
 ## Guidelines
 - Be warm but professional
 - Include relevant wedding details (date, guest count, budget context)
 - Respect the couple's language preferences
 - When sending via WhatsApp, use sendWhatsApp with the vendorId and composed message
+- When sending via email, use the gog tool. Always look up the vendor's email first via dbQuery.
+- After sending via any channel, create a communication record via dbQuery to track the conversation
 - The message may be sent immediately or queued for user review depending on settings`;
 
 const PARSER_PROMPT = `You are analyzing incoming vendor responses for a wedding planning app.
@@ -63,13 +66,13 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
-    tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema"],
+    tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "gog"],
     maxSteps: 15,
   },
   {
     name: "outreach",
     systemPrompt: OUTREACH_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
+    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog"],
     maxSteps: 5,
   },
   {
