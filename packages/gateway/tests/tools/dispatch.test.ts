@@ -24,7 +24,7 @@ describe("dispatch tool", () => {
     expect(mockOrchestrator.dispatch).toHaveBeenCalledWith(
       "browser",
       { url: "https://venue.com", instructions: "Find pricing info", vendorId: 42 },
-      { lane: "subagent", vendorId: 42 },
+      { lane: "subagent", vendorId: 42, parentSessionKey: "research-parent-456" },
     );
     expect(result).toEqual({ taskId: "browser-task-123" });
   });

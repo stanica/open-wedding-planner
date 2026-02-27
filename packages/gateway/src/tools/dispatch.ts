@@ -25,7 +25,7 @@ export function makeDispatchTool(ctx: DispatchContext) {
       const { sessionKey } = await ctx.orchestrator.dispatch(
         "browser",
         { url, instructions, vendorId },
-        { lane: "subagent", vendorId },
+        { lane: "subagent", vendorId, parentSessionKey: ctx.parentSessionKey },
       );
       return { taskId: sessionKey };
     },

@@ -59,7 +59,7 @@ export class Orchestrator {
   async dispatch(
     agentName: string,
     input: unknown,
-    options?: { lane?: string; vendorId?: number; categoryId?: number },
+    options?: { lane?: string; vendorId?: number; categoryId?: number; parentSessionKey?: string },
   ): Promise<{ taskId: string; sessionKey: string }> {
     const taskConfig = this.configs.get(agentName);
     const agent = this.agents.get(agentName);
@@ -68,6 +68,17 @@ export class Orchestrator {
     const taskId = randomUUID();
     const sessionKey = `${agentName}-${taskId}`;
     const lane = options?.lane ?? "main";
+
+    // Look up parent task ID if a parent session key was provided
+    let parentTaskId: number | null = null;
+    if (options?.parentSessionKey) {
+      const [parent] = await this.db
+        .select({ id: agentTasks.id })
+        .from(agentTasks)
+        .where(eq(agentTasks.sessionId, options.parentSessionKey))
+        .limit(1);
+      parentTaskId = parent?.id ?? null;
+    }
 
     // Create session
     await this.sessions.getOrCreate(sessionKey, { agentName, input });
@@ -80,6 +91,7 @@ export class Orchestrator {
       input: JSON.stringify(input),
       vendorId: options?.vendorId ?? null,
       categoryId: options?.categoryId ?? null,
+      parentTaskId,
     });
 
     // Enqueue execution
