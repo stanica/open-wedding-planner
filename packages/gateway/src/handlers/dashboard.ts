@@ -55,10 +55,11 @@ export function registerDashboardHandlers(router: Router) {
     const [config] = await db.select().from(weddingConfig);
     const totalBudget = config?.budgetTotal ?? 0;
 
-    // Recent activity (last 10 agent tasks)
+    // Recent activity (last 10 agent tasks, excluding heartbeat)
     const recentTasks = await db
       .select()
       .from(agentTasks)
+      .where(sql`${agentTasks.type} NOT IN ('heartbeat', 'heartbeat-research')`)
       .orderBy(sql`${agentTasks.createdAt} desc`)
       .limit(10);
 
