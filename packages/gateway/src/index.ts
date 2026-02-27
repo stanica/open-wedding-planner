@@ -55,10 +55,12 @@ export async function startGateway(options: GatewayOptions = {}) {
   // 4. Seed categories
   await seedCategories(db);
 
-  // 5. Create router and register handlers
+  // 5. Create router, delivery queue, and register handlers
   const router = new Router();
   const proxyManager = new ProxyManager();
-  registerAllHandlers(router, proxyManager);
+  const deliveryQueue = new DeliveryQueue(getDeliveryQueueDir());
+  deliveryQueue.recover();
+  registerAllHandlers(router, proxyManager, deliveryQueue);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
@@ -80,9 +82,6 @@ export async function startGateway(options: GatewayOptions = {}) {
     { dataDir: getDataDir() },
     (event) => wsServer.broadcast(event),
   );
-
-  const deliveryQueue = new DeliveryQueue(getDeliveryQueueDir());
-  deliveryQueue.recover();
 
   // 7c. Register WhatsApp send function on delivery queue
   deliveryQueue.registerChannel("whatsapp", async (entry) => {

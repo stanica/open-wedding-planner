@@ -1,8 +1,9 @@
+import type { DeliveryQueue } from "../infra/delivery-queue.js";
 import { eq, desc } from "drizzle-orm";
 import { communications, vendors } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 
-export function registerCommunicationHandlers(router: Router) {
+export function registerCommunicationHandlers(router: Router, deliveryQueue?: DeliveryQueue) {
   router.register("communications.list", async (db: Db, params: unknown) => {
     const filters = (params as {
       direction?: string;
@@ -72,6 +73,22 @@ export function registerCommunicationHandlers(router: Router) {
       .select()
       .from(communications)
       .where(eq(communications.id, id));
+
+    // Enqueue approved WhatsApp messages for delivery
+    if (updated && updated.channel === "whatsapp" && updated.direction === "out" && deliveryQueue) {
+      const [vendor] = await db
+        .select()
+        .from(vendors)
+        .where(eq(vendors.id, updated.vendorId));
+      if (vendor?.contactWhatsapp) {
+        deliveryQueue.enqueue("whatsapp", updated.vendorId, {
+          communicationId: updated.id,
+          to: vendor.contactWhatsapp,
+          text: updated.bodyOriginal,
+        });
+      }
+    }
+
     return updated;
   });
 

@@ -1,5 +1,6 @@
 import type { Router } from "../infra/router.js";
 import type { ProxyManager } from "../infra/proxy-manager.js";
+import type { DeliveryQueue } from "../infra/delivery-queue.js";
 import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
@@ -17,7 +18,7 @@ import { registerResearchThreadHandlers } from "./research-threads.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 
-export function registerAllHandlers(router: Router, proxyManager: ProxyManager) {
+export function registerAllHandlers(router: Router, proxyManager: ProxyManager, deliveryQueue?: DeliveryQueue) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
   registerVendorHandlers(router);
@@ -25,7 +26,7 @@ export function registerAllHandlers(router: Router, proxyManager: ProxyManager) 
   registerQuoteHandlers(router);
   registerBudgetHandlers(router);
   registerTaskHandlers(router);
-  registerCommunicationHandlers(router);
+  registerCommunicationHandlers(router, deliveryQueue);
   registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
   registerAIConfigHandlers(router, proxyManager);
