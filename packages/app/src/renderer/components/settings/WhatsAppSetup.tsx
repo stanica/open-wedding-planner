@@ -6,9 +6,11 @@ import { MessageCircle } from "lucide-react";
 interface WhatsAppSetupProps {
   status: "disconnected" | "connecting" | "connected";
   qrCode: string | null;
+  autoSend: boolean;
+  onAutoSendChange: (value: boolean) => void;
 }
 
-export function WhatsAppSetup({ status, qrCode }: WhatsAppSetupProps) {
+export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: WhatsAppSetupProps) {
   const { mutate: connect, loading: connecting } = useMutation(
     "whatsapp.connect",
   );
@@ -68,12 +70,35 @@ export function WhatsAppSetup({ status, qrCode }: WhatsAppSetupProps) {
       )}
 
       {status === "connected" && (
-        <button
-          onClick={handleDisconnect}
-          className="w-full rounded-lg border border-red-500/30 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-        >
-          Disconnect
-        </button>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-white">Auto-send messages</p>
+              <p className="text-xs text-gray-400">
+                When off, outgoing messages are saved as drafts for your review
+              </p>
+            </div>
+            <button
+              onClick={() => onAutoSendChange(!autoSend)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                autoSend ? "bg-green-600" : "bg-gray-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoSend ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <button
+            onClick={handleDisconnect}
+            className="w-full rounded-lg border border-red-500/30 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+          >
+            Disconnect
+          </button>
+        </div>
       )}
     </div>
   );

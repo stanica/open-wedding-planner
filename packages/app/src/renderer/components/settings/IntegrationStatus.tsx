@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { wsClient } from "../../lib/ws-client";
+import { useRequest, useMutation } from "../../hooks/useRequest";
 import { WhatsAppSetup } from "./WhatsAppSetup";
 import { GmailSetup } from "./GmailSetup";
 import type { GatewayEvent } from "@wedding-planner/shared";
@@ -15,6 +16,15 @@ export function IntegrationStatus() {
     gmail: "disconnected",
   });
   const [whatsappQr, setWhatsappQr] = useState<string | null>(null);
+
+  const { data: aiConfigData } = useRequest<{ whatsappAutoSend?: boolean }>("ai-config.get");
+  const { mutate: updateAiConfig } = useMutation("ai-config.update");
+
+  const autoSend = aiConfigData?.whatsappAutoSend ?? false;
+
+  function handleAutoSendChange(value: boolean) {
+    updateAiConfig({ whatsappAutoSend: value });
+  }
 
   const handleEvent = useCallback((event: GatewayEvent) => {
     if (event.name === "channel-status") {
@@ -47,7 +57,12 @@ export function IntegrationStatus() {
     <div>
       <h2 className="text-lg font-semibold mb-4">Integrations</h2>
       <div className="space-y-4">
-        <WhatsAppSetup status={statuses.whatsapp} qrCode={whatsappQr} />
+        <WhatsAppSetup
+          status={statuses.whatsapp}
+          qrCode={whatsappQr}
+          autoSend={autoSend}
+          onAutoSendChange={handleAutoSendChange}
+        />
         <GmailSetup status={statuses.gmail} />
 
         {/* Calendar — no setup needed beyond Gmail OAuth */}
