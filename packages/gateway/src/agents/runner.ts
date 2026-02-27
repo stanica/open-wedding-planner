@@ -1,7 +1,7 @@
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 import type { TaskConfig, AgentContext, AgentResult } from "./base-agent.js";
-import { getModel, getBuiltInTools } from "./model-provider.js";
+import { getModel, getBuiltInTools, getContextWindowForModel, getSummarizationModel, getAIConfig } from "./model-provider.js";
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 import { StuckError } from "./safety/guardrails.js";
 
@@ -55,7 +55,7 @@ export class AgentRunner {
     const model = await getModel();
     const maxSteps = config.maxSteps ?? 15;
 
-    const { text, steps } = await generateText({
+    const { text, steps, usage } = await generateText({
       model,
       system: systemPrompt,
       messages,
@@ -104,9 +104,47 @@ export class AgentRunner {
 
     ctx.emit("complete", `${config.name} finished`);
 
+    // Check if context needs compaction
+    let compactionSummary: string | undefined;
+    if (usage?.inputTokens) {
+      const modelName = getAIConfig().model;
+      const contextWindow = getContextWindowForModel(modelName);
+      const threshold = contextWindow * 0.8;
+
+      if (usage.inputTokens > threshold) {
+        ctx.emit("compacting", `Context at ${Math.round((usage.inputTokens / contextWindow) * 100)}% — summarizing conversation...`);
+        try {
+          const summarizationModel = await getSummarizationModel();
+          const { text: summary } = await generateText({
+            model: summarizationModel,
+            system: `You are summarizing a conversation between a user and a wedding planning research assistant. Produce a concise summary that preserves:
+- All vendor names, pricing, and contact details discovered
+- Key decisions and preferences expressed by the user
+- Outstanding questions or next steps
+- Any important context about the wedding (date, location, guest count, budget)
+
+Be thorough but concise. This summary will replace the conversation history for future interactions.`,
+            messages: [
+              {
+                role: "user",
+                content: messages
+                  .map((m) => `[${m.role}]: ${"content" in m && typeof m.content === "string" ? m.content : JSON.stringify(m)}`)
+                  .join("\n\n"),
+              },
+            ],
+            abortSignal: ctx.signal,
+          });
+          compactionSummary = summary;
+        } catch (err) {
+          ctx.emit("warning", `Context compaction failed: ${err instanceof Error ? err.message : "unknown error"}`);
+        }
+      }
+    }
+
     return {
       summary: text || `${config.name} completed`,
       data: { toolCalls: allToolCalls, vendorIds },
+      compactionSummary,
     };
   }
 }

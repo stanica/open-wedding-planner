@@ -18,6 +18,7 @@ export interface AgentContext {
 export interface AgentResult {
   summary: string;
   data?: unknown;
+  compactionSummary?: string;
 }
 
 export interface BaseAgent {

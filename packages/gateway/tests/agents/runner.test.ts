@@ -25,6 +25,20 @@ vi.mock("../../src/agents/model-provider.js", () => ({
     }),
   }),
   getBuiltInTools: vi.fn().mockResolvedValue(null),
+  getContextWindowForModel: vi.fn().mockReturnValue(200_000),
+  getSummarizationModel: vi.fn().mockResolvedValue({
+    specificationVersion: "v2",
+    provider: "test",
+    modelId: "claude-sonnet-4-20250514",
+    supportedUrls: {},
+    doGenerate: vi.fn().mockResolvedValue({
+      content: [{ type: "text", text: "Summarized conversation" }],
+      finishReason: "stop",
+      usage: { inputTokens: 100, outputTokens: 50 },
+      warnings: [],
+    }),
+  }),
+  getAIConfig: vi.fn().mockReturnValue({ model: "claude-opus-4-20250514" }),
 }));
 
 function setupDb() {
@@ -206,5 +220,77 @@ describe("AgentRunner", () => {
     );
 
     expect(result.summary).toBe("empty-agent completed");
+  });
+
+  it("returns compactionSummary when prompt tokens exceed 80% of context window", async () => {
+    const { getModel, getSummarizationModel } = await import("../../src/agents/model-provider.js");
+
+    // Mock main model to return high token usage (170k > 80% of 200k = 160k)
+    (getModel as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      specificationVersion: "v2",
+      provider: "test",
+      modelId: "claude-opus-4-20250514",
+      supportedUrls: {},
+      doGenerate: vi.fn().mockResolvedValue({
+        content: [{ type: "text", text: "Research response" }],
+        finishReason: "stop",
+        usage: { inputTokens: 170_000, outputTokens: 500 },
+        warnings: [],
+      }),
+    });
+
+    // Mock summarization model
+    (getSummarizationModel as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      specificationVersion: "v2",
+      provider: "test",
+      modelId: "claude-sonnet-4-20250514",
+      supportedUrls: {},
+      doGenerate: vi.fn().mockResolvedValue({
+        content: [{ type: "text", text: "Summary of the conversation so far." }],
+        finishReason: "stop",
+        usage: { inputTokens: 1000, outputTokens: 200 },
+        warnings: [],
+      }),
+    });
+
+    const { AgentRunner } = await import("../../src/agents/runner.js");
+
+    const emitSpy = vi.fn();
+    const ctx: AgentContext = {
+      db,
+      sessionKey: "test-session",
+      emit: emitSpy,
+      signal: new AbortController().signal,
+      toolRegistry: registry,
+      permissionManager,
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const toolCtx: ToolFactoryContext = {
+      db,
+      emit: emitSpy,
+      sqlite,
+      workspaceDir: "/tmp/test",
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const runner = new AgentRunner();
+    const result = await runner.run(
+      {
+        name: "research",
+        systemPrompt: "You are a test agent.",
+        tools: [],
+        maxSteps: 3,
+      },
+      ctx,
+      [{ role: "user", content: "Hello" }],
+      toolCtx,
+    );
+
+    expect(result.compactionSummary).toBe("Summary of the conversation so far.");
   });
 });
