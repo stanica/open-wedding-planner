@@ -13,13 +13,14 @@ interface PendingPermission {
 interface ResearchStore {
   activeThreadId: number | null;
   activeSession: string | null;
+  sessionThreadId: number | null;
   liveToolCalls: Array<{ toolName: string; detail: string }>;
   pendingPermissions: PendingPermission[];
   completedAt: number | null;
   contextCompactedAt: number | null;
 
   setActiveThreadId: (id: number | null) => void;
-  setActiveSession: (key: string | null) => void;
+  setActiveSession: (key: string | null, threadId: number) => void;
   clearSession: () => void;
   resolvePermission: (requestId: string, decision: string) => void;
 }
@@ -32,6 +33,7 @@ let bufferedPermissions: Array<{ sessionKey: string; data: PermissionEventData }
 export const useResearchStore = create<ResearchStore>((set) => ({
   activeThreadId: null,
   activeSession: null,
+  sessionThreadId: null,
   liveToolCalls: [],
   pendingPermissions: [],
   completedAt: null,
@@ -39,12 +41,13 @@ export const useResearchStore = create<ResearchStore>((set) => ({
 
   setActiveThreadId: (id) => set({ activeThreadId: id }),
 
-  setActiveSession: (key) => {
+  setActiveSession: (key, threadId) => {
     if (key) {
       const matching = bufferedPermissions.filter((b) => b.sessionKey === key);
       bufferedPermissions = [];
       set((state) => ({
         activeSession: key,
+        sessionThreadId: threadId,
         pendingPermissions:
           matching.length > 0
             ? [
@@ -67,6 +70,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
   clearSession: () =>
     set({
       activeSession: null,
+      sessionThreadId: null,
       liveToolCalls: [],
       pendingPermissions: [],
       completedAt: Date.now(),

@@ -30,6 +30,7 @@ export function ResearchView() {
   const {
     activeThreadId,
     activeSession,
+    sessionThreadId,
     liveToolCalls,
     pendingPermissions,
     completedAt,
@@ -39,6 +40,7 @@ export function ResearchView() {
     clearSession,
     resolvePermission,
   } = useResearchStore();
+  const isSessionThread = activeThreadId === sessionThreadId;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Data fetching
@@ -142,7 +144,7 @@ export function ResearchView() {
     }));
 
     const result = await startResearch({ threadId, messages: agentMessages });
-    setActiveSession(result.sessionKey);
+    setActiveSession(result.sessionKey, threadId);
   }
 
   async function handleStop() {
@@ -200,10 +202,7 @@ export function ResearchView() {
         <ThreadList
           threads={threads ?? []}
           activeThreadId={activeThreadId}
-          onSelect={(id) => {
-            if (id !== activeThreadId && activeSession) clearSession();
-            setActiveThreadId(id);
-          }}
+          onSelect={(id) => setActiveThreadId(id)}
           onCreate={handleCreateThread}
           onDelete={handleDeleteThread}
         />
@@ -242,7 +241,7 @@ export function ResearchView() {
               )}
 
               {/* Live agent activity */}
-              {(researching || activeSession) && (
+              {(researching || (activeSession && isSessionThread)) && (
                 <div className="py-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-purple-400">Assistant</span>
@@ -304,7 +303,7 @@ export function ResearchView() {
         </div>
 
         {/* Compose box */}
-        <ComposeBox onSend={handleSend} disabled={researching || !!activeSession} />
+        <ComposeBox onSend={handleSend} disabled={researching || (!!activeSession && isSessionThread)} />
       </div>
     </div>
   );
