@@ -23,3 +23,9 @@ export function getDeliveryQueueDir(): string {
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
+
+export function getImagesDir(): string {
+  const dir = path.join(getDataDir(), "images");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
