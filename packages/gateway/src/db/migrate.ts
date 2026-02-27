@@ -211,6 +211,14 @@ export function pushSchema(sqlite: Database.Database) {
       api_key TEXT,
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS heartbeat_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      prompt TEXT,
+      interval_minutes INTEGER NOT NULL DEFAULT 30,
+      last_run_at TEXT
+    );
   `);
 
   // Migrations for existing databases

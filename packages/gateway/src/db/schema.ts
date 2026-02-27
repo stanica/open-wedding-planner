@@ -230,3 +230,11 @@ export const searchConfig = sqliteTable("search_config", {
     .notNull()
     .default(sql`(datetime('now'))`),
 });
+
+export const heartbeatConfig = sqliteTable("heartbeat_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  enabled: integer("enabled").notNull().default(0),
+  prompt: text("prompt"),
+  intervalMinutes: integer("interval_minutes").notNull().default(30),
+  lastRunAt: text("last_run_at"),
+});
