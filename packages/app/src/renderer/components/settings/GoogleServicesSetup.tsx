@@ -31,6 +31,7 @@ export function GoogleServicesSetup() {
   const [pasteMode, setPasteMode] = useState(false);
   const [pastedJson, setPastedJson] = useState("");
   const [credError, setCredError] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status?.hasCredentials && !status.connected) {
@@ -78,17 +79,22 @@ export function GoogleServicesSetup() {
 
   async function handleConnect() {
     if (!email) return;
-    const result = await connect({ email, services: selectedServices });
-    if (result?.authUrl) {
-      window.electronAPI.openExternal(result.authUrl);
-      // Poll for connection status
-      const interval = setInterval(async () => {
-        const updated = await refetch();
-        if (updated?.connected) {
-          clearInterval(interval);
-        }
-      }, 2000);
-      setTimeout(() => clearInterval(interval), 5 * 60 * 1000);
+    setConnectError(null);
+    try {
+      const result = await connect({ email, services: selectedServices });
+      if (result?.authUrl) {
+        window.electronAPI.openExternal(result.authUrl);
+        // Poll for connection status
+        const interval = setInterval(async () => {
+          const updated = await refetch();
+          if (updated?.connected) {
+            clearInterval(interval);
+          }
+        }, 2000);
+        setTimeout(() => clearInterval(interval), 5 * 60 * 1000);
+      }
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Failed to connect");
     }
   }
 
@@ -215,6 +221,11 @@ export function GoogleServicesSetup() {
               </label>
             ))}
           </div>
+          {connectError && (
+            <p className="text-xs text-red-400 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 break-all">
+              {connectError}
+            </p>
+          )}
           <button
             onClick={handleConnect}
             disabled={connecting || !email || selectedServices.length === 0}
