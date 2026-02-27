@@ -29,6 +29,7 @@ export class Orchestrator {
   private runningAbortControllers = new Map<string, AbortController>();
   private sqlite: unknown;
   private extraToolCtx: Record<string, unknown>;
+  private completionCallbacks = new Map<string, (threadId: number) => void>();
 
   constructor(
     db: Db,
@@ -50,6 +51,14 @@ export class Orchestrator {
 
   registerAgent(agent: BaseAgent): void {
     this.agents.set(agent.name, agent);
+  }
+
+  onThreadComplete(threadId: number, callback: (threadId: number) => void): void {
+    this.completionCallbacks.set(`thread-${threadId}`, callback);
+  }
+
+  removeThreadCallback(threadId: number): void {
+    this.completionCallbacks.delete(`thread-${threadId}`);
   }
 
   registerConfig(taskConfig: TaskConfig): void {
@@ -231,6 +240,12 @@ export class Orchestrator {
           data: { threadId: researchInput.threadId },
         });
 
+        // Trigger completion callback for queue processing
+        const threadCallback = this.completionCallbacks.get(`thread-${researchInput.threadId}`);
+        if (threadCallback) {
+          threadCallback(researchInput.threadId);
+        }
+
         // Save compaction marker if context was summarized
         if (result.compactionSummary) {
           await this.db.insert(researchMessages).values({
@@ -267,6 +282,15 @@ export class Orchestrator {
           name: "agent-activity",
           data: { sessionKey, action: "error", detail: message },
         });
+      }
+
+      // Clean up activeThreads on failure too
+      const failedInput = input as { threadId?: number };
+      if (failedInput.threadId) {
+        const threadCallback = this.completionCallbacks.get(`thread-${failedInput.threadId}`);
+        if (threadCallback) {
+          threadCallback(failedInput.threadId);
+        }
       }
     } finally {
       this.runningAbortControllers.delete(sessionKey);
