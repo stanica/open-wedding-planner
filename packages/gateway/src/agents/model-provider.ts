@@ -26,6 +26,36 @@ export function getAIConfig(): AIProviderConfig {
   return { ...currentConfig };
 }
 
+const CONTEXT_WINDOWS: Record<string, number> = {
+  opus: 200_000,
+  sonnet: 1_000_000,
+  haiku: 200_000,
+};
+
+export function getContextWindowForModel(modelName: string): number {
+  const lower = modelName.toLowerCase();
+  for (const [key, tokens] of Object.entries(CONTEXT_WINDOWS)) {
+    if (lower.includes(key)) return tokens;
+  }
+  return 200_000;
+}
+
+export async function getSummarizationModel(): Promise<LanguageModel> {
+  if (currentConfig.provider === "claude-max") {
+    const { createOpenAI } = await import("@ai-sdk/openai");
+    const openai = createOpenAI({
+      baseURL: currentConfig.proxyUrl,
+      apiKey: "claude-max",
+    });
+    return openai.chat("claude-sonnet-4-20250514");
+  }
+
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
+  return anthropic("claude-sonnet-4-20250514");
+}
+
 /** OAuth setup tokens (from `claude setup-token`) need Bearer auth + beta header */
 function isOAuthToken(key: string): boolean {
   return key.startsWith("sk-ant-oat");
