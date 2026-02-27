@@ -1,5 +1,8 @@
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Wrench } from "lucide-react";
 import { ToolActivityCard } from "./ToolActivityCard";
 import { VendorResultCard } from "./VendorResultCard";
+import { Markdown } from "../shared/Markdown";
 
 interface ToolCall {
   toolName: string;
@@ -19,8 +22,29 @@ interface MessageProps {
   }>;
 }
 
+const TOOL_LABELS: Record<string, string> = {
+  search: "search",
+  scrape: "scrape",
+  browse: "browse",
+  parsePdf: "PDF parse",
+};
+
+function summarizeToolCalls(toolCalls: ToolCall[]) {
+  const counts: Record<string, number> = {};
+  for (const tc of toolCalls) {
+    const label = TOOL_LABELS[tc.toolName] ?? tc.toolName;
+    counts[label] = (counts[label] ?? 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([name, count]) => (count > 1 ? `${count} ${name}s` : `1 ${name}`))
+    .join(", ");
+}
+
 export function ChatMessage({ role, content, toolCalls, vendors }: MessageProps) {
   const isUser = role === "user";
+  const [toolsExpanded, setToolsExpanded] = useState(false);
+
+  const visibleToolCalls = (toolCalls ?? []).filter((tc) => tc.toolName !== "createVendor");
 
   return (
     <div className="py-4">
@@ -30,20 +54,35 @@ export function ChatMessage({ role, content, toolCalls, vendors }: MessageProps)
         </span>
       </div>
 
-      {/* Tool activity cards (before main text for assistant) */}
-      {!isUser && toolCalls && toolCalls.length > 0 && (
+      {/* Collapsed tool activity summary */}
+      {!isUser && visibleToolCalls.length > 0 && (
         <div className="mb-2">
-          {toolCalls
-            .filter((tc) => tc.toolName !== "createVendor")
-            .map((tc, i) => (
-              <ToolActivityCard key={i} toolName={tc.toolName} args={tc.args} result={tc.result} />
-            ))}
+          <button
+            onClick={() => setToolsExpanded(!toolsExpanded)}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-400 transition-colors"
+          >
+            {toolsExpanded ? (
+              <ChevronDown className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+            <Wrench className="h-3 w-3" />
+            <span>Used {visibleToolCalls.length} tools</span>
+            <span className="text-gray-600">({summarizeToolCalls(visibleToolCalls)})</span>
+          </button>
+          {toolsExpanded && (
+            <div className="mt-1 ml-1 border-l border-white/5 pl-2">
+              {visibleToolCalls.map((tc, i) => (
+                <ToolActivityCard key={i} toolName={tc.toolName} args={tc.args} result={tc.result} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* Message text */}
       {content && (
-        <div className="text-sm text-gray-200 whitespace-pre-wrap">{content}</div>
+        <Markdown content={content} />
       )}
 
       {/* Vendor result cards */}

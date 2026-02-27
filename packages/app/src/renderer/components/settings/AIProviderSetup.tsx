@@ -12,6 +12,7 @@ interface AIConfig {
   model: string;
   proxyUrl: string;
   hasApiKey: boolean;
+  maskedApiKey: string | null;
   proxyStatus: ProxyStatus;
   availableModels: string[];
 }
@@ -23,7 +24,13 @@ export function AIProviderSetup() {
   const [provider, setProvider] = useState<"api-key" | "claude-max">(
     "api-key",
   );
+  const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    valid: boolean;
+    error?: string;
+  } | null>(null);
   const [startingProxy, setStartingProxy] = useState(false);
   const [proxyStatus, setProxyStatus] = useState<ProxyStatus>({
     running: false,
@@ -50,6 +57,7 @@ export function AIProviderSetup() {
   async function handleProviderChange(newProvider: "api-key" | "claude-max") {
     setProvider(newProvider);
     setProxyError(null);
+    setValidationResult(null);
 
     if (newProvider === "claude-max") {
       setStartingProxy(true);
@@ -84,6 +92,26 @@ export function AIProviderSetup() {
     }
   }
 
+  async function handleValidate() {
+    if (!apiKey) return;
+    setValidating(true);
+    setValidationResult(null);
+    try {
+      const result = await wsClient.request<{ valid: boolean; error?: string }>(
+        "ai-config.validate",
+        { apiKey },
+      );
+      setValidationResult(result);
+    } catch (err) {
+      setValidationResult({
+        valid: false,
+        error: err instanceof Error ? err.message : "Validation failed",
+      });
+    } finally {
+      setValidating(false);
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     setProxyError(null);
@@ -92,15 +120,20 @@ export function AIProviderSetup() {
         ok: boolean;
         proxyStatus: ProxyStatus;
         proxyError?: string;
-      }>("ai-config.update", { provider, model });
+      }>("ai-config.update", {
+        provider,
+        model,
+        ...(apiKey ? { apiKey } : {}),
+      });
 
       setProxyStatus(result.proxyStatus);
       if (result.proxyError) {
         setProxyError(result.proxyError);
       }
-      // Refetch config to get updated available models (proxy may have just started)
+      // Refetch config to get updated state
       const cfg = await wsClient.request<AIConfig>("ai-config.get");
       setConfig(cfg);
+      setApiKey("");
       if (cfg.availableModels.length > 0) {
         setModels(cfg.availableModels);
       }
@@ -111,7 +144,7 @@ export function AIProviderSetup() {
 
   if (!config) return null;
 
-  const dirty = provider !== config.provider || model !== config.model;
+  const dirty = provider !== config.provider || model !== config.model || !!apiKey;
 
   return (
     <div>
@@ -129,20 +162,11 @@ export function AIProviderSetup() {
             />
             <div>
               <p className="text-sm font-medium text-white">
-                Anthropic API Key
+                Anthropic API Key or Setup Token
               </p>
               <p className="text-xs text-gray-400">
-                Uses ANTHROPIC_API_KEY environment variable
+                Direct API access with full tool support
               </p>
-              {provider === "api-key" && (
-                <p
-                  className={`text-xs mt-1 ${config.hasApiKey ? "text-green-400" : "text-yellow-400"}`}
-                >
-                  {config.hasApiKey
-                    ? "API key detected"
-                    : "No API key found — set ANTHROPIC_API_KEY"}
-                </p>
-              )}
             </div>
           </label>
 
@@ -156,14 +180,82 @@ export function AIProviderSetup() {
             />
             <div>
               <p className="text-sm font-medium text-white">
-                Claude Max Subscription
+                Claude Max Proxy
               </p>
               <p className="text-xs text-gray-400">
-                Uses your Claude subscription (no API costs)
+                Text-only mode via CLI proxy (no tool support)
               </p>
             </div>
           </label>
         </div>
+
+        {/* API key input — shown when api-key provider is selected */}
+        {provider === "api-key" && (
+          <div className="space-y-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+            {/* Current key status */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  config.hasApiKey ? "bg-green-400" : "bg-gray-500"
+                }`}
+              />
+              <p className="text-xs text-gray-400">
+                {config.hasApiKey
+                  ? `Key set (${config.maskedApiKey})`
+                  : "No API key configured"}
+              </p>
+            </div>
+
+            {/* Key input */}
+            <div className="space-y-2">
+              <label className="block text-sm text-gray-400">
+                {config.hasApiKey ? "Update Key" : "API Key or Setup Token"}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    setValidationResult(null);
+                  }}
+                  placeholder="sk-ant-..."
+                  className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleValidate}
+                  disabled={!apiKey || validating}
+                  className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                >
+                  {validating ? "Testing..." : "Validate"}
+                </button>
+              </div>
+            </div>
+
+            {/* Validation result */}
+            {validationResult && (
+              <p
+                className={`text-xs ${validationResult.valid ? "text-green-400" : "text-red-400"}`}
+              >
+                {validationResult.valid
+                  ? "Key is valid"
+                  : `Invalid: ${validationResult.error}`}
+              </p>
+            )}
+
+            {/* Instructions */}
+            {!config.hasApiKey && (
+              <div className="border-t border-white/5 pt-2 mt-2">
+                <p className="text-xs text-gray-500">
+                  Use an API key (<code className="rounded bg-white/10 px-1">sk-ant-api03-...</code>)
+                  or run{" "}
+                  <code className="rounded bg-white/10 px-1">claude setup-token</code>{" "}
+                  to generate a token from your Max/Pro subscription.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Claude Max status and instructions */}
         {provider === "claude-max" && (

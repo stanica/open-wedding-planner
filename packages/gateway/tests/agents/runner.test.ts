@@ -24,6 +24,7 @@ vi.mock("../../src/agents/model-provider.js", () => ({
       warnings: [],
     }),
   }),
+  getBuiltInTools: vi.fn().mockResolvedValue(null),
 }));
 
 function setupDb() {

@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFile } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { promisify } from "node:util";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
@@ -108,5 +108,11 @@ export class GogManager {
       timeout: 60000,
       maxBuffer: 1024 * 1024,
     });
+  }
+
+  /** Spawn gog as a long-lived child process (for interactive flows like --manual) */
+  async spawnProcess(args: string[]): Promise<ChildProcess> {
+    const binPath = await this.ensureInstalled();
+    return spawn(binPath, args, { stdio: ["pipe", "pipe", "pipe"] });
   }
 }

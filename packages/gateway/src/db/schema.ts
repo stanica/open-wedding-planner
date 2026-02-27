@@ -253,6 +253,12 @@ export const heartbeatConfig = sqliteTable("heartbeat_config", {
   lastRunAt: text("last_run_at"),
 });
 
+export const guardrailsConfig = sqliteTable("guardrails_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  enabled: integer("enabled").notNull().default(0),
+  config: text("config"),
+});
+
 export const googleConfig = sqliteTable("google_config", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   accountEmail: text("account_email"),

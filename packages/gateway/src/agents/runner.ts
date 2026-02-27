@@ -3,6 +3,7 @@ import type { ModelMessage } from "ai";
 import type { TaskConfig, AgentContext, AgentResult } from "./base-agent.js";
 import { getModel, getBuiltInTools } from "./model-provider.js";
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
+import { StuckError } from "./safety/guardrails.js";
 
 export interface ToolFactoryContext {
   db: unknown;
@@ -61,9 +62,28 @@ export class AgentRunner {
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       stopWhen: stepCountIs(maxSteps),
       abortSignal: ctx.signal,
-      onStepFinish: ({ toolCalls: stepToolCalls }) => {
+      onStepFinish: ({ toolCalls: stepToolCalls, toolResults: stepToolResults }) => {
+        // Emit events for debug console
         for (const tc of stepToolCalls) {
-          ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 100)}`);
+          ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 500)}`);
+        }
+        for (const tr of stepToolResults) {
+          ctx.emit("tool-result", `${(tr as any).toolName}: ${JSON.stringify((tr as any).output).slice(0, 500)}`);
+        }
+
+        // Run guardrails: check each tool call against history, then record its outcome
+        for (const tc of stepToolCalls) {
+          const { record, signal } = ctx.guardrails.preToolCheck(tc.toolName, tc.input);
+          const tr = stepToolResults.find((r: any) => r.toolCallId === tc.toolCallId);
+          if (tr) {
+            ctx.guardrails.recordOutcome(record, (tr as any).output);
+          }
+          if (signal) {
+            if (signal.severity === "critical") {
+              throw new StuckError(signal);
+            }
+            ctx.emit("warning", `Guardrail: ${signal.message}`);
+          }
         }
       },
     });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { wsClient } from "../../lib/ws-client";
 import { useDebugStore, type LogSource } from "../../stores/debug-store";
 import type { GatewayEvent } from "@wedding-planner/shared";
@@ -7,12 +7,14 @@ const SOURCE_COLORS: Record<LogSource, string> = {
   agent: "text-blue-400",
   gateway: "text-yellow-400",
   ws: "text-green-400",
+  renderer: "text-red-400",
 };
 
 const SOURCE_BG: Record<LogSource, string> = {
   agent: "bg-blue-400/10",
   gateway: "bg-yellow-400/10",
   ws: "bg-green-400/10",
+  renderer: "bg-red-400/10",
 };
 
 const FILTER_OPTIONS: Array<{ value: LogSource | "all"; label: string }> = [
@@ -20,6 +22,7 @@ const FILTER_OPTIONS: Array<{ value: LogSource | "all"; label: string }> = [
   { value: "agent", label: "Agent" },
   { value: "gateway", label: "Gateway" },
   { value: "ws", label: "WebSocket" },
+  { value: "renderer", label: "Renderer" },
 ];
 
 export function DebugConsole() {
@@ -27,6 +30,7 @@ export function DebugConsole() {
     useDebugStore();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isAutoScrolling = useRef(false);
 
   // Subscribe to agent events
   useEffect(() => {
@@ -93,10 +97,38 @@ export function DebugConsole() {
     });
   }, [push]);
 
+  // Capture uncaught renderer errors
+  useEffect(() => {
+    const onError = (e: ErrorEvent) => {
+      push({
+        source: "renderer",
+        timestamp: Date.now(),
+        summary: `[error] ${e.message}`,
+        detail: e.error?.stack ?? `${e.filename}:${e.lineno}:${e.colno}`,
+      });
+    };
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const reason = e.reason instanceof Error ? e.reason : { message: String(e.reason) };
+      push({
+        source: "renderer",
+        timestamp: Date.now(),
+        summary: `[unhandledrejection] ${reason.message}`,
+        detail: (reason as Error).stack,
+      });
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
+  }, [push]);
+
   // Auto-scroll
   useEffect(() => {
-    if (autoScroll) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && bottomRef.current) {
+      isAutoScrolling.current = true;
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [entries.length, autoScroll]);
 
@@ -105,7 +137,10 @@ export function DebugConsole() {
     const el = containerRef.current;
     if (!el) return;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-    if (!atBottom && autoScroll) {
+    if (atBottom) {
+      isAutoScrolling.current = false;
+    }
+    if (!atBottom && autoScroll && !isAutoScrolling.current) {
       setAutoScroll(false);
     }
   }, [autoScroll, setAutoScroll]);
@@ -200,22 +235,34 @@ function LogLine({ entry }: { entry: { id: number; source: LogSource; timestamp:
     second: "2-digit",
   });
 
+  const [open, setOpen] = useState(false);
+  const detailStr = entry.detail != null
+    ? typeof entry.detail === "string" ? entry.detail : JSON.stringify(entry.detail, null, 2)
+    : null;
+
   return (
-    <div className="flex items-start gap-2 px-2 py-0.5 hover:bg-white/[0.02] group">
-      <span className="text-gray-600 shrink-0 tabular-nums">{time}</span>
-      <span
-        className={`shrink-0 uppercase text-[10px] font-semibold px-1.5 py-0.5 rounded ${SOURCE_COLORS[entry.source]} ${SOURCE_BG[entry.source]}`}
-      >
-        {entry.source === "ws" ? "WS" : entry.source.slice(0, 3).toUpperCase()}
-      </span>
-      <span className="text-gray-300 break-all">{entry.summary}</span>
-      {entry.detail && (
-        <details className="ml-auto text-gray-600 group-hover:text-gray-500 cursor-pointer">
-          <summary className="text-[10px]">detail</summary>
-          <pre className="text-[10px] text-gray-500 mt-1 max-w-lg overflow-x-auto whitespace-pre-wrap">
-            {typeof entry.detail === "string" ? entry.detail : JSON.stringify(entry.detail, null, 2)}
-          </pre>
-        </details>
+    <div className="px-2 py-0.5 hover:bg-white/[0.02] group">
+      <div className="flex items-start gap-2">
+        <span className="text-gray-600 shrink-0 tabular-nums">{time}</span>
+        <span
+          className={`shrink-0 uppercase text-[10px] font-semibold px-1.5 py-0.5 rounded ${SOURCE_COLORS[entry.source]} ${SOURCE_BG[entry.source]}`}
+        >
+          {entry.source === "ws" ? "WS" : entry.source.slice(0, 3).toUpperCase()}
+        </span>
+        <span className="text-gray-300 break-all min-w-0">{entry.summary}</span>
+        {detailStr && (
+          <button
+            onClick={() => setOpen(!open)}
+            className="ml-auto shrink-0 text-[10px] text-gray-600 group-hover:text-gray-500 cursor-pointer"
+          >
+            {open ? "hide" : "detail"}
+          </button>
+        )}
+      </div>
+      {open && detailStr && (
+        <pre className="text-[10px] text-gray-500 mt-1 ml-[4.5rem] max-w-full overflow-x-auto whitespace-pre-wrap">
+          {detailStr}
+        </pre>
       )}
     </div>
   );

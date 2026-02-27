@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type LogSource = "agent" | "gateway" | "ws";
+export type LogSource = "agent" | "gateway" | "ws" | "renderer";
 
 export interface LogEntry {
   id: number;

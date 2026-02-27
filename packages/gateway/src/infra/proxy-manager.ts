@@ -39,11 +39,15 @@ export class ProxyManager {
       this.lastError = null;
 
       child.stderr?.on("data", (data: Buffer) => {
-        console.error("[claude-max-proxy]", data.toString().trim());
+        const line = data.toString().trim();
+        if (!line || /Received \d+ bytes of std(out|err)/.test(line)) return;
+        console.error("[claude-max-proxy]", line);
       });
 
       child.stdout?.on("data", (data: Buffer) => {
-        console.log("[claude-max-proxy]", data.toString().trim());
+        const line = data.toString().trim();
+        if (!line || /Received \d+ bytes of std(out|err)/.test(line)) return;
+        console.log("[claude-max-proxy]", line);
       });
 
       child.on("error", (err) => {

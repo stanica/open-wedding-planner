@@ -6,6 +6,7 @@ export interface AIProviderConfig {
   provider: AIProviderType;
   model: string;
   proxyUrl: string;
+  apiKey?: string | null;
 }
 
 const DEFAULT_CONFIG: AIProviderConfig = {
@@ -17,11 +18,24 @@ const DEFAULT_CONFIG: AIProviderConfig = {
 let currentConfig: AIProviderConfig = { ...DEFAULT_CONFIG };
 
 export function setAIConfig(config: Partial<AIProviderConfig>): void {
+  if (config.apiKey) config.apiKey = config.apiKey.trim().replace(/\s+/g, "");
   currentConfig = { ...currentConfig, ...config };
 }
 
 export function getAIConfig(): AIProviderConfig {
   return { ...currentConfig };
+}
+
+/** OAuth setup tokens (from `claude setup-token`) need Bearer auth + beta header */
+function isOAuthToken(key: string): boolean {
+  return key.startsWith("sk-ant-oat");
+}
+
+function anthropicOptions(key: string): { apiKey?: string; authToken?: string; headers?: Record<string, string> } {
+  if (isOAuthToken(key)) {
+    return { authToken: key, headers: { "anthropic-beta": "oauth-2025-04-20" } };
+  }
+  return { apiKey: key };
 }
 
 /**
@@ -41,9 +55,37 @@ export async function getModel(): Promise<LanguageModel> {
     return openai.chat(currentConfig.model);
   }
 
-  // Default: Anthropic API key
-  const { anthropic } = await import("@ai-sdk/anthropic");
+  // Default: Anthropic API key (stored key takes precedence over env var)
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
   return anthropic(currentConfig.model);
+}
+
+/**
+ * Returns Anthropic's built-in server-side tools (web_search, web_fetch) when
+ * using the direct API. Returns null for claude-max proxy mode (not supported).
+ */
+export async function getBuiltInTools(
+  emit: (action: string, detail?: string) => void,
+): Promise<Record<string, unknown> | null> {
+  if (currentConfig.provider !== "api-key") return null;
+
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
+  return {
+    webSearch: anthropic.tools.webSearch_20250305({
+      onInputAvailable: async ({ input }: { input: { query: string } }) => {
+        emit("tool-call", `webSearch: ${JSON.stringify(input).slice(0, 100)}`);
+      },
+    }),
+    webFetch: anthropic.tools.webFetch_20250910({
+      onInputAvailable: async ({ input }: { input: { url: string } }) => {
+        emit("tool-call", `webFetch: ${JSON.stringify(input).slice(0, 100)}`);
+      },
+    }),
+  };
 }
 
 /**
@@ -53,5 +95,5 @@ export function hasAIProvider(isProxyRunning?: boolean): boolean {
   if (currentConfig.provider === "claude-max") {
     return isProxyRunning ?? false;
   }
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!(currentConfig.apiKey || process.env.ANTHROPIC_API_KEY);
 }

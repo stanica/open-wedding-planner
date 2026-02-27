@@ -3,6 +3,7 @@ import { Shield } from "lucide-react";
 interface PermissionRequestCardProps {
   toolName: string;
   toolDescription: string;
+  context?: string;
   onDecision: (decision: "allow" | "always-allow" | "deny") => void;
   resolved?: string | null;
 }
@@ -10,6 +11,7 @@ interface PermissionRequestCardProps {
 export function PermissionRequestCard({
   toolName,
   toolDescription,
+  context,
   onDecision,
   resolved,
 }: PermissionRequestCardProps) {
@@ -33,6 +35,11 @@ export function PermissionRequestCard({
       </div>
       <p className="text-sm text-white font-medium">{toolName}</p>
       <p className="text-xs text-gray-400 mt-0.5">{toolDescription}</p>
+      {context && (
+        <pre className="mt-2 px-3 py-2 text-xs text-gray-300 bg-black/30 rounded-md overflow-x-auto whitespace-pre-wrap break-all">
+          {context}
+        </pre>
+      )}
       <div className="flex gap-2 mt-3">
         <button
           onClick={() => onDecision("allow")}

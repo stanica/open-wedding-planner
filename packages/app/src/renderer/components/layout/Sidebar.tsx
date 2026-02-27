@@ -27,11 +27,6 @@ const NAV_ITEMS = [
   { to: "/budget", icon: DollarSign, label: "Budget" },
 ] as const;
 
-const CHANNEL_STATUS = [
-  { label: "WhatsApp", connected: false },
-  { label: "Gmail", connected: false },
-] as const;
-
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
@@ -64,29 +59,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       <div className="border-t border-white/10 px-2 py-3 space-y-1">
-        {!collapsed && (
-          <div className="px-3 pb-2">
-            <span className="text-xs font-medium uppercase text-gray-500">
-              Channels
-            </span>
-            <div className="mt-1 space-y-1">
-              {CHANNEL_STATUS.map((ch) => (
-                <div
-                  key={ch.label}
-                  className="flex items-center gap-2 text-xs text-gray-400"
-                >
-                  <div
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      ch.connected ? "bg-green-500" : "bg-gray-600"
-                    }`}
-                  />
-                  {ch.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        <SidebarItem
+<SidebarItem
           to="/settings"
           icon={Settings}
           label="Settings"

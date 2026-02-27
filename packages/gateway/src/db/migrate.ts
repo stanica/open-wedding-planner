@@ -237,6 +237,12 @@ export function pushSchema(sqlite: Database.Database) {
       credentials_path TEXT,
       auto_send INTEGER NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS guardrails_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      config TEXT
+    );
   `);
 
   // Migrations for existing databases

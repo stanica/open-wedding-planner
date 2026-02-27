@@ -64,22 +64,62 @@ export function registerGoogleAuthHandlers(router: Router, gogManager: GogManage
 
     const serviceArg = services.join(",");
 
-    // Step 1: Get the auth URL via remote flow
-    const { stdout } = await gogManager.exec([
+    // Clear any cached gog state for this email so scopes reflect current selection
+    try {
+      await gogManager.exec(["auth", "remove", email, "--force"]);
+    } catch {
+      // Not connected yet — ignore
+    }
+
+    // Spawn gog in --manual mode: it prints the auth URL, then waits for
+    // the redirect URL on stdin. We capture the URL, start our own callback
+    // server on gog's expected port, and pipe the callback URL back.
+    const child = await gogManager.spawnProcess([
       "auth", "add", email,
       "--services", serviceArg,
-      "--remote", "--step", "1",
+      "--manual",
     ]);
 
-    // gog prints the auth URL to stdout — extract it
-    const urlMatch = stdout.match(/https:\/\/accounts\.google\.com\S+/);
-    if (!urlMatch) {
-      throw new Error(`Could not extract auth URL from gog output: ${stdout}`);
-    }
-    const authUrl = urlMatch[0];
+    // Collect stdout to extract the auth URL
+    const authUrl = await new Promise<string>((resolve, reject) => {
+      let output = "";
+      const timeout = setTimeout(() => reject(new Error("Timed out waiting for auth URL from gog")), 10000);
 
-    // Spin up a temporary localhost server to capture the OAuth callback
-    const { port, waitForCallback } = await createCallbackServer();
+      child.stderr!.on("data", (chunk: Buffer) => {
+        output += chunk.toString();
+        const match = output.match(/https:\/\/accounts\.google\.com\S+/);
+        if (match) {
+          clearTimeout(timeout);
+          resolve(match[0]);
+        }
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+
+      child.on("close", (code) => {
+        clearTimeout(timeout);
+        if (!output.includes("accounts.google.com")) {
+          reject(new Error(`gog exited (code ${code}) without printing auth URL. Output: ${output}`));
+        }
+      });
+    });
+
+    // Extract redirect_uri from the auth URL to know which port gog expects
+    const authUrlObj = new URL(authUrl);
+    const redirectUri = authUrlObj.searchParams.get("redirect_uri");
+    if (!redirectUri) {
+      child.kill();
+      throw new Error(`No redirect_uri in auth URL: ${authUrl}`);
+    }
+    const redirectUrl = new URL(redirectUri);
+    const callbackPort = parseInt(redirectUrl.port || "80", 10);
+    const callbackPath = redirectUrl.pathname;
+
+    // Listen on gog's expected port/path to capture the OAuth callback
+    const waitForCallback = listenForCallback(callbackPort, callbackPath);
 
     // Store connection info
     const [existing] = await db.select().from(googleConfig).limit(1);
@@ -93,21 +133,22 @@ export function registerGoogleAuthHandlers(router: Router, gogManager: GogManage
       await db.insert(googleConfig).values(values);
     }
 
-    // Wait for callback in background, then complete step 2
+    // When our callback server receives the redirect, pipe the URL to gog's stdin
     waitForCallback.then(async (callbackUrl) => {
-      try {
-        await gogManager.exec([
-          "auth", "add", email,
-          "--remote", "--step", "2",
-          "--auth-url", callbackUrl,
-        ]);
-        console.log(`Google account ${email} connected successfully`);
-      } catch (err) {
-        console.error("Failed to complete Google auth:", err);
-      }
+      console.log(`Google OAuth callback received for ${email}`);
+      child.stdin!.write(callbackUrl + "\n");
+      child.stdin!.end();
+
+      child.on("close", (code) => {
+        if (code === 0) {
+          console.log(`Google account ${email} connected successfully`);
+        } else {
+          console.error(`gog auth exited with code ${code}`);
+        }
+      });
     });
 
-    return { authUrl, callbackPort: port };
+    return { authUrl };
   });
 
   router.register("google.disconnect", async (db) => {
@@ -115,7 +156,7 @@ export function registerGoogleAuthHandlers(router: Router, gogManager: GogManage
     if (!config?.accountEmail) throw new Error("No Google account connected");
 
     try {
-      await gogManager.exec(["auth", "remove", config.accountEmail]);
+      await gogManager.exec(["auth", "remove", config.accountEmail, "--force"]);
     } catch {
       // Ignore — account may already be removed from gog
     }
@@ -152,29 +193,25 @@ export function registerGoogleAuthHandlers(router: Router, gogManager: GogManage
   });
 }
 
-/** Spins up a one-shot HTTP server that captures the OAuth redirect */
-async function createCallbackServer(): Promise<{
-  port: number;
-  waitForCallback: Promise<string>;
-}> {
-  return new Promise((resolveSetup) => {
-    let resolveCallback: (url: string) => void;
-    const waitForCallback = new Promise<string>((r) => {
-      resolveCallback = r;
-    });
-
+/** Spins up a one-shot HTTP server on the exact port/path gog expects for the OAuth redirect */
+function listenForCallback(port: number, expectedPath: string): Promise<string> {
+  return new Promise((resolve) => {
     const server: Server = createServer((req, res) => {
-      const fullUrl = `http://127.0.0.1:${(server.address() as any).port}${req.url}`;
+      const reqUrl = new URL(req.url!, `http://127.0.0.1:${port}`);
+      if (reqUrl.pathname !== expectedPath) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
+      const fullUrl = `http://127.0.0.1:${port}${req.url}`;
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end("<html><body><h1>Authorization complete!</h1><p>You can close this tab and return to the app.</p></body></html>");
       server.close();
-      resolveCallback(fullUrl);
+      resolve(fullUrl);
     });
 
-    server.listen(0, "127.0.0.1", () => {
-      const port = (server.address() as any).port;
-      resolveSetup({ port, waitForCallback });
-    });
+    server.listen(port, "127.0.0.1");
 
     // Auto-close after 5 minutes if no callback
     setTimeout(() => {

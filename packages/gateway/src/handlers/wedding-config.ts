@@ -9,10 +9,10 @@ export function registerWeddingConfigHandlers(router: Router) {
       return {
         weddingDate: null,
         guestCount: null,
-        budgetTotal: null,
+        totalBudget: null,
         currency: "EUR",
         coupleNames: null,
-        coupleEmail: null,
+        email: null,
         location: null,
         languagePreferences: ["en", "it"],
         dietaryRequirements: null,
@@ -22,6 +22,10 @@ export function registerWeddingConfigHandlers(router: Router) {
     const row = rows[0];
     return {
       ...row,
+      totalBudget: row.budgetTotal,
+      email: row.coupleEmail,
+      budgetTotal: undefined,
+      coupleEmail: undefined,
       languagePreferences: JSON.parse(row.languagePreferences),
     };
   });
@@ -29,6 +33,14 @@ export function registerWeddingConfigHandlers(router: Router) {
   router.register("wedding-config.update", async (db: Db, params: unknown) => {
     const data = params as Record<string, unknown>;
     const values: Record<string, unknown> = { ...data };
+    if (data.totalBudget !== undefined) {
+      values.budgetTotal = data.totalBudget;
+      delete values.totalBudget;
+    }
+    if (data.email !== undefined) {
+      values.coupleEmail = data.email;
+      delete values.email;
+    }
     if (data.languagePreferences) {
       values.languagePreferences = JSON.stringify(data.languagePreferences);
     }
@@ -46,6 +58,10 @@ export function registerWeddingConfigHandlers(router: Router) {
     const [updated] = await db.select().from(weddingConfig);
     return {
       ...updated,
+      totalBudget: updated.budgetTotal,
+      email: updated.coupleEmail,
+      budgetTotal: undefined,
+      coupleEmail: undefined,
       languagePreferences: JSON.parse(updated.languagePreferences),
     };
   });

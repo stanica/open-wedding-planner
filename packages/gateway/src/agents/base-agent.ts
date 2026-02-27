@@ -1,6 +1,8 @@
 import type { Db } from "../infra/router.js";
 import type { ToolRegistry } from "../tools/registry.js";
 import type { PermissionManager, PermissionCallbacks } from "../tools/permission-wrapper.js";
+import type { Guardrails } from "./safety/guardrails.js";
+import type { GuardrailsConfig } from "./safety/types.js";
 
 export interface AgentContext {
   db: Db;
@@ -10,6 +12,7 @@ export interface AgentContext {
   toolRegistry: ToolRegistry;
   permissionManager: PermissionManager;
   permissionCallbacks: PermissionCallbacks;
+  guardrails: Guardrails;
 }
 
 export interface AgentResult {
@@ -28,4 +31,5 @@ export interface TaskConfig {
   systemPrompt: string;
   tools: string[];
   maxSteps?: number;
+  guardrails?: Partial<GuardrailsConfig>;
 }

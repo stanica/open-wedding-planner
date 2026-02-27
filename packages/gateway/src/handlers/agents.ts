@@ -11,6 +11,12 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
     return { taskId, sessionKey };
   });
 
+  router.register("agent.stop", async (_db, params) => {
+    const { sessionKey } = params as { sessionKey: string };
+    const stopped = orchestrator.abortTask(sessionKey);
+    return { ok: stopped };
+  });
+
   router.register("research.permissionResponse", async (_db, params) => {
     const { requestId, response } = params as { requestId: string; response: string };
     orchestrator.resolvePermission(requestId, response as any);

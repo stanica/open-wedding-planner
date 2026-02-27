@@ -4,7 +4,8 @@ import type { ModelMessage } from "ai";
 import { agentTasks, researchMessages } from "../db/schema.js";
 import { CommandQueue } from "../infra/command-queue.js";
 import { SessionManager } from "../infra/sessions.js";
-import { LoopDetector } from "./safety/loop-detection.js";
+import { Guardrails } from "./safety/guardrails.js";
+import { getGuardrailsConfigFromDb } from "../handlers/guardrails-config.js";
 import { AgentRunner } from "./runner.js";
 import type { ToolFactoryContext } from "./runner.js";
 import type { BaseAgent, AgentContext, TaskConfig } from "./base-agent.js";
@@ -114,16 +115,13 @@ export class Orchestrator {
     const controller = new AbortController();
     this.runningAbortControllers.set(sessionKey, controller);
 
-    const loopDetector = new LoopDetector();
+    const dbGuardrailsConfig = await getGuardrailsConfigFromDb(this.db);
+    const guardrails = new Guardrails({
+      ...dbGuardrailsConfig,
+      ...taskConfig?.guardrails,
+    });
 
     const emit = (action: string, detail?: string) => {
-      const warning = loopDetector.record(action, detail);
-      if (warning) {
-        this.broadcast({
-          name: "agent-activity",
-          data: { sessionKey, action: "warning", detail: `Loop warning: ${warning.pattern} (${warning.count}x)` },
-        });
-      }
       this.broadcast({
         name: "agent-activity",
         data: { sessionKey, action, detail },
@@ -159,6 +157,7 @@ export class Orchestrator {
         toolRegistry: this.toolRegistry,
         permissionManager: this.permissionManager,
         permissionCallbacks,
+        guardrails,
       };
 
       let result;
