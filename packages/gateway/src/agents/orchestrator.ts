@@ -169,6 +169,8 @@ export class Orchestrator {
           sqlite: this.sqlite,
           workspaceDir: getWorkspaceDir(),
           permissionCallbacks,
+          orchestrator: this,
+          parentSessionKey: sessionKey,
           ...this.extraToolCtx,
         };
 

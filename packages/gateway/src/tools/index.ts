@@ -10,6 +10,8 @@ import { makeCreateVendorTool } from "./create-vendor.js";
 import { makeAddVendorImagesTool } from "./add-vendor-images.js";
 import { makeSendWhatsAppTool } from "./send-whatsapp.js";
 import { makeGogTool } from "./gog.js";
+import { makeDispatchTool } from "./dispatch.js";
+import { makeAwaitTasksTool } from "./await-tasks.js";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -126,6 +128,24 @@ export function createToolRegistry(): ToolRegistry {
         getAutoSend: getGoogleAutoSend ?? (() => false),
         permissionCallbacks,
       });
+    },
+  });
+
+  registry.registerFactory("dispatch", {
+    description: "Dispatch a browser subagent to research a website",
+    category: "agent",
+    create: (ctx: unknown) => {
+      const { orchestrator, parentSessionKey } = ctx as any;
+      return makeDispatchTool({ orchestrator, parentSessionKey });
+    },
+  });
+
+  registry.registerFactory("awaitTasks", {
+    description: "Wait for dispatched subagent tasks to complete",
+    category: "agent",
+    create: (ctx: unknown) => {
+      const { db } = ctx as any;
+      return makeAwaitTasksTool({ db });
     },
   });
 

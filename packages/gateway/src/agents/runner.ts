@@ -34,6 +34,8 @@ export interface ToolFactoryContext {
   permissionCallbacks: unknown;
   deliveryQueue?: unknown;
   getAutoSend?: () => boolean;
+  orchestrator?: unknown;
+  parentSessionKey?: string;
 }
 
 export class AgentRunner {
