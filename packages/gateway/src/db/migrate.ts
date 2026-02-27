@@ -257,4 +257,10 @@ export function pushSchema(sqlite: Database.Database) {
   } catch {
     // Column already exists
   }
+
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN whatsapp_active_thread_id INTEGER;`);
+  } catch {
+    // Column already exists
+  }
 }

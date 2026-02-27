@@ -199,6 +199,7 @@ export const aiConfig = sqliteTable("ai_config", {
   proxyUrl: text("proxy_url").notNull().default("http://localhost:3456/v1"),
   apiKey: text("api_key"),
   whatsappAutoSend: integer("whatsapp_auto_send").notNull().default(0),
+  whatsappActiveThreadId: integer("whatsapp_active_thread_id"),
 });
 
 export const researchThreads = sqliteTable("research_threads", {
