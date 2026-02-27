@@ -216,6 +216,19 @@ export class Orchestrator {
           name: "research.messageComplete",
           data: { threadId: researchInput.threadId },
         });
+
+        // Save compaction marker if context was summarized
+        if (result.compactionSummary) {
+          await this.db.insert(researchMessages).values({
+            threadId: researchInput.threadId,
+            role: "system",
+            content: result.compactionSummary,
+          });
+          this.broadcast({
+            name: "context-compacted",
+            data: { threadId: researchInput.threadId },
+          });
+        }
       }
     } catch (err) {
       const aborted = controller.signal.aborted;
