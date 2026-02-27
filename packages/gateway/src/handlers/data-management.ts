@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import {
   vendors,
   vendorAttributes,
@@ -42,7 +43,7 @@ export function registerDataManagementHandlers(router: Router) {
 
     // Clean up image directories from disk
     for (const v of allVendors) {
-      const vendorImagesPath = `${imagesDir}/${v.id}`;
+      const vendorImagesPath = path.join(imagesDir, String(v.id));
       if (fs.existsSync(vendorImagesPath)) {
         fs.rmSync(vendorImagesPath, { recursive: true, force: true });
       }
