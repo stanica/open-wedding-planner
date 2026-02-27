@@ -22,12 +22,12 @@ export function makeDispatchTool(ctx: DispatchContext) {
         .describe("Vendor ID to associate data with. The subagent can use this to save images and update vendor info."),
     }),
     execute: async ({ url, instructions, vendorId }) => {
-      const { taskId } = await ctx.orchestrator.dispatch(
+      const { sessionKey } = await ctx.orchestrator.dispatch(
         "browser",
         { url, instructions, vendorId },
         { lane: "subagent", vendorId },
       );
-      return { taskId };
+      return { taskId: sessionKey };
     },
   });
 }

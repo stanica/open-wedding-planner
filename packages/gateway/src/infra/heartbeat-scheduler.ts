@@ -56,7 +56,7 @@ export class HeartbeatScheduler {
         this.orchestrator.registerConfig({
           name: "heartbeat-research",
           systemPrompt: config.prompt,
-          tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
+          tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
           maxSteps: 15,
         });
 

@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import type { Page } from "playwright";
 
-export function createPlaywrightTools(page: Page): Record<string, ReturnType<typeof tool>> {
+export function createPlaywrightTools(page: Page) {
   return {
     navigate: tool({
       description: "Navigate to a URL. Returns the page title and current URL after loading.",
@@ -65,8 +65,9 @@ export function createPlaywrightTools(page: Page): Record<string, ReturnType<typ
           return { text: text.trim().slice(0, 10_000), selector };
         }
         const text = await page.evaluate(() => {
-          document.querySelectorAll("script, style, nav, footer, header, noscript").forEach((el) => el.remove());
-          return (document.body?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 10_000);
+          const clone = document.body.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll("script, style, nav, footer, header, noscript").forEach((el) => el.remove());
+          return (clone.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 10_000);
         });
         return { text, url: page.url() };
       },

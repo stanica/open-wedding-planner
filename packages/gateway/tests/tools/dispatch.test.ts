@@ -26,7 +26,7 @@ describe("dispatch tool", () => {
       { url: "https://venue.com", instructions: "Find pricing info", vendorId: 42 },
       { lane: "subagent", vendorId: 42 },
     );
-    expect(result).toEqual({ taskId: "task-123" });
+    expect(result).toEqual({ taskId: "browser-task-123" });
   });
 
   it("works without vendorId", async () => {
@@ -47,6 +47,6 @@ describe("dispatch tool", () => {
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
     );
 
-    expect(result).toEqual({ taskId: "task-789" });
+    expect(result).toEqual({ taskId: "browser-task-789" });
   });
 });

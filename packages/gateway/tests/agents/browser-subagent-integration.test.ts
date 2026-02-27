@@ -31,17 +31,16 @@ describe("browser subagent integration", () => {
       output: JSON.stringify({ summary: "Found pricing: €5000 for 100 guests. Saved 3 gallery images." }),
     });
 
-    const [row] = await db.select().from(schema.agentTasks);
-
     const awaitTool = makeAwaitTasksTool({ db });
     const result = await awaitTool.execute(
-      { taskIds: [String(row.id)] },
+      { taskIds: ["browser-test-1"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
     );
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0].status).toBe("completed");
     expect(result.results[0].summary).toContain("€5000");
+    expect(result.results[0].taskId).toBe("browser-test-1");
   });
 
   it("awaitTasks handles multiple tasks with mixed statuses", async () => {
@@ -69,12 +68,9 @@ describe("browser subagent integration", () => {
       },
     ]);
 
-    const rows = await db.select().from(schema.agentTasks);
-    const taskIds = rows.map((r) => String(r.id));
-
     const awaitTool = makeAwaitTasksTool({ db });
     const result = await awaitTool.execute(
-      { taskIds },
+      { taskIds: ["browser-multi-1", "browser-multi-2", "browser-multi-3"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
     );
 

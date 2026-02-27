@@ -30,17 +30,16 @@ describe("awaitTasks tool", () => {
       output: JSON.stringify({ summary: "Found pricing: €5000" }),
     });
 
-    const [row] = await db.select().from(schema.agentTasks);
-
     const awaitTool = makeAwaitTasksTool({ db });
     const result = await awaitTool.execute(
-      { taskIds: [String(row.id)] },
+      { taskIds: ["browser-task-1"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
     );
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0].status).toBe("completed");
     expect(result.results[0].summary).toBe("Found pricing: €5000");
+    expect(result.results[0].taskId).toBe("browser-task-1");
   });
 
   it("returns error info for failed tasks", async () => {
@@ -51,11 +50,9 @@ describe("awaitTasks tool", () => {
       output: JSON.stringify({ error: "Timeout" }),
     });
 
-    const [row] = await db.select().from(schema.agentTasks);
-
     const awaitTool = makeAwaitTasksTool({ db });
     const result = await awaitTool.execute(
-      { taskIds: [String(row.id)] },
+      { taskIds: ["browser-task-2"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
     );
 

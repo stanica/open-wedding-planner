@@ -90,7 +90,7 @@ export class AgentRunner {
       // to use the custom tools instead of asking for its built-in web_search/web_fetch
       let systemPrompt = config.systemPrompt;
       if (!builtInTools) {
-        systemPrompt += "\n\nIMPORTANT: Use the provided tools (search, scrape, browse) for web access. Do NOT ask the user to enable WebSearch, WebFetch, or any built-in tools — they are not available. Use the tools you have.";
+        systemPrompt += "\n\nIMPORTANT: Use the provided tools (search, scrape, dispatch) for web access. Do NOT ask the user to enable WebSearch, WebFetch, or any built-in tools — they are not available. Use the tools you have.";
       }
 
       const model = await getModel();
