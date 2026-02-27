@@ -15,6 +15,10 @@ interface PendingRequest {
 class WsClient {
   private ws: WebSocket | null = null;
   private port: number | null = null;
+
+  get gatewayPort(): number | null {
+    return this.port;
+  }
   private reconnectDelay = 1000;
   private maxReconnectDelay = 30000;
   private pendingRequests = new Map<string, PendingRequest>();
