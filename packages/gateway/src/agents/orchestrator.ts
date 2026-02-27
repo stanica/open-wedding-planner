@@ -4,9 +4,7 @@ import type { ModelMessage } from "ai";
 import { agentTasks, researchMessages } from "../db/schema.js";
 import { CommandQueue } from "../infra/command-queue.js";
 import { SessionManager } from "../infra/sessions.js";
-import { TurnCounter } from "./safety/turn-limits.js";
 import { LoopDetector } from "./safety/loop-detection.js";
-import { withTimeout, TimeoutError } from "./safety/timeout.js";
 import { AgentRunner } from "./runner.js";
 import type { ToolFactoryContext } from "./runner.js";
 import type { BaseAgent, AgentContext, TaskConfig } from "./base-agent.js";
@@ -17,44 +15,36 @@ import { PermissionManager } from "../tools/permission-wrapper.js";
 import type { UserResponse } from "../tools/permission-wrapper.js";
 import { getWorkspaceDir } from "../config/paths.js";
 
-export interface OrchestratorConfig {
-  maxTurns?: number;
-  timeoutMs?: number;
-}
-
-const DEFAULTS: Required<OrchestratorConfig> = {
-  maxTurns: 50,
-  timeoutMs: 120_000,
-};
-
 export class Orchestrator {
   private agents = new Map<string, BaseAgent>();
   private configs = new Map<string, TaskConfig>();
   private queue: CommandQueue;
   private sessions: SessionManager;
-  private config: Required<OrchestratorConfig>;
   private broadcast: (event: GatewayEvent) => void;
   private db: Db;
   private toolRegistry: ToolRegistry;
   private permissionManager: PermissionManager;
   private pendingPermissions = new Map<string, { resolve: (response: UserResponse) => void }>();
+  private runningAbortControllers = new Map<string, AbortController>();
   private sqlite: unknown;
+  private extraToolCtx: Record<string, unknown>;
 
   constructor(
     db: Db,
     broadcast: (event: GatewayEvent) => void,
     toolRegistry: ToolRegistry,
-    config?: OrchestratorConfig,
+    config?: unknown,
     sqlite?: unknown,
+    extraToolCtx?: Record<string, unknown>,
   ) {
     this.db = db;
     this.broadcast = broadcast;
     this.toolRegistry = toolRegistry;
-    this.config = { ...DEFAULTS, ...config };
     this.queue = new CommandQueue();
     this.sessions = new SessionManager(db);
     this.permissionManager = new PermissionManager(db);
     this.sqlite = sqlite;
+    this.extraToolCtx = extraToolCtx ?? {};
   }
 
   registerAgent(agent: BaseAgent): void {
@@ -99,6 +89,15 @@ export class Orchestrator {
     return { taskId, sessionKey };
   }
 
+  abortTask(sessionKey: string): boolean {
+    const controller = this.runningAbortControllers.get(sessionKey);
+    if (controller) {
+      controller.abort();
+      return true;
+    }
+    return false;
+  }
+
   private async execute(
     taskConfig: TaskConfig | null,
     agent: BaseAgent | null,
@@ -112,11 +111,12 @@ export class Orchestrator {
       .set({ status: "running" })
       .where(eq(agentTasks.sessionId, sessionKey));
 
-    const turnCounter = new TurnCounter(this.config.maxTurns);
+    const controller = new AbortController();
+    this.runningAbortControllers.set(sessionKey, controller);
+
     const loopDetector = new LoopDetector();
 
     const emit = (action: string, detail?: string) => {
-      turnCounter.increment();
       const warning = loopDetector.record(action, detail);
       if (warning) {
         this.broadcast({
@@ -151,42 +151,38 @@ export class Orchestrator {
     };
 
     try {
-      const result = await withTimeout(
-        (signal) => {
-          const ctx: AgentContext = {
-            db: this.db,
-            sessionKey,
-            emit,
-            signal,
-            toolRegistry: this.toolRegistry,
-            permissionManager: this.permissionManager,
-            permissionCallbacks,
-          };
+      const ctx: AgentContext = {
+        db: this.db,
+        sessionKey,
+        emit,
+        signal: controller.signal,
+        toolRegistry: this.toolRegistry,
+        permissionManager: this.permissionManager,
+        permissionCallbacks,
+      };
 
-          if (taskConfig) {
-            // Use AgentRunner for TaskConfig-based agents
-            const toolCtx: ToolFactoryContext = {
-              db: this.db,
-              emit,
-              sqlite: this.sqlite,
-              workspaceDir: getWorkspaceDir(),
-              permissionCallbacks,
-            };
+      let result;
 
-            const inputData = input as { messages?: ModelMessage[]; threadId?: number; [key: string]: unknown };
-            const messages: ModelMessage[] = inputData.messages ?? [{ role: "user" as const, content: JSON.stringify(input) }];
+      if (taskConfig) {
+        const toolCtx: ToolFactoryContext = {
+          db: this.db,
+          emit,
+          sqlite: this.sqlite,
+          workspaceDir: getWorkspaceDir(),
+          permissionCallbacks,
+          ...this.extraToolCtx,
+        };
 
-            const runner = new AgentRunner();
-            return runner.run(taskConfig, ctx, messages, toolCtx);
-          } else if (agent) {
-            // Use BaseAgent directly (for heartbeat etc.)
-            return agent.run(ctx, input);
-          }
+        const inputData = input as { messages?: ModelMessage[]; threadId?: number; [key: string]: unknown };
+        const messages: ModelMessage[] = inputData.messages ?? [{ role: "user" as const, content: JSON.stringify(input) }];
 
-          throw new Error("No task config or agent provided");
-        },
-        this.config.timeoutMs,
-      );
+        const runner = new AgentRunner();
+        result = await runner.run(taskConfig, ctx, messages, toolCtx);
+      } else if (agent) {
+        result = await agent.run(ctx, input);
+      } else {
+        throw new Error("No task config or agent provided");
+      }
 
       // Mark completed
       await this.db
@@ -223,22 +219,31 @@ export class Orchestrator {
         });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      const status = err instanceof TimeoutError ? "failed" : "failed";
+      const aborted = controller.signal.aborted;
+      const message = aborted ? "Stopped by user" : (err instanceof Error ? err.message : "Unknown error");
 
       await this.db
         .update(agentTasks)
         .set({
-          status,
+          status: aborted ? "cancelled" : "failed",
           output: JSON.stringify({ error: message }),
           completedAt: sql`datetime('now')`,
         })
         .where(eq(agentTasks.sessionId, sessionKey));
 
-      this.broadcast({
-        name: "agent-activity",
-        data: { sessionKey, action: "error", detail: message },
-      });
+      if (aborted) {
+        this.broadcast({
+          name: "agent-complete",
+          data: { taskId, summary: "Stopped by user" },
+        });
+      } else {
+        this.broadcast({
+          name: "agent-activity",
+          data: { sessionKey, action: "error", detail: message },
+        });
+      }
+    } finally {
+      this.runningAbortControllers.delete(sessionKey);
     }
   }
 

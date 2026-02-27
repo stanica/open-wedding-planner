@@ -1,7 +1,7 @@
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 import type { TaskConfig, AgentContext, AgentResult } from "./base-agent.js";
-import { getModel } from "./model-provider.js";
+import { getModel, getBuiltInTools } from "./model-provider.js";
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 
 export interface ToolFactoryContext {
@@ -10,6 +10,8 @@ export interface ToolFactoryContext {
   sqlite: unknown;
   workspaceDir: string;
   permissionCallbacks: unknown;
+  deliveryQueue?: unknown;
+  getAutoSend?: () => boolean;
 }
 
 export class AgentRunner {
@@ -23,11 +25,30 @@ export class AgentRunner {
 
     // Build wrapped tool set from config
     const tools: Record<string, any> = {};
-    if (config.tools.length > 0) {
-      const rawTools = ctx.toolRegistry.getToolSetWithContext(config.tools, toolCtx);
+    const builtInTools = await getBuiltInTools(ctx.emit);
+
+    // Exclude custom search/scrape when built-in alternatives are available
+    const customToolNames = builtInTools
+      ? config.tools.filter((t) => t !== "search" && t !== "scrape")
+      : config.tools;
+
+    if (customToolNames.length > 0) {
+      const rawTools = ctx.toolRegistry.getToolSetWithContext(customToolNames, toolCtx);
       for (const [name, t] of Object.entries(rawTools)) {
         tools[name] = wrapToolWithPermission(t, name, ctx.permissionManager, ctx.permissionCallbacks);
       }
+    }
+
+    // Merge built-in tools (server-side execution, no permission wrapping)
+    if (builtInTools) {
+      Object.assign(tools, builtInTools);
+    }
+
+    // When built-in tools aren't available (claude-max proxy), tell the model
+    // to use the custom tools instead of asking for its built-in web_search/web_fetch
+    let systemPrompt = config.systemPrompt;
+    if (!builtInTools) {
+      systemPrompt += "\n\nIMPORTANT: Use the provided tools (search, scrape, browse) for web access. Do NOT ask the user to enable WebSearch, WebFetch, or any built-in tools — they are not available. Use the tools you have.";
     }
 
     const model = await getModel();
@@ -35,7 +56,7 @@ export class AgentRunner {
 
     const { text, steps } = await generateText({
       model,
-      system: config.systemPrompt,
+      system: systemPrompt,
       messages,
       tools: Object.keys(tools).length > 0 ? tools : undefined,
       stopWhen: stepCountIs(maxSteps),
