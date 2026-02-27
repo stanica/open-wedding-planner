@@ -163,6 +163,7 @@ export async function startGateway(options: GatewayOptions = {}) {
     gogManager,
     getGoogleAutoSend: googleAutoSendGetter,
     getGoogleConfig,
+    imagesDir,
   });
 
   for (const config of TASK_CONFIGS) {

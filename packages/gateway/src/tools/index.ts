@@ -7,6 +7,7 @@ import { createCmdTool } from "./cmd.js";
 import { createDbQueryTool } from "./db-query.js";
 import { createDbSchemaTool } from "./db-schema.js";
 import { makeCreateVendorTool } from "./create-vendor.js";
+import { makeAddVendorImagesTool } from "./add-vendor-images.js";
 import { makeSendWhatsAppTool } from "./send-whatsapp.js";
 import { makeGogTool } from "./gog.js";
 import { tool } from "ai";
@@ -74,6 +75,15 @@ export function createToolRegistry(): ToolRegistry {
     description: "Create a new vendor record in the database",
     category: "database",
     create: (ctx: unknown) => makeCreateVendorTool(ctx as any),
+  });
+
+  registry.registerFactory("addVendorImages", {
+    description: "Add images to a vendor's photo gallery",
+    category: "database",
+    create: (ctx: unknown) => {
+      const { db, emit, imagesDir } = ctx as any;
+      return makeAddVendorImagesTool({ db, emit, imagesDir });
+    },
   });
 
   registry.registerFactory("sendWhatsApp", {

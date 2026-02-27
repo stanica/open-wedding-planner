@@ -13,7 +13,8 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - Extract real contact information when available (email, phone, website)
 - Write clear descriptions summarizing what the vendor offers
 - Pick the most appropriate category for each vendor
-- When fetching a vendor's website, look for image URLs and pass them to createVendor via the imageUrl field
+- When fetching a vendor's website, look for gallery images and use addVendorImages to save relevant photos with descriptive captions
+- Prefer saving 3-8 high-quality images rather than every image on the page
 - If a page is JavaScript-heavy and returns little content, try the browse tool if available
 - If you find a PDF (menu, brochure, price list), parse it for details
 - Do not create duplicate vendors
@@ -66,7 +67,7 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
-    tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "gog"],
+    tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog"],
     maxSteps: 15,
   },
   {
