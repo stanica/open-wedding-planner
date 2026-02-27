@@ -1,3 +1,4 @@
+import type { Tool } from "ai";
 import type { Db } from "../infra/router.js";
 import type { ToolRegistry } from "../tools/registry.js";
 import type { PermissionManager, PermissionCallbacks } from "../tools/permission-wrapper.js";
@@ -33,4 +34,8 @@ export interface TaskConfig {
   tools: string[];
   maxSteps?: number;
   guardrails?: Partial<GuardrailsConfig>;
+  setup?: (toolCtx: unknown) => Promise<{
+    extraTools: Record<string, Tool>;
+    cleanup: () => Promise<void>;
+  }>;
 }
