@@ -6,7 +6,7 @@ interface PendingPermission {
   requestId: string;
   toolName: string;
   toolDescription: string;
-  context: string | undefined;
+  context?: string;
   resolved: string | null;
 }
 
@@ -21,37 +21,39 @@ interface ResearchStore {
   resolvePermission: (requestId: string, decision: string) => void;
 }
 
-// Buffer for permission events that arrive before activeSession is set
-let bufferedPermissions: Array<{ sessionKey: string; data: GatewayEvent["data"] }> = [];
+type PermissionEventData = Extract<GatewayEvent, { name: "research.permissionRequest" }>["data"];
 
-export const useResearchStore = create<ResearchStore>((set, get) => ({
+// Buffer for permission events that arrive before activeSession is set
+let bufferedPermissions: Array<{ sessionKey: string; data: PermissionEventData }> = [];
+
+export const useResearchStore = create<ResearchStore>((set) => ({
   activeSession: null,
   liveToolCalls: [],
   pendingPermissions: [],
   completedAt: null,
 
   setActiveSession: (key) => {
-    set({ activeSession: key });
     if (key) {
       const matching = bufferedPermissions.filter((b) => b.sessionKey === key);
       bufferedPermissions = [];
-      if (matching.length > 0) {
-        set((state) => ({
-          pendingPermissions: [
-            ...state.pendingPermissions,
-            ...matching.map((b) => {
-              const d = b.data as any;
-              return {
-                requestId: d.requestId,
-                toolName: d.toolName,
-                toolDescription: d.toolDescription,
-                context: d.context,
-                resolved: null,
-              };
-            }),
-          ],
-        }));
-      }
+      set((state) => ({
+        activeSession: key,
+        pendingPermissions:
+          matching.length > 0
+            ? [
+                ...state.pendingPermissions,
+                ...matching.map((b) => ({
+                  requestId: b.data.requestId,
+                  toolName: b.data.toolName,
+                  toolDescription: b.data.toolDescription,
+                  context: b.data.context,
+                  resolved: null,
+                })),
+              ]
+            : state.pendingPermissions,
+      }));
+    } else {
+      set({ activeSession: null });
     }
   },
 
