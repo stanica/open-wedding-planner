@@ -1,6 +1,7 @@
 import type { Router } from "../infra/router.js";
 import type { ProxyManager } from "../infra/proxy-manager.js";
 import type { DeliveryQueue } from "../infra/delivery-queue.js";
+import type { GogManager } from "../infra/gog-manager.js";
 import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
@@ -16,10 +17,16 @@ import { registerToolPermissionHandlers } from "./tool-permissions.js";
 import { registerSearchConfigHandlers } from "./search-config.js";
 import { registerHeartbeatConfigHandlers } from "./heartbeat-config.js";
 import { registerResearchThreadHandlers } from "./research-threads.js";
+import { registerGoogleAuthHandlers } from "./google-auth.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 
-export function registerAllHandlers(router: Router, proxyManager: ProxyManager, deliveryQueue?: DeliveryQueue) {
+export function registerAllHandlers(
+  router: Router,
+  proxyManager: ProxyManager,
+  deliveryQueue?: DeliveryQueue,
+  gogManager?: GogManager,
+) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
   registerVendorHandlers(router);
@@ -35,6 +42,10 @@ export function registerAllHandlers(router: Router, proxyManager: ProxyManager, 
   registerSearchConfigHandlers(router);
   registerHeartbeatConfigHandlers(router);
   registerResearchThreadHandlers(router);
+
+  if (gogManager) {
+    registerGoogleAuthHandlers(router, gogManager);
+  }
 
   router.register("import.budget-csv", async (db, params) => {
     const { content } = params as { content: string };
