@@ -1,7 +1,6 @@
 import { ToolRegistry } from "./registry.js";
 import { searchTool } from "./search.js";
 import { scraperTool } from "./scraper.js";
-import { browserTool } from "./browser.js";
 import { pdfTool } from "./pdf.js";
 import { createCmdTool } from "./cmd.js";
 import { createDbQueryTool } from "./db-query.js";
@@ -30,13 +29,6 @@ export function createToolRegistry(): ToolRegistry {
     description: "Extract text and contact info from a web page",
     category: "web",
     tool: scraperTool,
-  });
-
-  registry.register({
-    name: "browse",
-    description: "Load a JavaScript-heavy web page using a headless browser",
-    category: "web",
-    tool: browserTool,
   });
 
   registry.register({

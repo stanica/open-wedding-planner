@@ -15,7 +15,7 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - Write clear descriptions summarizing what the vendor offers
 - Pick the most appropriate category for each vendor
 - When fetching a vendor's website, look for gallery images and use addVendorImages to save relevant photos with descriptive captions
-- If a page is JavaScript-heavy and returns little content, try the browse tool
+- If a page is JavaScript-heavy or you need to navigate a complex website (galleries, pricing pages, etc.), use dispatch to spawn a browser subagent with instructions. Use awaitTasks to collect results when ready. You can dispatch multiple browser subagents in parallel.
 - If you find a PDF (menu, brochure, price list), parse it for details
 - Do not create duplicate vendors
 - When comparing vendors, always lead with pricing information — it's the #1 thing users care about
@@ -107,7 +107,7 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
-    tools: ["search", "scrape", "browse", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog"],
+    tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog"],
     maxSteps: 15,
   },
   {
