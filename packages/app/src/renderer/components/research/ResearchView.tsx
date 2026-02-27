@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Square, Wrench } from "lucide-react";
 import { wsClient } from "../../lib/ws-client";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { useVendors } from "../../hooks/useVendors";
+import { useResearchStore } from "../../stores/research-store";
 import { ThreadList } from "./ThreadList";
 import { ChatMessage } from "./ChatMessage";
 import { ComposeBox } from "./ComposeBox";
 import { PermissionRequestCard } from "./PermissionRequestCard";
-import type { GatewayEvent } from "@wedding-planner/shared";
 
 interface Thread {
   id: number;
@@ -25,25 +26,17 @@ interface Message {
   createdAt: string;
 }
 
-interface PendingPermission {
-  requestId: string;
-  toolName: string;
-  toolDescription: string;
-  resolved: string | null;
-}
-
 export function ResearchView() {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
-  const [activeSession, _setActiveSession] = useState<string | null>(null);
-  const activeSessionRef = useRef<string | null>(null);
-  const setActiveSession = (v: string | null) => {
-    activeSessionRef.current = v;
-    _setActiveSession(v);
-  };
-  const [pendingPermissions, setPendingPermissions] = useState<PendingPermission[]>([]);
-  const [liveToolCalls, setLiveToolCalls] = useState<Array<{ toolName: string; detail: string }>>(
-    [],
-  );
+  const {
+    activeSession,
+    liveToolCalls,
+    pendingPermissions,
+    completedAt,
+    setActiveSession,
+    clearSession,
+    resolvePermission,
+  } = useResearchStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Data fetching
@@ -75,49 +68,20 @@ export function ResearchView() {
     { requestId: string; response: string },
     unknown
   >("research.permissionResponse");
+  const { mutate: stopAgent } = useMutation<{ sessionKey: string }, unknown>("agent.stop");
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, liveToolCalls, pendingPermissions, researching, activeSession]);
+  }, [messages, liveToolCalls, pendingPermissions, activeSession]);
 
-  // WebSocket event handler — uses ref to avoid stale closure for activeSession
+  // Refetch data when agent completes (even if we were on another tab)
   useEffect(() => {
-    return wsClient.onEvent((event: GatewayEvent) => {
-      const session = activeSessionRef.current;
-
-      if (event.name === "agent-activity" && event.data.sessionKey === session) {
-        if (event.data.action === "tool-call" && event.data.detail) {
-          setLiveToolCalls((prev) => [
-            ...prev,
-            { toolName: event.data.detail!.split(":")[0], detail: event.data.detail! },
-          ]);
-        }
-      }
-
-      if (event.name === "agent-complete" && session) {
-        setActiveSession(null);
-        setLiveToolCalls([]);
-        refetchMessages();
-        refetchThreads();
-      }
-
-      if (event.name === "research.permissionRequest") {
-        const data = event.data;
-        if (data.sessionKey === session) {
-          setPendingPermissions((prev) => [
-            ...prev,
-            {
-              requestId: data.requestId,
-              toolName: data.toolName,
-              toolDescription: data.toolDescription,
-              resolved: null,
-            },
-          ]);
-        }
-      }
-    });
-  }, [refetchMessages, refetchThreads]);
+    if (completedAt) {
+      refetchMessages();
+      refetchThreads();
+    }
+  }, [completedAt, refetchMessages, refetchThreads]);
 
   // Handlers
   async function handleCreateThread() {
@@ -168,14 +132,20 @@ export function ResearchView() {
     setActiveSession(result.sessionKey);
   }
 
+  async function handleStop() {
+    if (activeSession) {
+      await stopAgent({ sessionKey: activeSession });
+      clearSession();
+      refetchMessages();
+    }
+  }
+
   async function handlePermissionDecision(
     requestId: string,
     decision: "allow" | "always-allow" | "deny",
   ) {
     await respondPermission({ requestId, response: decision });
-    setPendingPermissions((prev) =>
-      prev.map((p) => (p.requestId === requestId ? { ...p, resolved: decision } : p)),
-    );
+    resolvePermission(requestId, decision);
   }
 
   // Build vendor lookup
@@ -220,9 +190,7 @@ export function ResearchView() {
           activeThreadId={activeThreadId}
           onSelect={(id) => {
             setActiveThreadId(id);
-            setActiveSession(null);
-            setLiveToolCalls([]);
-            setPendingPermissions([]);
+            clearSession();
           }}
           onCreate={handleCreateThread}
           onDelete={handleDeleteThread}
@@ -248,18 +216,32 @@ export function ResearchView() {
               {/* Live agent activity */}
               {(researching || activeSession) && (
                 <div className="py-4">
-                  <span className="text-xs font-medium text-purple-400">Assistant</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-purple-400">Assistant</span>
+                    {activeSession && (
+                      <button
+                        onClick={handleStop}
+                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                      >
+                        <Square className="h-3 w-3" />
+                        Stop
+                      </button>
+                    )}
+                  </div>
                   <div className="mt-2 flex flex-col gap-1">
                     {liveToolCalls.length > 0 ? (
-                      liveToolCalls.map((tc, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 text-xs text-gray-500"
-                        >
+                      <>
+                        {liveToolCalls.length > 1 && (
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                            <Wrench className="h-3 w-3" />
+                            <span>{liveToolCalls.length} tool calls</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
-                          <span>{tc.detail}</span>
+                          <span>{liveToolCalls[liveToolCalls.length - 1].detail}</span>
                         </div>
-                      ))
+                      </>
                     ) : (
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
@@ -276,6 +258,7 @@ export function ResearchView() {
                   key={p.requestId}
                   toolName={p.toolName}
                   toolDescription={p.toolDescription}
+                  context={p.context}
                   resolved={p.resolved}
                   onDecision={(decision) => handlePermissionDecision(p.requestId, decision)}
                 />
