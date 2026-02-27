@@ -76,8 +76,10 @@ export function ResearchView() {
   }, [messages, liveToolCalls, pendingPermissions, activeSession]);
 
   // Refetch data when agent completes (even if we were on another tab)
+  const completedAtSeen = useRef<number | null>(null);
   useEffect(() => {
-    if (completedAt) {
+    if (completedAt && completedAt !== completedAtSeen.current) {
+      completedAtSeen.current = completedAt;
       refetchMessages();
       refetchThreads();
     }
@@ -136,7 +138,6 @@ export function ResearchView() {
     if (activeSession) {
       await stopAgent({ sessionKey: activeSession });
       clearSession();
-      refetchMessages();
     }
   }
 
@@ -190,7 +191,7 @@ export function ResearchView() {
           activeThreadId={activeThreadId}
           onSelect={(id) => {
             setActiveThreadId(id);
-            clearSession();
+            if (activeSession) clearSession();
           }}
           onCreate={handleCreateThread}
           onDelete={handleDeleteThread}
