@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Square, Wrench } from "lucide-react";
 import { wsClient } from "../../lib/ws-client";
 import { useRequest, useMutation } from "../../hooks/useRequest";
@@ -27,13 +27,14 @@ interface Message {
 }
 
 export function ResearchView() {
-  const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
   const {
+    activeThreadId,
     activeSession,
     liveToolCalls,
     pendingPermissions,
     completedAt,
     contextCompactedAt,
+    setActiveThreadId,
     setActiveSession,
     clearSession,
     resolvePermission,
@@ -200,8 +201,8 @@ export function ResearchView() {
           threads={threads ?? []}
           activeThreadId={activeThreadId}
           onSelect={(id) => {
+            if (id !== activeThreadId && activeSession) clearSession();
             setActiveThreadId(id);
-            if (activeSession) clearSession();
           }}
           onCreate={handleCreateThread}
           onDelete={handleDeleteThread}

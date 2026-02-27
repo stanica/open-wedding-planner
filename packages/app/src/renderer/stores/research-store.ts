@@ -11,12 +11,14 @@ interface PendingPermission {
 }
 
 interface ResearchStore {
+  activeThreadId: number | null;
   activeSession: string | null;
   liveToolCalls: Array<{ toolName: string; detail: string }>;
   pendingPermissions: PendingPermission[];
   completedAt: number | null;
   contextCompactedAt: number | null;
 
+  setActiveThreadId: (id: number | null) => void;
   setActiveSession: (key: string | null) => void;
   clearSession: () => void;
   resolvePermission: (requestId: string, decision: string) => void;
@@ -28,11 +30,14 @@ type PermissionEventData = Extract<GatewayEvent, { name: "research.permissionReq
 let bufferedPermissions: Array<{ sessionKey: string; data: PermissionEventData }> = [];
 
 export const useResearchStore = create<ResearchStore>((set) => ({
+  activeThreadId: null,
   activeSession: null,
   liveToolCalls: [],
   pendingPermissions: [],
   completedAt: null,
   contextCompactedAt: null,
+
+  setActiveThreadId: (id) => set({ activeThreadId: id }),
 
   setActiveSession: (key) => {
     if (key) {
