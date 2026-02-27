@@ -15,6 +15,7 @@ interface ResearchStore {
   liveToolCalls: Array<{ toolName: string; detail: string }>;
   pendingPermissions: PendingPermission[];
   completedAt: number | null;
+  contextCompactedAt: number | null;
 
   setActiveSession: (key: string | null) => void;
   clearSession: () => void;
@@ -31,6 +32,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
   liveToolCalls: [],
   pendingPermissions: [],
   completedAt: null,
+  contextCompactedAt: null,
 
   setActiveSession: (key) => {
     if (key) {
@@ -90,6 +92,10 @@ wsClient.onEvent((event: GatewayEvent) => {
 
   if (event.name === "agent-complete" && activeSession) {
     useResearchStore.getState().clearSession();
+  }
+
+  if (event.name === "context-compacted") {
+    useResearchStore.setState({ contextCompactedAt: Date.now() });
   }
 
   if (event.name === "research.permissionRequest") {

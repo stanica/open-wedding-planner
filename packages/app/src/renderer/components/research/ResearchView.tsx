@@ -33,6 +33,7 @@ export function ResearchView() {
     liveToolCalls,
     pendingPermissions,
     completedAt,
+    contextCompactedAt,
     setActiveSession,
     clearSession,
     resolvePermission,
@@ -85,6 +86,15 @@ export function ResearchView() {
     }
   }, [completedAt, refetchMessages, refetchThreads]);
 
+  // Refetch messages when context is compacted
+  const compactedAtSeen = useRef<number | null>(null);
+  useEffect(() => {
+    if (contextCompactedAt && contextCompactedAt !== compactedAtSeen.current) {
+      compactedAtSeen.current = contextCompactedAt;
+      refetchMessages();
+    }
+  }, [contextCompactedAt, refetchMessages]);
+
   // Handlers
   async function handleCreateThread() {
     const thread = await createThread({ title: "New research" });
@@ -126,7 +136,7 @@ export function ResearchView() {
     }
 
     const agentMessages = history.map((m) => ({
-      role: m.role as "user" | "assistant",
+      role: m.role as "user" | "assistant" | "system",
       content: m.content,
     }));
 
@@ -204,15 +214,31 @@ export function ResearchView() {
         <div className="flex-1 overflow-y-auto px-6">
           {activeThreadId && messages ? (
             <>
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  role={msg.role as "user" | "assistant"}
-                  content={msg.content}
-                  toolCalls={getToolCallsForMessage(msg)}
-                  vendors={getVendorsForMessage(msg)}
-                />
-              ))}
+              {messages.map((msg) =>
+                msg.role === "system" ? (
+                  <div
+                    key={msg.id}
+                    className="my-4 flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3"
+                  >
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-amber-400">
+                        Conversation compacted
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        Earlier messages were summarized to stay within the context window. Scroll up to see the full history.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role as "user" | "assistant"}
+                    content={msg.content}
+                    toolCalls={getToolCallsForMessage(msg)}
+                    vendors={getVendorsForMessage(msg)}
+                  />
+                ),
+              )}
 
               {/* Live agent activity */}
               {(researching || activeSession) && (
