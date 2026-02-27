@@ -10,7 +10,7 @@ import { Router } from "./infra/router.js";
 import { registerAllHandlers } from "./handlers/index.js";
 import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
-import { getDbPath, getDataDir, getDeliveryQueueDir } from "./config/paths.js";
+import { getDbPath, getDataDir, getDeliveryQueueDir, getImagesDir } from "./config/paths.js";
 import { GogManager } from "./infra/gog-manager.js";
 import { WhatsAppChannel } from "./channels/whatsapp.js";
 import { DeliveryQueue } from "./infra/delivery-queue.js";
@@ -62,12 +62,13 @@ export async function startGateway(options: GatewayOptions = {}) {
   const proxyManager = new ProxyManager();
   const deliveryQueue = new DeliveryQueue(getDeliveryQueueDir());
   deliveryQueue.recover();
+  const imagesDir = getImagesDir();
 
   // 5b. Create gog manager
   const gogBinDir = path.join(getDataDir(), "bin");
   const gogManager = new GogManager(gogBinDir);
 
-  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager);
+  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager, imagesDir);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
@@ -82,7 +83,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   }
 
   // 7. Start WebSocket server
-  const wsServer = await createWsServer({ port, getState, router, db });
+  const wsServer = await createWsServer({ port, getState, router, db, imagesDir });
 
   // 7b. WhatsApp channel + delivery queue
   const whatsapp = new WhatsAppChannel(
