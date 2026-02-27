@@ -196,6 +196,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   const heartbeat = new HeartbeatScheduler(
     orchestrator,
     (event) => wsServer.broadcast(event),
+    db,
   );
   heartbeat.start();
   deliveryQueue.startProcessing(5000);
