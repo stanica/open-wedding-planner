@@ -3,24 +3,42 @@ import type { GogManager } from "../infra/gog-manager.js";
 import { googleConfig } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { createServer, type Server } from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import { getDataDir } from "../config/paths.js";
 
 export function registerGoogleAuthHandlers(router: Router, gogManager: GogManager) {
-  // Save credentials file path and run gog auth credentials
+  // Save credentials — accepts either a file path or raw JSON content
   router.register("google.set-credentials", async (db, params) => {
-    const { credentialsPath } = params as { credentialsPath: string };
+    const { credentialsPath, credentialsJson } = params as {
+      credentialsPath?: string;
+      credentialsJson?: string;
+    };
+
+    let filePath = credentialsPath;
+
+    // If raw JSON was pasted, write it to a file
+    if (credentialsJson) {
+      // Validate it's valid JSON
+      JSON.parse(credentialsJson);
+      filePath = path.join(getDataDir(), "google-credentials.json");
+      fs.writeFileSync(filePath, credentialsJson, "utf-8");
+    }
+
+    if (!filePath) throw new Error("Provide either credentialsPath or credentialsJson");
 
     // Run gog auth credentials to register the OAuth client
-    await gogManager.exec(["auth", "credentials", credentialsPath]);
+    await gogManager.exec(["auth", "credentials", filePath]);
 
     // Upsert config
     const [existing] = await db.select().from(googleConfig).limit(1);
     if (existing) {
       await db
         .update(googleConfig)
-        .set({ credentialsPath })
+        .set({ credentialsPath: filePath })
         .where(eq(googleConfig.id, existing.id));
     } else {
-      await db.insert(googleConfig).values({ credentialsPath });
+      await db.insert(googleConfig).values({ credentialsPath: filePath });
     }
 
     return { ok: true };

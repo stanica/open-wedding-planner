@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { StatusIndicator } from "./IntegrationStatus";
-import { Mail, Upload } from "lucide-react";
+import { Mail, Upload, ClipboardPaste } from "lucide-react";
 
 interface GoogleStatus {
   connected: boolean;
@@ -28,6 +28,8 @@ export function GoogleServicesSetup() {
   const [email, setEmail] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>(["gmail"]);
   const [step, setStep] = useState<"credentials" | "services" | "ready">("credentials");
+  const [pasteMode, setPasteMode] = useState(false);
+  const [pastedJson, setPastedJson] = useState("");
 
   useEffect(() => {
     if (status?.hasCredentials && !status.connected) {
@@ -45,6 +47,12 @@ export function GoogleServicesSetup() {
     if (result.canceled || !result.filePaths[0]) return;
 
     await setCredentials({ credentialsPath: result.filePaths[0] });
+    refetch();
+  }
+
+  async function handlePasteCredentials() {
+    if (!pastedJson.trim()) return;
+    await setCredentials({ credentialsJson: pastedJson.trim() });
     refetch();
   }
 
@@ -89,11 +97,11 @@ export function GoogleServicesSetup() {
         <StatusIndicator status={isConnected ? "connected" : "disconnected"} />
       </div>
 
-      {/* Step 1: Upload credentials */}
+      {/* Step 1: Upload or paste credentials */}
       {step === "credentials" && (
         <div className="space-y-3">
           <p className="text-xs text-gray-400">
-            First, upload your Google Cloud OAuth credentials (client_secret.json).
+            First, provide your Google Cloud OAuth credentials (client_secret.json).
             You can create one at{" "}
             <button
               onClick={() =>
@@ -105,14 +113,50 @@ export function GoogleServicesSetup() {
             </button>
             .
           </p>
-          <button
-            onClick={handleCredentialsFile}
-            disabled={settingCreds}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            <Upload className="h-4 w-4" />
-            {settingCreds ? "Saving..." : "Upload client_secret.json"}
-          </button>
+          {pasteMode ? (
+            <div className="space-y-2">
+              <textarea
+                value={pastedJson}
+                onChange={(e) => setPastedJson(e.target.value)}
+                placeholder='Paste your client_secret JSON here...'
+                rows={6}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePasteCredentials}
+                  disabled={settingCreds || !pastedJson.trim()}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {settingCreds ? "Saving..." : "Save Credentials"}
+                </button>
+                <button
+                  onClick={() => setPasteMode(false)}
+                  className="rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-400 hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCredentialsFile}
+                disabled={settingCreds}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                {settingCreds ? "Saving..." : "Upload File"}
+              </button>
+              <button
+                onClick={() => setPasteMode(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+              >
+                <ClipboardPaste className="h-4 w-4" />
+                Paste JSON
+              </button>
+            </div>
+          )}
         </div>
       )}
 
