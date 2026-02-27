@@ -11,6 +11,10 @@ interface GoogleStatus {
   hasCredentials: boolean;
 }
 
+interface WeddingConfig {
+  coupleEmail?: string;
+}
+
 const AVAILABLE_SERVICES = [
   { id: "gmail", label: "Gmail", description: "Send and receive emails" },
   { id: "calendar", label: "Calendar", description: "Manage calendar events" },
@@ -18,8 +22,18 @@ const AVAILABLE_SERVICES = [
   { id: "drive", label: "Drive", description: "Access Google Drive files" },
 ];
 
+function openExternal(url: string) {
+  try {
+    window.electronAPI?.openExternal(url);
+  } catch {
+    // Fallback: open in current window if electronAPI unavailable
+    window.open(url, "_blank");
+  }
+}
+
 export function GoogleServicesSetup() {
   const { data: status, refetch } = useRequest<GoogleStatus>("google.status");
+  const { data: weddingConfig } = useRequest<WeddingConfig>("wedding-config.get");
   const { mutate: setCredentials, loading: settingCreds } = useMutation("google.set-credentials");
   const { mutate: connect, loading: connecting } = useMutation("google.connect");
   const { mutate: disconnect } = useMutation("google.disconnect");
@@ -33,6 +47,13 @@ export function GoogleServicesSetup() {
   const [credError, setCredError] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
 
+  // Auto-fill email from wedding config
+  useEffect(() => {
+    if (weddingConfig?.coupleEmail && !email) {
+      setEmail(weddingConfig.coupleEmail);
+    }
+  }, [weddingConfig]);
+
   useEffect(() => {
     if (status?.hasCredentials && !status.connected) {
       setStep("services");
@@ -43,13 +64,13 @@ export function GoogleServicesSetup() {
 
   async function handleCredentialsFile() {
     setCredError(null);
-    const result = await window.electronAPI.showOpenDialog({
-      filters: [{ name: "JSON", extensions: ["json"] }],
-      properties: ["openFile"],
-    });
-    if (result.canceled || !result.filePaths[0]) return;
-
     try {
+      const result = await window.electronAPI?.showOpenDialog({
+        filters: [{ name: "JSON", extensions: ["json"] }],
+        properties: ["openFile"],
+      });
+      if (!result || result.canceled || !result.filePaths[0]) return;
+
       await setCredentials({ credentialsPath: result.filePaths[0] });
       refetch();
     } catch (err) {
@@ -61,7 +82,6 @@ export function GoogleServicesSetup() {
     if (!pastedJson.trim()) return;
     setCredError(null);
 
-    // Validate JSON client-side first
     try {
       JSON.parse(pastedJson.trim());
     } catch {
@@ -83,13 +103,9 @@ export function GoogleServicesSetup() {
     try {
       const result = await connect({ email, services: selectedServices });
       if (result?.authUrl) {
-        window.electronAPI?.openExternal(result.authUrl);
-        // Poll for connection status
+        openExternal(result.authUrl);
         const interval = setInterval(async () => {
-          const updated = await refetch();
-          if (updated?.connected) {
-            clearInterval(interval);
-          }
+          refetch();
         }, 2000);
         setTimeout(() => clearInterval(interval), 5 * 60 * 1000);
       }
@@ -130,9 +146,7 @@ export function GoogleServicesSetup() {
             First, provide your Google Cloud OAuth credentials (client_secret.json).
             You can create one at{" "}
             <button
-              onClick={() =>
-                window.electronAPI.openExternal("https://console.cloud.google.com/apis/credentials")
-              }
+              onClick={() => openExternal("https://console.cloud.google.com/apis/credentials")}
               className="text-blue-400 hover:underline"
             >
               Google Cloud Console
