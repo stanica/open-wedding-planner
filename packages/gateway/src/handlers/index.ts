@@ -6,6 +6,7 @@ import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
 import { registerVendorAttributeHandlers } from "./vendor-attributes.js";
+import { registerVendorImageHandlers } from "./vendor-images.js";
 import { registerQuoteHandlers } from "./quotes.js";
 import { registerBudgetHandlers } from "./budget.js";
 import { registerTaskHandlers } from "./tasks.js";
@@ -20,17 +21,20 @@ import { registerResearchThreadHandlers } from "./research-threads.js";
 import { registerGoogleAuthHandlers } from "./google-auth.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
+import { getImagesDir } from "../config/paths.js";
 
 export function registerAllHandlers(
   router: Router,
   proxyManager: ProxyManager,
   deliveryQueue?: DeliveryQueue,
   gogManager?: GogManager,
+  imagesDir?: string,
 ) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
   registerVendorHandlers(router);
   registerVendorAttributeHandlers(router);
+  registerVendorImageHandlers(router, imagesDir ?? getImagesDir());
   registerQuoteHandlers(router);
   registerBudgetHandlers(router);
   registerTaskHandlers(router);

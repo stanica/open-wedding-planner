@@ -1,7 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import {
   vendors,
   vendorAttributes,
+  vendorImages,
   quotes,
   quoteLineItems,
   communications,
@@ -10,6 +13,7 @@ import {
   tasks,
   agentTasks,
 } from "../db/schema.js";
+import { getImagesDir } from "../config/paths.js";
 import type { Router, Db } from "../infra/router.js";
 
 export function registerVendorHandlers(router: Router) {
@@ -61,6 +65,12 @@ export function registerVendorHandlers(router: Router) {
       .where(eq(quotes.vendorId, id));
     const quoteIds = vendorQuotes.map((q) => q.id);
 
+    // Clean up image files from disk
+    const imagesPath = path.join(getImagesDir(), String(id));
+    if (fs.existsSync(imagesPath)) {
+      fs.rmSync(imagesPath, { recursive: true, force: true });
+    }
+
     // Delete in dependency order within a transaction
     // Note: better-sqlite3 transactions are synchronous — no async/await inside
     db.transaction((tx) => {
@@ -70,6 +80,8 @@ export function registerVendorHandlers(router: Router) {
       }
       // Delete quotes
       tx.delete(quotes).where(eq(quotes.vendorId, id)).run();
+      // Delete vendor images
+      tx.delete(vendorImages).where(eq(vendorImages.vendorId, id)).run();
       // Delete vendor attributes
       tx.delete(vendorAttributes).where(eq(vendorAttributes.vendorId, id)).run();
       // Delete communications
