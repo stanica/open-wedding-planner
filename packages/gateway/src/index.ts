@@ -30,7 +30,8 @@ import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
 } from "@wedding-planner/shared";
-import type { GatewayStateSnapshot } from "@wedding-planner/shared";
+import type { GatewayEvent, GatewayStateSnapshot } from "@wedding-planner/shared";
+import { handleWhatsAppCommand } from "./channels/whatsapp-commands.js";
 
 export interface GatewayOptions {
   port?: number;
@@ -125,6 +126,8 @@ export async function startGateway(options: GatewayOptions = {}) {
     });
   }
 
+  let whatsappActiveThreadId: number | null = savedAiConfig?.whatsappActiveThreadId ?? null;
+
   if (savedAiConfig?.provider === "claude-max") {
     try {
       await proxyManager.start();
@@ -172,9 +175,92 @@ export async function startGateway(options: GatewayOptions = {}) {
   orchestrator.registerAgent(heartbeatAgent);
   registerAgentHandlers(router, orchestrator);
 
+  async function getOrCreateWhatsAppThread(): Promise<number> {
+    if (whatsappActiveThreadId) {
+      // Verify thread still exists
+      const [thread] = await db
+        .select()
+        .from(schema.researchThreads)
+        .where(eq(schema.researchThreads.id, whatsappActiveThreadId));
+      if (thread) return whatsappActiveThreadId;
+    }
+
+    // Create new thread
+    const [thread] = await db
+      .insert(schema.researchThreads)
+      .values({ title: "WhatsApp" })
+      .returning();
+    whatsappActiveThreadId = thread.id;
+    await db
+      .update(schema.aiConfig)
+      .set({ whatsappActiveThreadId: thread.id });
+    return thread.id;
+  }
+
+  async function setWhatsAppActiveThread(id: number): Promise<void> {
+    whatsappActiveThreadId = id;
+    await db
+      .update(schema.aiConfig)
+      .set({ whatsappActiveThreadId: id });
+  }
+
   // 8c. Register incoming WhatsApp message handler
-  whatsapp.onIncoming(async ({ from, body, messageId }) => {
-    // Match phone to vendor
+  whatsapp.onIncoming(async ({ from, body, messageId, selfChat }) => {
+    if (selfChat) {
+      // --- Self-chat: route to research agent ---
+      const userJid = whatsapp.getUserJid();
+      if (!userJid) return;
+
+      // Check commands first
+      const cmdResult = await handleWhatsAppCommand(body, {
+        db,
+        sqlite,
+        reply: (text: string) => whatsapp.send(userJid, text),
+        getActiveThreadId: () => whatsappActiveThreadId,
+        setActiveThreadId: setWhatsAppActiveThread,
+        getQueueStatus: () => {
+          const status = orchestrator.getQueueStatus();
+          const running = Object.values(status).reduce((sum, s) => sum + s.active, 0);
+          const pending = Object.values(status).reduce((sum, s) => sum + s.queued, 0);
+          return { running, pending };
+        },
+      });
+      if (cmdResult.handled) return;
+
+      // Get or create active thread
+      const threadId = await getOrCreateWhatsAppThread();
+
+      // Save user message to thread
+      await db.insert(schema.researchMessages).values({
+        threadId,
+        role: "user",
+        content: body,
+      });
+
+      // Load full message history
+      const history = await db
+        .select()
+        .from(schema.researchMessages)
+        .where(eq(schema.researchMessages.threadId, threadId))
+        .orderBy(schema.researchMessages.createdAt)
+        .all();
+
+      const agentMessages = history.map((m) => ({
+        role: m.role as "user" | "assistant" | "system",
+        content: m.content,
+      }));
+
+      // Dispatch via router — returns { queued: true } if agent already running on this thread
+      const result = await router.handle(db, "agent.research", { threadId, messages: agentMessages }) as any;
+
+      if (result && !result.queued && result.sessionKey) {
+        whatsapp.sendTyping(userJid);
+      }
+
+      return;
+    }
+
+    // --- Vendor message: existing behavior ---
     const matchedVendors = await db
       .select()
       .from(schema.vendors)
@@ -190,7 +276,6 @@ export async function startGateway(options: GatewayOptions = {}) {
       },
     });
 
-    // Only create communication record if vendor matched (FK constraint)
     if (vendor) {
       const [comm] = await db
         .insert(schema.communications)
@@ -204,7 +289,6 @@ export async function startGateway(options: GatewayOptions = {}) {
         })
         .returning();
 
-      // Auto-dispatch parser agent
       orchestrator.dispatch("parse", {
         communicationId: comm.id,
         vendorId: vendor.id,
@@ -213,6 +297,63 @@ export async function startGateway(options: GatewayOptions = {}) {
       });
     }
   });
+
+  // Intercept broadcasts to deliver research responses via WhatsApp
+  const origBroadcastFn = wsServer.broadcast.bind(wsServer);
+  wsServer.broadcast = (event: GatewayEvent) => {
+    origBroadcastFn(event);
+
+    // Send agent response to WhatsApp when research completes on active thread
+    if (event.name === "research.messageComplete") {
+      const { threadId } = event.data as { threadId: number };
+      if (threadId === whatsappActiveThreadId) {
+        const userJid = whatsapp.getUserJid();
+        if (!userJid) return;
+
+        const messages = db.select()
+          .from(schema.researchMessages)
+          .where(eq(schema.researchMessages.threadId, threadId))
+          .orderBy(schema.researchMessages.createdAt)
+          .all();
+
+        const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+        if (!lastAssistant) return;
+
+        const text = lastAssistant.content;
+        const chunks: string[] = [];
+        for (let i = 0; i < text.length; i += 4000) {
+          chunks.push(text.slice(i, i + 4000));
+        }
+        chunks.reduce(
+          (p, chunk) => p.then(() => whatsapp.send(userJid, chunk)),
+          Promise.resolve(),
+        ).then(() => whatsapp.stopTyping(userJid));
+      }
+    }
+
+    // Refresh typing indicator on tool calls (WhatsApp expires composing after ~25s)
+    if (event.name === "agent-activity") {
+      const data = event.data as { sessionKey: string; action: string };
+      if (data.sessionKey.startsWith("research-") && data.action === "tool-call") {
+        const userJid = whatsapp.getUserJid();
+        if (userJid && whatsappActiveThreadId) {
+          whatsapp.sendTyping(userJid);
+        }
+      }
+    }
+
+    // Send error message to WhatsApp
+    if (event.name === "agent-activity") {
+      const data = event.data as { sessionKey: string; action: string };
+      if (data.action === "error" && whatsappActiveThreadId) {
+        const userJid = whatsapp.getUserJid();
+        if (userJid) {
+          whatsapp.send(userJid, "Something went wrong, try again.")
+            .then(() => whatsapp.stopTyping(userJid));
+        }
+      }
+    }
+  };
 
   router.register("tools.list", async () => {
     return toolRegistry.listAll();
