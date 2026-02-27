@@ -1,4 +1,5 @@
 import type { TaskConfig } from "./base-agent.js";
+import { createPlaywrightTools } from "../tools/playwright-tools.js";
 
 const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job is to find and document wedding vendors matching the user's queries.
 
@@ -9,6 +10,7 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 4. Create vendor records for each viable option found
 
 ## Guidelines
+- Use dbQuery to fetch the user's wedding information from the wedding_config table
 - Extract real contact information when available (email, phone, website)
 - Write clear descriptions summarizing what the vendor offers
 - Pick the most appropriate category for each vendor
@@ -60,6 +62,47 @@ const TRANSLATION_PROMPT = `You are a professional translator for wedding planni
 Translate the provided text accurately. Only output the translated text, nothing else.
 If you need to process or format the text, you can use the cmd tool.`;
 
+const BROWSER_PROMPT = `You are a browser research agent. You have full control of a headless browser and can navigate websites to extract information about wedding vendors.
+
+## Your URL
+You have been given a starting URL. Begin by using extractText or screenshot to understand the page, then navigate as needed.
+
+## Available Browser Actions
+- navigate(url) — go to a new page
+- click(selector) — click buttons, links, tabs (supports CSS selectors and text selectors like 'text=Pricing')
+- type(selector, text) — fill form fields
+- screenshot() — take a screenshot to see the page visually
+- extractText(selector?) — get text from the page or a specific element
+- extractLinks() — get all links on the page
+- extractImages() — get all image URLs on the page
+- scroll(direction) — scroll up or down to see more content
+- waitForSelector(selector) — wait for an element to appear
+- evaluate(script) — run JavaScript in the page
+
+## Data Tools
+- addVendorImages — save images to a vendor's gallery
+- createVendor — create a new vendor record
+- dbQuery / dbSchema — read or update the database directly
+- parsePdf — if you find a PDF link (menu, brochure, price list), download and extract its text
+
+## Process
+1. Start by extracting text or taking a screenshot to understand the page
+2. Look for navigation links to key sections: pricing, gallery, menus, packages, contact
+3. Navigate to each relevant section and extract information
+4. Save images via addVendorImages with descriptive captions
+5. If you find PDF links, use parsePdf to extract their contents
+6. Update vendor records via dbQuery with any pricing, contact, or service details found
+7. Return a summary of everything you found
+
+## Guidelines
+- Always check extractLinks() first to understand the site structure
+- Use screenshot() when the page layout is unclear or content seems missing
+- If a page is very long, use scroll() to see more content
+- When saving images, write descriptive captions (e.g. "Outdoor ceremony area overlooking the sea")
+- Extract specific pricing whenever possible — it's the #1 thing users care about
+- Look for: pricing/packages, gallery/photos, menus, contact info, capacity, availability
+- If a page requires interaction (tabs, accordions, popups), use click() to reveal hidden content`;
+
 export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
@@ -84,6 +127,24 @@ export const TASK_CONFIGS: TaskConfig[] = [
     systemPrompt: TRANSLATION_PROMPT,
     tools: ["cmd"],
     maxSteps: 3,
+  },
+  {
+    name: "browser",
+    systemPrompt: BROWSER_PROMPT,
+    tools: ["parsePdf", "addVendorImages", "dbQuery", "dbSchema", "createVendor"],
+    maxSteps: 20,
+    setup: async (_toolCtx: unknown) => {
+      const { chromium } = await import("playwright");
+      const browser = await chromium.launch({ headless: true });
+      const page = await browser.newPage();
+      const extraTools = createPlaywrightTools(page);
+      return {
+        extraTools,
+        cleanup: async () => {
+          await browser.close();
+        },
+      };
+    },
   },
 ];
 
