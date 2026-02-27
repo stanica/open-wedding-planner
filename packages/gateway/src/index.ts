@@ -156,19 +156,6 @@ export async function startGateway(options: GatewayOptions = {}) {
       .where(eq(schema.vendors.contactWhatsapp, from));
     const vendor = matchedVendors[0] ?? null;
 
-    // Create communication record
-    const [comm] = await db
-      .insert(schema.communications)
-      .values({
-        vendorId: vendor?.id ?? 0,
-        direction: "in",
-        channel: "whatsapp",
-        bodyOriginal: body,
-        status: "received",
-        threadId: messageId,
-      })
-      .returning();
-
     wsServer.broadcast({
       name: "agent-activity",
       data: {
@@ -178,8 +165,21 @@ export async function startGateway(options: GatewayOptions = {}) {
       },
     });
 
-    // Auto-dispatch parser agent if vendor matched
+    // Only create communication record if vendor matched (FK constraint)
     if (vendor) {
+      const [comm] = await db
+        .insert(schema.communications)
+        .values({
+          vendorId: vendor.id,
+          direction: "in",
+          channel: "whatsapp",
+          bodyOriginal: body,
+          status: "received",
+          threadId: messageId,
+        })
+        .returning();
+
+      // Auto-dispatch parser agent
       orchestrator.dispatch("parse", {
         communicationId: comm.id,
         vendorId: vendor.id,
