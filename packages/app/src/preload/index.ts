@@ -1,6 +1,7 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, shell } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  openExternal: (url: string): Promise<void> => shell.openExternal(url),
   getGatewayPort: (): Promise<number> => ipcRenderer.invoke("get-gateway-port"),
   onGatewayLog: (
     callback: (log: { level: "stdout" | "stderr"; line: string; timestamp: number }) => void,
@@ -13,4 +14,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getGatewayLogBuffer: (): Promise<
     Array<{ level: "stdout" | "stderr"; line: string; timestamp: number }>
   > => ipcRenderer.invoke("get-gateway-log-buffer"),
+  showOpenDialog: (options: { filters?: Array<{ name: string; extensions: string[] }>; properties?: string[] }) =>
+    ipcRenderer.invoke("dialog:showOpenDialog", options),
 });

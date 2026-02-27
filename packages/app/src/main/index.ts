@@ -1,5 +1,5 @@
 import path from "node:path";
-import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, ipcMain, globalShortcut, dialog } from "electron";
 import { spawnGateway, stopGateway, getLogBuffer, setDebugWindow } from "./gateway-manager";
 import { createTray, destroyTray } from "./tray";
 
@@ -48,6 +48,9 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("get-gateway-port", () => gatewayPort);
   ipcMain.handle("get-gateway-log-buffer", () => getLogBuffer());
+  ipcMain.handle("dialog:showOpenDialog", async (_, options) => {
+    return dialog.showOpenDialog(options);
+  });
 
   mainWindow = new BrowserWindow({
     width: 1200,

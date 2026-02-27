@@ -2,18 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import { wsClient } from "../../lib/ws-client";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { WhatsAppSetup } from "./WhatsAppSetup";
-import { GmailSetup } from "./GmailSetup";
+import { GoogleServicesSetup } from "./GoogleServicesSetup";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
 interface ChannelStatuses {
   whatsapp: "disconnected" | "connecting" | "connected";
-  gmail: "disconnected" | "connected";
 }
 
 export function IntegrationStatus() {
   const [statuses, setStatuses] = useState<ChannelStatuses>({
     whatsapp: "disconnected",
-    gmail: "disconnected",
   });
   const [whatsappQr, setWhatsappQr] = useState<string | null>(null);
 
@@ -63,25 +61,7 @@ export function IntegrationStatus() {
           autoSend={autoSend}
           onAutoSendChange={handleAutoSendChange}
         />
-        <GmailSetup status={statuses.gmail} />
-
-        {/* Calendar — no setup needed beyond Gmail OAuth */}
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-white">Google Calendar</p>
-            <p className="text-xs text-gray-400">
-              Sync wedding timeline events
-            </p>
-          </div>
-          <StatusIndicator
-            status={statuses.gmail === "connected" ? "connected" : "disconnected"}
-            label={
-              statuses.gmail === "connected"
-                ? "Available via Gmail"
-                : "Connect Gmail first"
-            }
-          />
-        </div>
+        <GoogleServicesSetup />
       </div>
     </div>
   );
