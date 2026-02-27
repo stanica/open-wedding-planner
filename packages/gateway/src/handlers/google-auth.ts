@@ -19,10 +19,24 @@ export function registerGoogleAuthHandlers(router: Router, gogManager: GogManage
 
     // If raw JSON was pasted, write it to a file
     if (credentialsJson) {
-      // Validate it's valid JSON
-      JSON.parse(credentialsJson);
+      let parsed = JSON.parse(credentialsJson);
+
+      // If user pasted just { client_id, client_secret }, wrap in the format gog expects
+      if (parsed.client_id && parsed.client_secret && !parsed.installed && !parsed.web) {
+        parsed = {
+          installed: {
+            client_id: parsed.client_id,
+            client_secret: parsed.client_secret,
+            auth_uri: "https://accounts.google.com/o/oauth2/auth",
+            token_uri: "https://oauth2.googleapis.com/token",
+            auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+            redirect_uris: ["http://localhost"],
+          },
+        };
+      }
+
       filePath = path.join(getDataDir(), "google-credentials.json");
-      fs.writeFileSync(filePath, credentialsJson, "utf-8");
+      fs.writeFileSync(filePath, JSON.stringify(parsed, null, 2), "utf-8");
     }
 
     if (!filePath) throw new Error("Provide either credentialsPath or credentialsJson");
