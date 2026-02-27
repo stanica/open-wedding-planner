@@ -8,6 +8,9 @@ import { createDbQueryTool } from "./db-query.js";
 import { createDbSchemaTool } from "./db-schema.js";
 import { makeCreateVendorTool } from "./create-vendor.js";
 import { makeSendWhatsAppTool } from "./send-whatsapp.js";
+import { makeGogTool } from "./gog.js";
+import { tool } from "ai";
+import { z } from "zod";
 
 export function createToolRegistry(): ToolRegistry {
   const registry = new ToolRegistry();
@@ -88,6 +91,29 @@ export function createToolRegistry(): ToolRegistry {
           : () => {
               throw new Error("Delivery queue not available");
             },
+      });
+    },
+  });
+
+  registry.registerFactory("gog", {
+    description: "Run Google Workspace commands via gog CLI",
+    category: "messaging",
+    create: (ctx: unknown) => {
+      const { gogManager, googleAccountEmail, googleServices, getGoogleAutoSend, permissionCallbacks } =
+        ctx as any;
+      if (!gogManager || !googleAccountEmail) {
+        return tool({
+          description: "Google services are not connected. Ask the user to connect in Settings.",
+          inputSchema: z.object({}),
+          execute: async () => ({ error: "Google services not connected. The user needs to connect their Google account in Settings." }),
+        });
+      }
+      return makeGogTool({
+        gogManager,
+        accountEmail: googleAccountEmail,
+        services: googleServices ?? "gmail",
+        getAutoSend: getGoogleAutoSend ?? (() => false),
+        permissionCallbacks,
       });
     },
   });
