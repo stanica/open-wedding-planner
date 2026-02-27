@@ -3,11 +3,29 @@ import type { Orchestrator } from "../agents/orchestrator.js";
 
 export function registerAgentHandlers(router: Router, orchestrator: Orchestrator) {
   router.register("agent.research", async (_db, params) => {
-    const { threadId, messages } = params as { threadId: number; messages: unknown[] };
+    const { threadId, messages } = params as { threadId: number; messages: Array<{ role: string; content: string }> };
     if (!threadId || !messages) {
       throw new Error("threadId and messages are required");
     }
-    const { taskId, sessionKey } = await orchestrator.dispatch("research", { threadId, messages });
+
+    // Find the last compaction marker (role: "system") in the message list
+    let compactedMessages: unknown[];
+    const lastSystemIdx = messages.findLastIndex((m) => m.role === "system");
+    if (lastSystemIdx !== -1) {
+      // Use summary as first user message + all messages after the marker
+      const summary = messages[lastSystemIdx].content;
+      const postMarker = messages.slice(lastSystemIdx + 1)
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({ role: m.role, content: m.content }));
+      compactedMessages = [
+        { role: "user", content: `Previous conversation summary:\n\n${summary}` },
+        ...(postMarker.length > 0 ? postMarker : []),
+      ];
+    } else {
+      compactedMessages = messages;
+    }
+
+    const { taskId, sessionKey } = await orchestrator.dispatch("research", { threadId, messages: compactedMessages });
     return { taskId, sessionKey };
   });
 
