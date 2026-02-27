@@ -6,6 +6,7 @@ import {
   communications,
   agentTasks,
   weddingConfig,
+  heartbeatConfig,
 } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 
@@ -90,6 +91,83 @@ export function registerDashboardHandlers(router: Router) {
         completedAt: t.completedAt,
       })),
       unreadMessages: unreadRow?.count ?? 0,
+    };
+  });
+
+  router.register("dashboard.heartbeat-activity", async (db: Db, params: unknown) => {
+    const { since } = (params as { since?: string } | undefined) ?? {};
+
+    // Default to last 24 hours if no timestamp provided
+    const sinceDate = since ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    // Get heartbeat-research tasks since the given time
+    const tasks = await db
+      .select()
+      .from(agentTasks)
+      .where(sql`${agentTasks.type} = 'heartbeat-research' AND ${agentTasks.completedAt} > ${sinceDate}`)
+      .orderBy(sql`${agentTasks.completedAt} desc`);
+
+    // Get vendors created since the given time
+    const newVendors = await db
+      .select({
+        id: vendors.id,
+        name: vendors.name,
+        categoryName: categories.name,
+        status: vendors.status,
+        createdAt: vendors.createdAt,
+      })
+      .from(vendors)
+      .leftJoin(categories, sql`${vendors.categoryId} = ${categories.id}`)
+      .where(sql`${vendors.createdAt} > ${sinceDate}`)
+      .orderBy(sql`${vendors.createdAt} desc`);
+
+    // Get draft communications (awaiting review)
+    const drafts = await db
+      .select({
+        id: communications.id,
+        vendorId: communications.vendorId,
+        vendorName: vendors.name,
+        channel: communications.channel,
+        subject: communications.subject,
+        bodyOriginal: communications.bodyOriginal,
+        status: communications.status,
+      })
+      .from(communications)
+      .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
+      .where(sql`${communications.direction} = 'out' AND ${communications.status} = 'draft'`)
+      .orderBy(sql`${communications.id} desc`);
+
+    // Get sent communications since the given time
+    const sent = await db
+      .select({
+        id: communications.id,
+        vendorId: communications.vendorId,
+        vendorName: vendors.name,
+        channel: communications.channel,
+        subject: communications.subject,
+        sentAt: communications.sentAt,
+      })
+      .from(communications)
+      .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
+      .where(sql`${communications.direction} = 'out' AND ${communications.status} = 'sent' AND ${communications.sentAt} > ${sinceDate}`)
+      .orderBy(sql`${communications.sentAt} desc`);
+
+    // Get heartbeat config for display
+    const [config] = await db.select().from(heartbeatConfig).limit(1);
+
+    return {
+      tasks: tasks.map((t) => ({
+        id: t.id,
+        status: t.status,
+        summary: t.output ? JSON.parse(t.output).summary ?? null : null,
+        createdAt: t.createdAt,
+        completedAt: t.completedAt,
+      })),
+      newVendors,
+      drafts,
+      sent,
+      heartbeatEnabled: !!config?.enabled,
+      lastRunAt: config?.lastRunAt ?? null,
     };
   });
 }
