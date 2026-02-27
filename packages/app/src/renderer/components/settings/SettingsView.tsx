@@ -4,6 +4,7 @@ import { AIProviderSetup } from "./AIProviderSetup";
 import { SearchConfig } from "./SearchConfig";
 import { HeartbeatSettings } from "./HeartbeatSettings";
 import { ToolPermissions } from "./ToolPermissions";
+import { DataManagement } from "./DataManagement";
 
 export function SettingsView() {
   return (
@@ -20,6 +21,8 @@ export function SettingsView() {
       <ToolPermissions />
       <hr className="border-white/10" />
       <IntegrationStatus />
+      <hr className="border-white/10" />
+      <DataManagement />
     </div>
   );
 }
