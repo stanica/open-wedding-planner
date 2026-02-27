@@ -238,3 +238,11 @@ export const heartbeatConfig = sqliteTable("heartbeat_config", {
   intervalMinutes: integer("interval_minutes").notNull().default(30),
   lastRunAt: text("last_run_at"),
 });
+
+export const googleConfig = sqliteTable("google_config", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  accountEmail: text("account_email"),
+  services: text("services").default("gmail").notNull(),
+  credentialsPath: text("credentials_path"),
+  autoSend: integer("auto_send").notNull().default(0),
+});
