@@ -107,50 +107,83 @@ export function registerDashboardHandlers(router: Router) {
       .where(sql`${agentTasks.type} = 'heartbeat-research' AND ${agentTasks.completedAt} > ${sinceDate}`)
       .orderBy(sql`${agentTasks.completedAt} desc`);
 
-    // Get vendors created since the given time
-    const newVendors = await db
-      .select({
-        id: vendors.id,
-        name: vendors.name,
-        categoryName: categories.name,
-        status: vendors.status,
-        createdAt: vendors.createdAt,
-      })
-      .from(vendors)
-      .leftJoin(categories, sql`${vendors.categoryId} = ${categories.id}`)
-      .where(sql`${vendors.createdAt} > ${sinceDate}`)
-      .orderBy(sql`${vendors.createdAt} desc`);
+    // Extract vendor IDs and communication IDs from heartbeat task outputs
+    const heartbeatVendorIds: number[] = [];
+    const heartbeatCommIds: number[] = [];
+    for (const task of tasks) {
+      if (!task.output) continue;
+      try {
+        const output = JSON.parse(task.output);
+        const data = output.data as { vendorIds?: number[]; toolCalls?: Array<{ toolName: string; result: unknown }> } | undefined;
+        if (data?.vendorIds) {
+          heartbeatVendorIds.push(...data.vendorIds);
+        }
+        if (data?.toolCalls) {
+          for (const tc of data.toolCalls) {
+            if (tc.toolName === "sendWhatsApp" && tc.result && typeof tc.result === "object") {
+              const r = tc.result as { communicationId?: number };
+              if (r.communicationId) heartbeatCommIds.push(r.communicationId);
+            }
+          }
+        }
+      } catch {
+        // Ignore malformed output
+      }
+    }
 
-    // Get draft communications (awaiting review)
-    const drafts = await db
-      .select({
-        id: communications.id,
-        vendorId: communications.vendorId,
-        vendorName: vendors.name,
-        channel: communications.channel,
-        subject: communications.subject,
-        bodyOriginal: communications.bodyOriginal,
-        status: communications.status,
-      })
-      .from(communications)
-      .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
-      .where(sql`${communications.direction} = 'out' AND ${communications.status} = 'draft'`)
-      .orderBy(sql`${communications.id} desc`);
+    // Get vendors created by heartbeat-research
+    let newVendors: Array<{ id: number; name: string; categoryName: string | null; status: string; createdAt: string }> = [];
+    if (heartbeatVendorIds.length > 0) {
+      newVendors = await db
+        .select({
+          id: vendors.id,
+          name: vendors.name,
+          categoryName: categories.name,
+          status: vendors.status,
+          createdAt: vendors.createdAt,
+        })
+        .from(vendors)
+        .leftJoin(categories, sql`${vendors.categoryId} = ${categories.id}`)
+        .where(sql`${vendors.id} IN (${sql.join(heartbeatVendorIds.map(id => sql`${id}`), sql`, `)})`)
+        .orderBy(sql`${vendors.createdAt} desc`);
+    }
 
-    // Get sent communications since the given time
-    const sent = await db
-      .select({
-        id: communications.id,
-        vendorId: communications.vendorId,
-        vendorName: vendors.name,
-        channel: communications.channel,
-        subject: communications.subject,
-        sentAt: communications.sentAt,
-      })
-      .from(communications)
-      .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
-      .where(sql`${communications.direction} = 'out' AND ${communications.status} = 'sent' AND ${communications.sentAt} > ${sinceDate}`)
-      .orderBy(sql`${communications.sentAt} desc`);
+    // Get draft communications created by heartbeat-research
+    let drafts: Array<{ id: number; vendorId: number; vendorName: string | null; channel: string; subject: string | null; bodyOriginal: string; status: string }> = [];
+    if (heartbeatCommIds.length > 0) {
+      drafts = await db
+        .select({
+          id: communications.id,
+          vendorId: communications.vendorId,
+          vendorName: vendors.name,
+          channel: communications.channel,
+          subject: communications.subject,
+          bodyOriginal: communications.bodyOriginal,
+          status: communications.status,
+        })
+        .from(communications)
+        .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
+        .where(sql`${communications.id} IN (${sql.join(heartbeatCommIds.map(id => sql`${id}`), sql`, `)}) AND ${communications.status} = 'draft'`)
+        .orderBy(sql`${communications.id} desc`);
+    }
+
+    // Get sent communications created by heartbeat-research
+    let sent: Array<{ id: number; vendorId: number; vendorName: string | null; channel: string; subject: string | null; sentAt: string | null }> = [];
+    if (heartbeatCommIds.length > 0) {
+      sent = await db
+        .select({
+          id: communications.id,
+          vendorId: communications.vendorId,
+          vendorName: vendors.name,
+          channel: communications.channel,
+          subject: communications.subject,
+          sentAt: communications.sentAt,
+        })
+        .from(communications)
+        .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
+        .where(sql`${communications.id} IN (${sql.join(heartbeatCommIds.map(id => sql`${id}`), sql`, `)}) AND ${communications.status} = 'sent'`)
+        .orderBy(sql`${communications.sentAt} desc`);
+    }
 
     // Get heartbeat config for display
     const [config] = await db.select().from(heartbeatConfig).limit(1);
