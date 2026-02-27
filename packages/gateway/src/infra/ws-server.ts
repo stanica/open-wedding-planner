@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import fs from "node:fs";
+import path from "node:path";
 import { WebSocketServer, WebSocket } from "ws";
-import type { IncomingMessage } from "node:http";
 import type {
   ClientMessage,
   ServerMessage,
@@ -19,17 +21,70 @@ export interface WsServerOptions {
   getState: () => GatewayStateSnapshot;
   router?: Router;
   db?: Db;
+  imagesDir?: string;
 }
 
+const MIME_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".avif": "image/avif",
+};
+
 export async function createWsServer(options: WsServerOptions) {
-  const { port, getState, router, db } = options;
+  const { port, getState, router, db, imagesDir } = options;
   const clients = new Set<AuthenticatedClient>();
   let eventSeq = 0;
 
-  const wss = new WebSocketServer({ port });
+  const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+    // Only serve GET /images/:vendorId/:filename
+    if (req.method !== "GET" || !req.url) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    const match = req.url.match(/^\/images\/(\d+)\/([^/]+)$/);
+    if (!match || !imagesDir) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    const [, vendorId, filename] = match;
+    const filePath = path.join(imagesDir, vendorId, filename);
+
+    // Prevent path traversal
+    const resolvedPath = path.resolve(filePath);
+    const resolvedImagesDir = path.resolve(imagesDir);
+    if (!resolvedPath.startsWith(resolvedImagesDir)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    const ext = path.extname(filename).toLowerCase();
+    const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+
+    res.writeHead(200, {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=86400",
+    });
+    fs.createReadStream(filePath).pipe(res);
+  });
+
+  const wss = new WebSocketServer({ server: httpServer });
 
   await new Promise<void>((resolve) => {
-    wss.on("listening", resolve);
+    httpServer.listen(port, resolve);
   });
 
   wss.on("connection", (ws: WebSocket, _req: IncomingMessage) => {
@@ -125,7 +180,9 @@ export async function createWsServer(options: WsServerOptions) {
       client.ws.close(1000, "Server shutting down");
     }
     return new Promise((resolve, reject) => {
-      wss.close((err) => (err ? reject(err) : resolve()));
+      wss.close(() => {
+        httpServer.close((err) => (err ? reject(err) : resolve()));
+      });
     });
   }
 

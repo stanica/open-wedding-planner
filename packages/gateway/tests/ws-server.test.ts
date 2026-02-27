@@ -1,6 +1,10 @@
-import { describe, it, expect, afterEach } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { WebSocket } from "ws";
 import { startGateway } from "../src/index.js";
+import { createWsServer } from "../src/infra/ws-server.js";
 import type { ServerMessage, ClientMessage } from "@wedding-planner/shared";
 
 function createClient(port: number): {
@@ -130,5 +134,50 @@ describe("WebSocket server", () => {
     expect(response.error).toContain("foo.bar");
 
     client.ws.close();
+  });
+});
+
+describe("HTTP image serving", () => {
+  let tmpDir: string;
+  let port: number;
+  let closeFn: () => Promise<void>;
+
+  beforeEach(async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "wp-http-test-"));
+    // Create a test image file
+    const vendorDir = path.join(tmpDir, "1");
+    fs.mkdirSync(vendorDir, { recursive: true });
+    fs.writeFileSync(path.join(vendorDir, "test.png"), Buffer.from("fake-png"));
+
+    port = 19876 + Math.floor(Math.random() * 1000);
+    const server = await createWsServer({
+      port,
+      getState: () => ({ version: "test", channels: {} } as any),
+      imagesDir: tmpDir,
+    });
+    closeFn = server.close;
+  });
+
+  afterEach(async () => {
+    await closeFn();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("serves an image file via HTTP GET", async () => {
+    const res = await fetch(`http://localhost:${port}/images/1/test.png`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/png");
+    const body = await res.text();
+    expect(body).toBe("fake-png");
+  });
+
+  it("returns 404 for missing images", async () => {
+    const res = await fetch(`http://localhost:${port}/images/1/missing.png`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for non-image routes", async () => {
+    const res = await fetch(`http://localhost:${port}/other`);
+    expect(res.status).toBe(404);
   });
 });
