@@ -7,6 +7,7 @@ import { createCmdTool } from "./cmd.js";
 import { createDbQueryTool } from "./db-query.js";
 import { createDbSchemaTool } from "./db-schema.js";
 import { makeCreateVendorTool } from "./create-vendor.js";
+import { makeSendWhatsAppTool } from "./send-whatsapp.js";
 
 export function createToolRegistry(): ToolRegistry {
   const registry = new ToolRegistry();
@@ -70,6 +71,25 @@ export function createToolRegistry(): ToolRegistry {
     description: "Create a new vendor record in the database",
     category: "database",
     create: (ctx: unknown) => makeCreateVendorTool(ctx as any),
+  });
+
+  registry.registerFactory("sendWhatsApp", {
+    description: "Send a WhatsApp message to a vendor",
+    category: "messaging",
+    create: (ctx: unknown) => {
+      const { db, emit, deliveryQueue, getAutoSend } = ctx as any;
+      return makeSendWhatsAppTool({
+        db,
+        emit,
+        getAutoSend: getAutoSend ?? (() => false),
+        enqueue: deliveryQueue
+          ? (channel: string, vendorId: number, payload: unknown) =>
+              (deliveryQueue as any).enqueue(channel, vendorId, payload)
+          : () => {
+              throw new Error("Delivery queue not available");
+            },
+      });
+    },
   });
 
   return registry;
