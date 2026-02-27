@@ -17,7 +17,7 @@ export class WhatsAppChannel {
   private authDir: string;
   private broadcast: (event: GatewayEvent) => void;
   private onMessage:
-    | ((msg: { from: string; body: string; messageId: string }) => void)
+    | ((msg: { from: string; body: string; messageId: string; selfChat: boolean }) => void)
     | null = null;
   private reconnectDelay = 1000;
   private reconnectAttempts = 0;
@@ -111,17 +111,30 @@ export class WhatsAppChannel {
 
     this.socket.ev.on("messages.upsert", ({ messages }) => {
       for (const msg of messages) {
-        if (msg.key.fromMe) continue;
         const body =
           msg.message?.conversation ??
           msg.message?.extendedTextMessage?.text ??
           "";
         if (!body) continue;
 
+        const userJid = this.getUserJid();
+        const remoteJid = msg.key.remoteJid ?? "";
+
+        if (msg.key.fromMe) {
+          // Self-chat: fromMe + remoteJid matches our own JID
+          if (userJid && remoteJid === userJid) {
+            this.onMessage?.({ from: remoteJid, body, messageId: msg.key.id ?? "", selfChat: true });
+          }
+          // Non-self fromMe messages: skip (our own outgoing messages to others)
+          continue;
+        }
+
+        // Incoming message from someone else
         this.onMessage?.({
-          from: msg.key.remoteJid ?? "",
+          from: remoteJid,
           body,
           messageId: msg.key.id ?? "",
+          selfChat: false,
         });
       }
     });
@@ -133,10 +146,26 @@ export class WhatsAppChannel {
     await this.socket.sendMessage(jid, { text });
   }
 
+  async sendTyping(jid: string): Promise<void> {
+    if (!this.socket) return;
+    await this.socket.sendPresenceUpdate("composing", jid);
+  }
+
+  async stopTyping(jid: string): Promise<void> {
+    if (!this.socket) return;
+    await this.socket.sendPresenceUpdate("paused", jid);
+  }
+
   onIncoming(
-    handler: (msg: { from: string; body: string; messageId: string }) => void,
+    handler: (msg: { from: string; body: string; messageId: string; selfChat: boolean }) => void,
   ) {
     this.onMessage = handler;
+  }
+
+  getUserJid(): string | null {
+    if (!this.socket?.user?.id) return null;
+    // Normalize: strip device suffix (e.g. "123:45@s.whatsapp.net" → "123@s.whatsapp.net")
+    return this.socket.user.id.replace(/:\d+@/, "@");
   }
 
   isConnected(): boolean {
