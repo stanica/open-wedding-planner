@@ -6,6 +6,7 @@ export interface ScrapedPage {
   url: string;
   title: string;
   textContent: string;
+  images: string[];
   contactInfo: {
     emails: string[];
     phones: string[];
@@ -52,6 +53,29 @@ function extractText($: cheerio.CheerioAPI): string {
 export function scrapeHtml(url: string, html: string): ScrapedPage {
   const $ = cheerio.load(html);
   const title = $("title").text().trim() || $("h1").first().text().trim() || "";
+
+  // Extract images before removing elements (extractText modifies the DOM)
+  const images: string[] = [];
+  $("img").each((_, el) => {
+    const src = $(el).attr("src");
+    if (!src || src.startsWith("data:")) return;
+
+    // Skip tiny icons (if width/height attributes suggest < 50px)
+    const w = parseInt($(el).attr("width") ?? "0", 10);
+    const h = parseInt($(el).attr("height") ?? "0", 10);
+    if ((w > 0 && w < 50) || (h > 0 && h < 50)) return;
+
+    // Resolve relative URLs
+    try {
+      const resolved = new URL(src, url).href;
+      images.push(resolved);
+    } catch {
+      // Invalid URL, skip
+    }
+  });
+
+  const uniqueImages = [...new Set(images)];
+
   const textContent = extractText($);
   const contactInfo = extractContactInfo(html);
   const meta = {
@@ -60,7 +84,7 @@ export function scrapeHtml(url: string, html: string): ScrapedPage {
     imageUrl: $('meta[property="og:image"]').attr("content") ?? null,
   };
 
-  return { url, title, textContent, contactInfo, meta };
+  return { url, title, textContent, images: uniqueImages, contactInfo, meta };
 }
 
 export const scraperTool = tool({

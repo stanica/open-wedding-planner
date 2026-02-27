@@ -50,6 +50,41 @@ describe("scrapeHtml", () => {
     const result = scrapeHtml("https://example.com", html);
     expect(result.meta.imageUrl).toBeNull();
   });
+
+  it("extracts image URLs from page content", () => {
+    const htmlWithGallery = `
+      <html>
+      <head>
+        <title>Villa Gallery</title>
+        <meta property="og:image" content="https://villa.it/og.jpg" />
+      </head>
+      <body>
+        <main>
+          <img src="https://villa.it/gallery/photo1.jpg" alt="Garden" />
+          <img src="https://villa.it/gallery/photo2.jpg" alt="Pool" />
+          <img src="/small-icon.png" alt="icon" width="20" height="20" />
+          <img src="data:image/png;base64,abc" alt="inline" />
+        </main>
+      </body>
+      </html>
+    `;
+    const result = scrapeHtml("https://villa.it", htmlWithGallery);
+    expect(result.images).toBeDefined();
+    expect(result.images).toContain("https://villa.it/gallery/photo1.jpg");
+    expect(result.images).toContain("https://villa.it/gallery/photo2.jpg");
+    // Should not include data URIs
+    expect(result.images.every((url: string) => !url.startsWith("data:"))).toBe(true);
+  });
+
+  it("resolves relative image URLs", () => {
+    const html = `
+      <html><body>
+        <img src="/images/hero.jpg" alt="Hero" />
+      </body></html>
+    `;
+    const result = scrapeHtml("https://villa.it/about", html);
+    expect(result.images).toContain("https://villa.it/images/hero.jpg");
+  });
 });
 
 describe("scraperTool", () => {
