@@ -1,3 +1,4 @@
+import { QRCodeSVG } from "qrcode.react";
 import { useMutation } from "../../hooks/useRequest";
 import { StatusIndicator } from "./IntegrationStatus";
 import { MessageCircle } from "lucide-react";
@@ -52,10 +53,7 @@ export function WhatsAppSetup({ status, qrCode }: WhatsAppSetupProps) {
             Scan this QR code with WhatsApp on your phone
           </p>
           <div className="rounded-xl bg-white p-4">
-            {/* QR code is a text string from Baileys — render as ASCII or use a QR library */}
-            <pre className="text-xs text-black font-mono leading-none whitespace-pre">
-              {qrCode}
-            </pre>
+            <QRCodeSVG value={qrCode} size={256} />
           </div>
           <p className="text-xs text-gray-500">
             Open WhatsApp &gt; Settings &gt; Linked Devices &gt; Link a Device
