@@ -83,7 +83,7 @@ export function GoogleServicesSetup() {
     try {
       const result = await connect({ email, services: selectedServices });
       if (result?.authUrl) {
-        window.electronAPI.openExternal(result.authUrl);
+        window.electronAPI?.openExternal(result.authUrl);
         // Poll for connection status
         const interval = setInterval(async () => {
           const updated = await refetch();
