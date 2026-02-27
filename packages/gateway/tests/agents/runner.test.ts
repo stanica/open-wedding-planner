@@ -293,4 +293,119 @@ describe("AgentRunner", () => {
 
     expect(result.compactionSummary).toBe("Summary of the conversation so far.");
   });
+
+  it("calls setup() before running and cleanup() after", async () => {
+    const { AgentRunner } = await import("../../src/agents/runner.js");
+
+    const cleanupSpy = vi.fn();
+    const extraTool = tool({
+      description: "Extra tool from setup",
+      inputSchema: z.object({}),
+      execute: async () => ({ result: "from-setup" }),
+    });
+
+    const setupSpy = vi.fn().mockResolvedValue({
+      extraTools: { extraTool },
+      cleanup: cleanupSpy,
+    });
+
+    const emitSpy = vi.fn();
+    const ctx: AgentContext = {
+      db,
+      sessionKey: "test-session",
+      emit: emitSpy,
+      signal: new AbortController().signal,
+      toolRegistry: registry,
+      permissionManager,
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const toolCtx: ToolFactoryContext = {
+      db,
+      emit: emitSpy,
+      sqlite,
+      workspaceDir: "/tmp/test",
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const runner = new AgentRunner();
+    await runner.run(
+      {
+        name: "setup-agent",
+        systemPrompt: "You are a test agent.",
+        tools: [],
+        maxSteps: 3,
+        setup: setupSpy,
+      },
+      ctx,
+      [{ role: "user", content: "Hello" }],
+      toolCtx,
+    );
+
+    expect(setupSpy).toHaveBeenCalledWith(toolCtx);
+    expect(cleanupSpy).toHaveBeenCalled();
+  });
+
+  it("calls cleanup() even when the agent throws", async () => {
+    const { AgentRunner } = await import("../../src/agents/runner.js");
+    const { getModel } = await import("../../src/agents/model-provider.js");
+
+    (getModel as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      specificationVersion: "v2",
+      provider: "test",
+      modelId: "test-model",
+      supportedUrls: {},
+      doGenerate: vi.fn().mockRejectedValue(new Error("Model exploded")),
+    });
+
+    const cleanupSpy = vi.fn();
+    const setupSpy = vi.fn().mockResolvedValue({
+      extraTools: {},
+      cleanup: cleanupSpy,
+    });
+
+    const emitSpy = vi.fn();
+    const ctx: AgentContext = {
+      db,
+      sessionKey: "test-session",
+      emit: emitSpy,
+      signal: new AbortController().signal,
+      toolRegistry: registry,
+      permissionManager,
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const toolCtx: ToolFactoryContext = {
+      db,
+      emit: emitSpy,
+      sqlite,
+      workspaceDir: "/tmp/test",
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const runner = new AgentRunner();
+    await expect(
+      runner.run(
+        {
+          name: "failing-agent",
+          systemPrompt: "You are a test agent.",
+          tools: [],
+          setup: setupSpy,
+        },
+        ctx,
+        [{ role: "user", content: "Hello" }],
+        toolCtx,
+      ),
+    ).rejects.toThrow("Model exploded");
+
+    expect(cleanupSpy).toHaveBeenCalled();
+  });
 });
