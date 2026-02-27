@@ -144,7 +144,10 @@ export function ResearchView() {
     }));
 
     const result = await startResearch({ threadId, messages: agentMessages });
-    setActiveSession(result.sessionKey, threadId);
+    // Only set session if not queued (agent is actually starting)
+    if (result && !(result as any).queued) {
+      setActiveSession(result.sessionKey, threadId);
+    }
   }
 
   async function handleStop() {
@@ -303,7 +306,7 @@ export function ResearchView() {
         </div>
 
         {/* Compose box */}
-        <ComposeBox onSend={handleSend} disabled={researching || (!!activeSession && isSessionThread)} />
+        <ComposeBox onSend={handleSend} disabled={researching} />
       </div>
     </div>
   );
