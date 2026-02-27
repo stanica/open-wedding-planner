@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Globe, Mail, Phone, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { VendorStatusBadge } from "./VendorStatusBadge";
 import { VendorActions } from "./VendorActions";
+import { EmailComposeModal } from "./EmailComposeModal";
 
 interface Vendor {
   id: number;
@@ -27,6 +28,7 @@ export function VendorHeader({
 }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
+  const [showEmailCompose, setShowEmailCompose] = useState(false);
   const showImage = vendor.imageUrl && !imgError;
 
   return (
@@ -63,10 +65,19 @@ export function VendorHeader({
               </span>
             )}
             {vendor.websiteUrl && (
-              <span className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = vendor.websiteUrl!.startsWith("http")
+                    ? vendor.websiteUrl!
+                    : `https://${vendor.websiteUrl}`;
+                  window.electronAPI.openExternal(url);
+                }}
+                className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+              >
                 <Globe className="h-3.5 w-3.5" />
                 {vendor.websiteUrl}
-              </span>
+              </button>
             )}
             {vendor.contactEmail && (
               <span className="flex items-center gap-1">
@@ -89,6 +100,15 @@ export function VendorHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          {vendor.contactEmail && (
+            <button
+              onClick={() => setShowEmailCompose(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 px-3 py-1.5 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </button>
+          )}
           <button
             onClick={onDelete}
             className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
@@ -99,6 +119,13 @@ export function VendorHeader({
           <VendorActions vendor={vendor} onStatusChange={onStatusChange} />
         </div>
       </div>
+
+      {showEmailCompose && (
+        <EmailComposeModal
+          vendor={vendor}
+          onClose={() => setShowEmailCompose(false)}
+        />
+      )}
     </div>
   );
 }
