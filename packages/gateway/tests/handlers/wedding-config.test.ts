@@ -42,7 +42,7 @@ describe("wedding-config handlers", () => {
 
     expect(result.coupleNames).toBe("Rob & Partner");
     expect(result.guestCount).toBe(60);
-    expect(result.budgetTotal).toBe(50000);
+    expect(result.totalBudget).toBe(50000);
     expect(result.location).toBe("Ischia, Italy");
   });
 

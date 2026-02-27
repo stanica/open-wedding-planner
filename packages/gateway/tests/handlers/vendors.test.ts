@@ -1,4 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
@@ -8,13 +11,16 @@ import { seedCategories } from "../../src/db/seed.js";
 import { Router } from "../../src/infra/router.js";
 import { registerAllHandlers } from "../../src/handlers/index.js";
 
+let tmpDir: string;
+
 function setup() {
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "wp-vendor-test-"));
   const sqlite = new Database(":memory:");
   sqliteVec.load(sqlite);
   pushSchema(sqlite);
   const db = drizzle(sqlite, { schema });
   const router = new Router();
-  registerAllHandlers(router);
+  registerAllHandlers(router, undefined as any, undefined, undefined, tmpDir);
   return { db, router };
 }
 
@@ -25,6 +31,10 @@ describe("vendor handlers", () => {
   beforeEach(async () => {
     ({ db, router } = setup());
     await seedCategories(db);
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it("creates and retrieves a vendor", async () => {
@@ -141,6 +151,14 @@ describe("vendor handlers", () => {
       sourceType: "web",
     });
 
+    // Add images
+    await router.handle(db, "vendor-images.upload", {
+      vendorId,
+      base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+      mimeType: "image/png",
+      caption: "Test photo",
+    });
+
     // Add budget entry referencing vendor
     await router.handle(db, "budget.create", {
       categoryId: 1,
@@ -175,6 +193,9 @@ describe("vendor handlers", () => {
 
     const notes = (await router.handle(db, "research-notes.list", { vendorId })) as unknown[];
     expect(notes).toHaveLength(0);
+
+    const images = (await router.handle(db, "vendor-images.list", { vendorId })) as unknown[];
+    expect(images).toHaveLength(0);
 
     // Verify budget entry still exists but vendorId is null
     const budget = (await router.handle(db, "budget.list", {})) as Array<Record<string, unknown>>;
