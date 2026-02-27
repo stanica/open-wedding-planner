@@ -175,7 +175,9 @@ export function pushSchema(sqlite: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       provider TEXT NOT NULL DEFAULT 'api-key',
       model TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
-      proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1'
+      proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1',
+      api_key TEXT,
+      whatsapp_auto_send INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS research_threads (
@@ -210,4 +212,17 @@ export function pushSchema(sqlite: Database.Database) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Migrations for existing databases
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN api_key TEXT;`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN whatsapp_auto_send INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists
+  }
 }
