@@ -19,6 +19,7 @@ import { registerSearchConfigHandlers } from "./search-config.js";
 import { registerHeartbeatConfigHandlers } from "./heartbeat-config.js";
 import { registerResearchThreadHandlers } from "./research-threads.js";
 import { registerGoogleAuthHandlers } from "./google-auth.js";
+import { registerDataManagementHandlers } from "./data-management.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 import { getImagesDir } from "../config/paths.js";
@@ -50,6 +51,8 @@ export function registerAllHandlers(
   if (gogManager) {
     registerGoogleAuthHandlers(router, gogManager);
   }
+
+  registerDataManagementHandlers(router);
 
   router.register("import.budget-csv", async (db, params) => {
     const { content } = params as { content: string };
