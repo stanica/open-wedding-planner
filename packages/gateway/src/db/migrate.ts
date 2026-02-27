@@ -219,6 +219,14 @@ export function pushSchema(sqlite: Database.Database) {
       interval_minutes INTEGER NOT NULL DEFAULT 30,
       last_run_at TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS google_config (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_email TEXT,
+      services TEXT NOT NULL DEFAULT 'gmail',
+      credentials_path TEXT,
+      auto_send INTEGER NOT NULL DEFAULT 0
+    );
   `);
 
   // Migrations for existing databases
