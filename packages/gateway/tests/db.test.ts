@@ -8,6 +8,7 @@ import { seedCategories } from "../src/db/seed.js";
 
 function createTestDb() {
   const sqlite = new Database(":memory:");
+  sqlite.pragma("foreign_keys = ON");
   sqliteVec.load(sqlite);
   pushSchema(sqlite);
   const db = drizzle(sqlite, { schema });
@@ -62,5 +63,50 @@ describe("database", () => {
     await seedCategories(db);
     const cats = await db.select().from(schema.categories);
     expect(cats.length).toBe(10);
+  });
+
+  it("creates vendor_images table", () => {
+    const rows = sqlite
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='vendor_images'",
+      )
+      .all();
+    expect(rows).toHaveLength(1);
+  });
+
+  it("inserts and retrieves vendor images", () => {
+    sqlite.exec(
+      "INSERT INTO categories (name, budget_percent_low, budget_percent_high, sort_order) VALUES ('Test', 0.1, 0.2, 1)",
+    );
+    sqlite.exec(
+      "INSERT INTO vendors (category_id, name, status) VALUES (1, 'Test Vendor', 'researched')",
+    );
+
+    sqlite.exec(`INSERT INTO vendor_images (vendor_id, filename, original_url, caption, sort_order)
+      VALUES (1, 'abc123.jpg', 'https://example.com/photo.jpg', 'Pool area', 0)`);
+
+    const rows = sqlite
+      .prepare("SELECT * FROM vendor_images WHERE vendor_id = 1")
+      .all() as any[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].filename).toBe("abc123.jpg");
+    expect(rows[0].caption).toBe("Pool area");
+  });
+
+  it("cascade-deletes vendor images when vendor is deleted", () => {
+    sqlite.exec(
+      "INSERT INTO categories (name, budget_percent_low, budget_percent_high, sort_order) VALUES ('Test', 0.1, 0.2, 1)",
+    );
+    sqlite.exec(
+      "INSERT INTO vendors (category_id, name, status) VALUES (1, 'Test Vendor', 'researched')",
+    );
+    sqlite.exec(
+      "INSERT INTO vendor_images (vendor_id, filename, sort_order) VALUES (1, 'abc.jpg', 0)",
+    );
+
+    sqlite.exec("DELETE FROM vendors WHERE id = 1");
+
+    const rows = sqlite.prepare("SELECT * FROM vendor_images").all();
+    expect(rows).toHaveLength(0);
   });
 });

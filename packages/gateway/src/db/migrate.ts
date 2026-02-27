@@ -66,6 +66,16 @@ export function pushSchema(sqlite: Database.Database) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS vendor_images (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vendor_id INTEGER NOT NULL REFERENCES vendors(id) ON DELETE CASCADE,
+      filename TEXT NOT NULL,
+      original_url TEXT,
+      caption TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS vendor_attributes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vendor_id INTEGER NOT NULL REFERENCES vendors(id),

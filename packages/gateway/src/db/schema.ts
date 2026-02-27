@@ -49,6 +49,20 @@ export const vendors = sqliteTable("vendors", {
     .default(sql`(datetime('now'))`),
 });
 
+export const vendorImages = sqliteTable("vendor_images", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  vendorId: integer("vendor_id")
+    .notNull()
+    .references(() => vendors.id, { onDelete: "cascade" }),
+  filename: text("filename").notNull(),
+  originalUrl: text("original_url"),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const vendorAttributes = sqliteTable("vendor_attributes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   vendorId: integer("vendor_id")
