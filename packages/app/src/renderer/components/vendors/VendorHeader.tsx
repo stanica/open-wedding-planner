@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { VendorStatusBadge } from "./VendorStatusBadge";
 import { VendorActions } from "./VendorActions";
 import { EmailComposeModal } from "./EmailComposeModal";
+import { useVendorImages } from "../../hooks/useVendorImages";
+import { wsClient } from "../../lib/ws-client";
 
 interface Vendor {
   id: number;
@@ -29,7 +31,12 @@ export function VendorHeader({
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const [showEmailCompose, setShowEmailCompose] = useState(false);
-  const showImage = vendor.imageUrl && !imgError;
+  const { data: galleryImages } = useVendorImages(vendor.id);
+  const firstGalleryImage = galleryImages?.[0];
+  const thumbnailSrc = firstGalleryImage
+    ? `http://localhost:${wsClient.gatewayPort}/images/${vendor.id}/${firstGalleryImage.filename}`
+    : vendor.imageUrl;
+  const showImage = thumbnailSrc && !imgError;
 
   return (
     <div className="space-y-4">
@@ -45,7 +52,7 @@ export function VendorHeader({
         <div className="flex gap-4">
           {showImage && (
             <img
-              src={vendor.imageUrl!}
+              src={thumbnailSrc!}
               alt=""
               onError={() => setImgError(true)}
               className="h-20 w-20 rounded-lg object-cover shrink-0"
@@ -71,7 +78,7 @@ export function VendorHeader({
                   const url = vendor.websiteUrl!.startsWith("http")
                     ? vendor.websiteUrl!
                     : `https://${vendor.websiteUrl}`;
-                  window.electronAPI.openExternal(url);
+                  window.electronAPI?.openExternal(url);
                 }}
                 className="flex items-center gap-1 hover:text-blue-400 transition-colors"
               >
