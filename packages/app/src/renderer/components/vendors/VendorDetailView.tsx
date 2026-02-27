@@ -7,10 +7,11 @@ import { VendorAttributes } from "./VendorAttributes";
 import { VendorQuotes } from "./VendorQuotes";
 import { VendorComms } from "./VendorComms";
 import { VendorNotes } from "./VendorNotes";
+import { VendorPhotos } from "./VendorPhotos";
 import { Skeleton } from "../common/Skeleton";
 import { ConfirmDialog } from "../common/ConfirmDialog";
 
-const TABS = ["Overview", "Quotes", "Communications", "Notes"] as const;
+const TABS = ["Overview", "Photos", "Quotes", "Communications", "Notes"] as const;
 type Tab = (typeof TABS)[number];
 
 export function VendorDetailView() {
@@ -84,6 +85,7 @@ export function VendorDetailView() {
             <VendorQuotes vendorId={vendorId} />
           </div>
         )}
+        {activeTab === "Photos" && <VendorPhotos vendorId={vendorId} />}
         {activeTab === "Quotes" && <VendorQuotes vendorId={vendorId} />}
         {activeTab === "Communications" && <VendorComms vendorId={vendorId} />}
         {activeTab === "Notes" && <VendorNotes vendorId={vendorId} />}
