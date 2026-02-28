@@ -8,7 +8,7 @@ import { VendorListView } from "./components/vendors/VendorListView";
 import { VendorDetailView } from "./components/vendors/VendorDetailView";
 import { BudgetView } from "./components/budget/BudgetView";
 import { ResearchView } from "./components/research/ResearchView";
-import { OutreachView } from "./components/outreach/OutreachView";
+import { WhatsAppView } from "./components/whatsapp/WhatsAppView";
 import { InboxView } from "./components/inbox/InboxView";
 import { TimelineView } from "./components/timeline/TimelineView";
 import { DebugConsole } from "./components/debug/DebugConsole";
@@ -28,7 +28,7 @@ export function App() {
           <Route path="research" element={<ResearchView />} />
           <Route path="vendors" element={<VendorListView />} />
           <Route path="vendors/:id" element={<VendorDetailView />} />
-          <Route path="outreach" element={<OutreachView />} />
+          <Route path="whatsapp" element={<WhatsAppView />} />
           <Route path="inbox" element={<InboxView />} />
           <Route path="timeline" element={<TimelineView />} />
           <Route path="budget" element={<BudgetView />} />
