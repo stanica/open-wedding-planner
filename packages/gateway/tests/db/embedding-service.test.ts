@@ -156,6 +156,46 @@ describe("EmbeddingService", () => {
     });
   });
 
+  describe("integration: end-to-end with text builders", () => {
+    it("inserts data, flushes pending queue, and searches", async () => {
+      // Set up real tables
+      const { pushSchema } = await import("../../src/db/migrate.js");
+      const intSqlite = new Database(":memory:");
+      sqliteVec.load(intSqlite);
+      pushSchema(intSqlite);
+
+      const emb = fakeEmbedding(42);
+      const intService = new EmbeddingService(intSqlite, async () => emb);
+
+      // Import text builder
+      const { buildEmbeddingText } = await import("../../src/db/text-builders.js");
+
+      // Insert test data — triggers should queue pending embeddings
+      intSqlite.prepare(
+        "INSERT INTO categories (name, budget_percent_low, budget_percent_high, sort_order) VALUES (?, ?, ?, ?)"
+      ).run("Venue", 0.3, 0.5, 1);
+      intSqlite.prepare(
+        "INSERT INTO vendors (name, category_id, description) VALUES (?, ?, ?)"
+      ).run("Villa Elegante", 1, "A stunning Tuscan villa");
+
+      // Verify trigger fired
+      const pending = intSqlite.prepare("SELECT * FROM pending_embeddings").all();
+      expect(pending.length).toBeGreaterThan(0);
+
+      // Flush
+      const processed = await intService.flush((table, id) =>
+        buildEmbeddingText(intSqlite, table, id),
+      );
+      expect(processed).toBeGreaterThan(0);
+
+      // Search
+      const results = await intService.search("Tuscan wedding venue");
+      expect(results.length).toBe(1);
+      expect(results[0].sourceTable).toBe("vendors");
+      expect(results[0].textPreview).toContain("Villa Elegante");
+    });
+  });
+
   describe("triggers", () => {
     beforeEach(() => {
       // Create a minimal vendors table for trigger testing
