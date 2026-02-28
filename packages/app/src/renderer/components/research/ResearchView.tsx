@@ -382,7 +382,6 @@ export function ResearchView() {
           onSend={handleSend}
           onSlashCommand={handleSlashCommand}
           slashCommands={slashCommands}
-          disabled={researching}
         />
       </div>
     </div>

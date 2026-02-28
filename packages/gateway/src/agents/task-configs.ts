@@ -24,7 +24,10 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - You can use dbQuery and dbSchema to inspect or modify the database directly
 
 ## Categories
-Venue, Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency`;
+Venue, Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency
+
+## Interrupted Research
+If your conversation history shows that browser subagents were dispatched but results were not collected (you'll see an assistant message mentioning "interrupted" with pending task IDs), use awaitTasks with those task IDs to retrieve their results. Address the user's latest message first, then collect subagent results when ready.`;
 
 const OUTREACH_PROMPT = `You are drafting outreach messages to wedding vendors.
 You have access to the database to look up vendor details and wedding configuration.
