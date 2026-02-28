@@ -88,8 +88,8 @@ export function VendorFilters({
         >
           All
         </button>
-        {categories.map((cat) => {
-          const count = categoryCounts.get(cat.id) ?? 0;
+        {categories.filter((cat) => (categoryCounts.get(cat.id) ?? 0) > 0).map((cat) => {
+          const count = categoryCounts.get(cat.id)!;
           return (
             <button
               key={cat.id}
@@ -101,9 +101,7 @@ export function VendorFilters({
               }`}
             >
               {cat.name}
-              {count > 0 && (
-                <span className="ml-1.5 text-xs text-gray-500">{count}</span>
-              )}
+              <span className="ml-1.5 text-xs text-gray-500">{count}</span>
             </button>
           );
         })}

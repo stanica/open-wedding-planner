@@ -5,28 +5,31 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useVendors, useCategories } from "../../hooks/useVendors";
 import { useMutation } from "../../hooks/useRequest";
 import { VendorCard } from "./VendorCard";
-import { VendorFilters, type SortOption, type ViewMode } from "./VendorFilters";
+import { VendorFilters } from "./VendorFilters";
 import { VendorTableView } from "./VendorTableView";
 import { EmptyState } from "../common/EmptyState";
 import { SkeletonCard } from "../common/Skeleton";
+import { useVendorFiltersStore } from "../../stores/vendor-filters-store";
 
 const STATUS_ORDER: Record<string, number> = {
   booked: 0, quoted: 1, contacted: 2, researched: 3, rejected: 4,
 };
 
 export function VendorListView() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const {
+    search, setSearch,
+    statusFilter, setStatusFilter,
+    categoryFilter, setCategoryFilter,
+    sortBy, setSortBy,
+    viewMode, setViewMode,
+    favoritesOnly, setFavoritesOnly,
+  } = useVendorFiltersStore();
   const navigate = useNavigate();
 
   const { data: vendors, loading: vendorsLoading } = useVendors(
     statusFilter ? { status: statusFilter } : undefined,
   );
   const { mutate: updateVendor } = useMutation("vendors.update");
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [optimisticFavorites, setOptimisticFavorites] = useState<Map<number, boolean>>(new Map());
   const { data: categories, loading: categoriesLoading } = useCategories();
 
