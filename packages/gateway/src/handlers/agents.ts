@@ -25,7 +25,7 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
 
   router.register("agent.stop", async (_db, params) => {
     const { sessionKey } = params as { sessionKey: string };
-    const stopped = orchestrator.abortTask(sessionKey);
+    const stopped = await orchestrator.abortTask(sessionKey);
     return { ok: stopped };
   });
 

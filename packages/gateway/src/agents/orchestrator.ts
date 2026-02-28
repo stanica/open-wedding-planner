@@ -111,13 +111,56 @@ export class Orchestrator {
     return { taskId, sessionKey };
   }
 
-  abortTask(sessionKey: string): boolean {
+  async abortTask(sessionKey: string): Promise<boolean> {
     const controller = this.runningAbortControllers.get(sessionKey);
     if (controller) {
       controller.abort();
-      return true;
     }
-    return false;
+
+    // Abort child tasks (sub-agents spawned by this task)
+    const [parentTask] = await this.db
+      .select({ id: agentTasks.id })
+      .from(agentTasks)
+      .where(eq(agentTasks.sessionId, sessionKey))
+      .limit(1);
+
+    if (parentTask) {
+      const children = await this.db
+        .select({
+          sessionId: agentTasks.sessionId,
+          type: agentTasks.type,
+          status: agentTasks.status,
+        })
+        .from(agentTasks)
+        .where(eq(agentTasks.parentTaskId, parentTask.id));
+
+      for (const child of children) {
+        if (!child.sessionId || child.status === "completed" || child.status === "failed" || child.status === "cancelled") {
+          continue;
+        }
+
+        // Abort running sub-agent via its controller
+        const childController = this.runningAbortControllers.get(child.sessionId);
+        if (childController) {
+          childController.abort();
+        } else {
+          // Not running yet — cancel from queue and update DB directly
+          const queueTaskId = child.sessionId.slice(child.type.length + 1);
+          this.queue.cancel("subagent", queueTaskId);
+
+          await this.db
+            .update(agentTasks)
+            .set({
+              status: "cancelled",
+              output: JSON.stringify({ summary: "Stopped: parent task was cancelled" }),
+              completedAt: sql`datetime('now')`,
+            })
+            .where(eq(agentTasks.sessionId, child.sessionId));
+        }
+      }
+    }
+
+    return !!controller;
   }
 
   private async execute(

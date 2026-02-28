@@ -54,7 +54,6 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "succe
 
 export function DashboardView() {
   const connected = useGatewayStore((s) => s.connected);
-  const state = useGatewayStore((s) => s.state);
   const { data: stats, loading } = useRequest<DashboardStats>("dashboard.stats");
   const { mutate: createThread } = useMutation<
     { title: string },
@@ -97,11 +96,9 @@ export function DashboardView() {
           <div
             className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`}
           />
-          <span className="text-sm text-gray-400">
-            {connected
-              ? `Gateway v${state?.version ?? "?"}`
-              : "Connecting..."}
-          </span>
+          {!connected && (
+            <span className="text-sm text-gray-400">Connecting...</span>
+          )}
         </div>
       </div>
 
@@ -197,19 +194,21 @@ export function DashboardView() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent>
-                <p className="text-sm text-gray-400 mb-2">By Category</p>
-                <div className="space-y-1">
-                  {stats.vendors.byCategory.slice(0, 4).map((cat) => (
-                    <div key={cat.categoryId} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-300 truncate">{cat.categoryName}</span>
-                      <span className="text-gray-500 ml-2">{cat.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {stats.vendors.byCategory.length > 0 && (
+              <Card>
+                <CardContent>
+                  <p className="text-sm text-gray-400 mb-2">By Category</p>
+                  <div className="space-y-1">
+                    {stats.vendors.byCategory.slice(0, 4).map((cat) => (
+                      <div key={cat.categoryId} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300 truncate">{cat.categoryName}</span>
+                        <span className="text-gray-500 ml-2">{cat.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Recent Activity */}
