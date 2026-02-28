@@ -6,7 +6,7 @@ import { useVendors } from "../../hooks/useVendors";
 import { useResearchStore } from "../../stores/research-store";
 import { ThreadList } from "./ThreadList";
 import { ChatMessage } from "./ChatMessage";
-import { ComposeBox } from "../common/ComposeBox";
+import { ComposeBox, type SlashCommand } from "../common/ComposeBox";
 import { PermissionRequestCard } from "./PermissionRequestCard";
 import { TokenUsageBar } from "./TokenUsageBar";
 
@@ -199,6 +199,33 @@ export function ResearchView() {
     }
   }
 
+  const slashCommands: SlashCommand[] = [
+    { name: "compact", description: "Summarize conversation to save context" },
+    { name: "clear", description: "Clear all messages in this thread" },
+    { name: "model", description: "Switch AI model", args: "<model-name>" },
+  ];
+
+  async function handleSlashCommand(command: string, args: string) {
+    if (!activeThreadId) return;
+
+    switch (command) {
+      case "compact":
+        await wsClient.request("research.compact", { threadId: activeThreadId });
+        refetchMessages();
+        break;
+      case "clear":
+        await wsClient.request("research.clear", { threadId: activeThreadId });
+        refetchMessages();
+        useResearchStore.setState({ tokenUsage: null });
+        break;
+      case "model":
+        if (args) {
+          await wsClient.request("research.switchModel", { model: args });
+        }
+        break;
+    }
+  }
+
   return (
     <div className="flex h-full">
       {/* Thread sidebar */}
@@ -308,7 +335,12 @@ export function ResearchView() {
         </div>
 
         {/* Compose box */}
-        <ComposeBox onSend={handleSend} disabled={researching} />
+        <ComposeBox
+          onSend={handleSend}
+          onSlashCommand={handleSlashCommand}
+          slashCommands={slashCommands}
+          disabled={researching}
+        />
       </div>
     </div>
   );
