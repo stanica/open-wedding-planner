@@ -29,7 +29,7 @@ describe("cmd tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const cmdTool = createCmdTool(WORKSPACE, callbacks);
     const result = await cmdTool.execute!(
-      { command: "echo", args: ["hello world"] },
+      { command: "echo", args: ["hello world"], timeout: 30000 },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(result).toMatchObject({ stdout: "hello world\n", stderr: "" });
@@ -39,7 +39,7 @@ describe("cmd tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const cmdTool = createCmdTool(WORKSPACE, callbacks);
     const result = await cmdTool.execute!(
-      { command: "false" },
+      { command: "false", args: [], timeout: 30000 },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(result).toMatchObject({ error: expect.stringContaining("") });
@@ -49,7 +49,7 @@ describe("cmd tool", () => {
     const callbacks = { requestPermission: vi.fn().mockResolvedValue("allow") };
     const cmdTool = createCmdTool(WORKSPACE, callbacks);
     await cmdTool.execute!(
-      { command: "rm", args: ["-rf", "somedir"] },
+      { command: "rm", args: ["-rf", "somedir"], timeout: 30000 },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(callbacks.requestPermission).toHaveBeenCalledWith(
@@ -62,7 +62,7 @@ describe("cmd tool", () => {
     const callbacks = { requestPermission: vi.fn().mockResolvedValue("deny") };
     const cmdTool = createCmdTool(WORKSPACE, callbacks);
     const result = await cmdTool.execute!(
-      { command: "rm", args: ["file.txt"] },
+      { command: "rm", args: ["file.txt"], timeout: 30000 },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(result).toMatchObject({ error: expect.stringContaining("denied") });
@@ -72,7 +72,7 @@ describe("cmd tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const cmdTool = createCmdTool(WORKSPACE, callbacks);
     const result = await cmdTool.execute!(
-      { command: "node", args: ["-e", "process.stdout.write('x'.repeat(60000))"] },
+      { command: "node", args: ["-e", "process.stdout.write('x'.repeat(60000))"], timeout: 30000 },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     const r = result as { stdout: string };

@@ -1,5 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { heartbeatConfig } from "../db/schema.js";
+import { getTaskConfig } from "../agents/task-configs.js";
 import type { Orchestrator } from "../agents/orchestrator.js";
 import type { GatewayEvent } from "@wedding-planner/shared";
 import type { Db } from "../infra/router.js";
@@ -52,11 +53,13 @@ export class HeartbeatScheduler {
       const [config] = await this.db.select().from(heartbeatConfig).limit(1);
 
       if (config?.enabled && config.prompt) {
-        // Register/update the heartbeat-research config with user's prompt
+        // Reuse the research task config's system prompt and tools,
+        // so the heartbeat agent gets proper behavioral instructions
+        const researchConfig = getTaskConfig("research")!;
         this.orchestrator.registerConfig({
           name: "heartbeat-research",
-          systemPrompt: config.prompt,
-          tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
+          systemPrompt: researchConfig.systemPrompt,
+          tools: researchConfig.tools,
         });
 
         this.broadcast({

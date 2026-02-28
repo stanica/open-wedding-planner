@@ -271,6 +271,8 @@ describe("AgentRunner", () => {
       emit: emitSpy,
       sqlite,
       workspaceDir: "/tmp/test",
+      broadcast: vi.fn(),
+      threadId: "test-thread",
       permissionCallbacks: {
         requestPermission: vi.fn().mockResolvedValue("allow"),
       },

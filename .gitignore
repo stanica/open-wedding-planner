@@ -1,6 +1,7 @@
 node_modules/
 dist/
 out/
+web-dist/
 .env
 *.db
 *.db-journal

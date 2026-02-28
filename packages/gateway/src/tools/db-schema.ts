@@ -37,7 +37,7 @@ export function createDbSchemaTool(sqlite: Database.Database) {
   return tool({
     description:
       "Inspect the database schema. Returns table names, columns, types, and foreign keys. Call with no arguments to list all tables, or pass a table name to get details for one table.",
-    parameters: z.object({
+    inputSchema: z.object({
       table: z.string().optional().describe("Table name to inspect. Omit to list all tables."),
     }),
     execute: async ({ table }) => {

@@ -31,10 +31,10 @@ describe("awaitTasks tool", () => {
     });
 
     const awaitTool = makeAwaitTasksTool({ db });
-    const result = await awaitTool.execute(
+    const result = await awaitTool.execute!(
       { taskIds: ["browser-task-1"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
-    );
+    ) as { results: { taskId: string; status: string; summary: string; error: string }[] };
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0].status).toBe("completed");
@@ -51,10 +51,10 @@ describe("awaitTasks tool", () => {
     });
 
     const awaitTool = makeAwaitTasksTool({ db });
-    const result = await awaitTool.execute(
+    const result = await awaitTool.execute!(
       { taskIds: ["browser-task-2"] },
       { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
-    );
+    ) as { results: { taskId: string; status: string; summary: string; error: string }[] };
 
     expect(result.results[0].status).toBe("failed");
     expect(result.results[0].error).toBe("Timeout");

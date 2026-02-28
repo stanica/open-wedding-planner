@@ -38,7 +38,7 @@ describe("gog tool integration", () => {
     const result = await gogTool.execute!(
       { subcommand: "gmail", args: ["search", "is:unread"] },
       toolOpts,
-    );
+    ) as { data: unknown };
 
     expect(mockRequestPermission).not.toHaveBeenCalled();
     expect(result.data).toEqual({ threads: [] });
@@ -71,7 +71,7 @@ describe("gog tool integration", () => {
     const result = await gogTool.execute!(
       { subcommand: "gmail", args: ["send", "--to", "vendor@example.com"] },
       toolOpts,
-    );
+    ) as { error: string };
 
     expect(result.error).toContain("denied");
     expect(mockExec).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("gog tool integration", () => {
     const result = await gogTool.execute!(
       { subcommand: "gmail", args: ["send", "--to", "a@b.com"] },
       toolOpts,
-    );
+    ) as { output: string };
 
     expect(result.output).toBe("Message sent successfully");
   });
@@ -114,7 +114,7 @@ describe("gog tool integration", () => {
     const result = await gogTool.execute!(
       { subcommand: "gmail", args: ["search", "test"] },
       toolOpts,
-    );
+    ) as { error: string };
 
     expect(result.error).toContain("gog not found");
   });

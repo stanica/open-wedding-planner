@@ -12,10 +12,10 @@ describe("pdfTool", () => {
   });
 
   it("parses PDF and returns text content", async () => {
-    const result = await pdfTool.execute(
+    const result = await pdfTool.execute!(
       { url: "https://example.com/packages.pdf" },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-    );
+    ) as { url: string; text: string; pages: number; info: Record<string, string> };
     expect(result.url).toBe("https://example.com/packages.pdf");
     expect(result.text).toContain("Wedding Package Pricing");
     expect(result.text).toContain("€5,000");
@@ -29,10 +29,10 @@ describe("pdfTool", () => {
       numpages: 1,
       info: {},
     }));
-    const result = await pdfTool.execute(
+    const result = await pdfTool.execute!(
       { url: "https://example.com/long.pdf" },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-    );
+    ) as { text: string };
     expect(result.text.length).toBe(20_000);
   });
 });

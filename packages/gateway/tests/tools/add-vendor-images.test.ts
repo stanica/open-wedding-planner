@@ -24,7 +24,7 @@ function setup() {
 }
 
 describe("addVendorImages tool", () => {
-  let db: ReturnType<typeof drizzle>;
+  let db: ReturnType<typeof setup>["db"];
 
   beforeEach(async () => {
     ({ db } = setup());
@@ -48,13 +48,13 @@ describe("addVendorImages tool", () => {
       imagesDir: tmpDir,
     });
 
-    const result = await tool.execute(
+    const result = await tool.execute!(
       {
         vendorId: 1,
         images: [{ data: base64, mimeType: "image/png", caption: "Pool area" }],
       },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
+    ) as { saved: number; failed: number; images: { caption: string | null }[]; errors: string[] };
 
     expect(result.saved).toBe(1);
     expect(result.images[0].caption).toBe("Pool area");
@@ -79,13 +79,13 @@ describe("addVendorImages tool", () => {
       fetchFn: mockFetch,
     });
 
-    const result = await tool.execute(
+    const result = await tool.execute!(
       {
         vendorId: 1,
         images: [{ url: "https://example.com/photo.png", caption: "Entrance" }],
       },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
+    ) as { saved: number; images: { caption: string | null }[] };
 
     expect(result.saved).toBe(1);
     expect(result.images[0].caption).toBe("Entrance");
@@ -102,7 +102,7 @@ describe("addVendorImages tool", () => {
       imagesDir: tmpDir,
     });
 
-    const result = await tool.execute(
+    const result = await tool.execute!(
       {
         vendorId: 1,
         images: [
@@ -111,7 +111,7 @@ describe("addVendorImages tool", () => {
         ],
       },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
+    ) as { saved: number; failed: number; errors: string[] };
 
     expect(result.saved).toBe(1);
     expect(result.failed).toBe(1);

@@ -1,7 +1,7 @@
 {
   "name": "@wedding-planner/app",
   "version": "0.0.1",
-  "productName": "Wedding Planner",
+  "productName": "Open Wedding Planner",
   "description": "AI-powered wedding planning assistant",
   "main": "./out/main/index.js",
   "scripts": {

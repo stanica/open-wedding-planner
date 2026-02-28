@@ -37,10 +37,10 @@ export async function importVendorsCsv(db: Db, csvContent: string) {
     .insert(vendors)
     .values({
       categoryId: plannerCategoryId,
-      name: "Ischia Wedding Planner",
+      name: "Ischia Open Wedding Planner",
       location: "Ischia, Italy",
       status: "quoted",
-      description: "Full-service wedding planner for Ischia destination weddings",
+      description: "Full-service Open Wedding Planner for Ischia destination weddings",
     })
     .returning();
 

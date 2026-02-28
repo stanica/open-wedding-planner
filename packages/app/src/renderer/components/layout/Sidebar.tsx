@@ -37,7 +37,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-4">
         {!collapsed && (
           <span className="text-sm font-semibold text-white truncate">
-            Wedding Planner
+            Open Wedding Planner
           </span>
         )}
         <button

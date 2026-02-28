@@ -82,7 +82,7 @@ describe("HeartbeatScheduler", () => {
     expect(orchestrator.registerConfig).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "heartbeat-research",
-        systemPrompt: "Find florists in Tuscany",
+        systemPrompt: expect.stringContaining("wedding vendor research assistant"),
       }),
     );
 

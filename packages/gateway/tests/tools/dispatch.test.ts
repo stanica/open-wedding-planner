@@ -12,7 +12,7 @@ describe("dispatch tool", () => {
       parentSessionKey: "research-parent-456",
     });
 
-    const result = await dispatchTool.execute(
+    const result = await dispatchTool.execute!(
       {
         url: "https://venue.com",
         instructions: "Find pricing info",
@@ -39,7 +39,7 @@ describe("dispatch tool", () => {
       parentSessionKey: "research-parent-456",
     });
 
-    const result = await dispatchTool.execute(
+    const result = await dispatchTool.execute!(
       {
         url: "https://venue.com",
         instructions: "Find pricing info",

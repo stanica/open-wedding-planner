@@ -93,10 +93,10 @@ describe("scraperTool", () => {
   });
 
   it("fetches and scrapes a URL", async () => {
-    const result = await scraperTool.execute(
+    const result = await scraperTool.execute!(
       { url: "https://villaelegante.it" },
       { toolCallId: "test", messages: [], abortSignal: undefined as unknown as AbortSignal },
-    );
+    ) as { title: string; contactInfo: { emails: string[] } };
     expect(result.title).toBe("Villa Elegante - Wedding Venue");
     expect(result.contactInfo.emails).toContain("info@villaelegante.it");
   });

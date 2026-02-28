@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import Database from "better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
-import {
-  createEmbeddingsTable,
-  storeVendorEmbedding,
-  findSimilarVendors,
-  setEmbedFn,
-} from "../../src/db/embeddings.js";
+import { EmbeddingService } from "../../src/db/embeddings.js";
 
 function randomEmbedding(seed: number): number[] {
   // Deterministic pseudo-random for testing
@@ -23,23 +18,23 @@ function randomEmbedding(seed: number): number[] {
 
 describe("embeddings", () => {
   let sqlite: Database.Database;
+  let service: EmbeddingService;
 
   beforeEach(() => {
     sqlite = new Database(":memory:");
     sqliteVec.load(sqlite);
-    createEmbeddingsTable(sqlite);
   });
 
   it("stores and retrieves embeddings", async () => {
     const emb1 = randomEmbedding(1);
-    setEmbedFn(async () => emb1);
+    service = new EmbeddingService(sqlite, async () => emb1);
 
-    await storeVendorEmbedding(sqlite, 1, "Villa Elegante wedding venue");
+    await service.upsert("vendors", 1, "Villa Elegante wedding venue");
 
     // Query with same embedding should find it
-    const similar = await findSimilarVendors(sqlite, "Villa Elegante", 1.0);
+    const similar = await service.search("Villa Elegante");
     expect(similar).toHaveLength(1);
-    expect(similar[0].vendorId).toBe(1);
+    expect(similar[0].sourceId).toBe(1);
     expect(similar[0].distance).toBeCloseTo(0, 1);
   });
 
@@ -48,7 +43,7 @@ describe("embeddings", () => {
     const emb2 = randomEmbedding(2);
 
     let callCount = 0;
-    setEmbedFn(async () => {
+    service = new EmbeddingService(sqlite, async () => {
       callCount++;
       // First two calls store, third call queries
       if (callCount <= 1) return emb1;
@@ -56,18 +51,18 @@ describe("embeddings", () => {
       return emb1; // Query returns same as vendor 1
     });
 
-    await storeVendorEmbedding(sqlite, 1, "Villa Elegante");
-    await storeVendorEmbedding(sqlite, 2, "Totally different place");
+    await service.upsert("vendors", 1, "Villa Elegante");
+    await service.upsert("vendors", 2, "Totally different place");
 
-    // Query with emb1 — should find vendor 1 close, vendor 2 far
-    const similar = await findSimilarVendors(sqlite, "Villa Elegante", 0.1);
+    // Query with emb1 — should find vendor 1 closest
+    const similar = await service.search("Villa Elegante", "vendors", 1);
     expect(similar).toHaveLength(1);
-    expect(similar[0].vendorId).toBe(1);
+    expect(similar[0].sourceId).toBe(1);
   });
 
   it("returns empty when no similar vendors", async () => {
-    setEmbedFn(async () => randomEmbedding(99));
-    const similar = await findSimilarVendors(sqlite, "anything", 0.5);
+    service = new EmbeddingService(sqlite, async () => randomEmbedding(99));
+    const similar = await service.search("anything");
     expect(similar).toHaveLength(0);
   });
 });

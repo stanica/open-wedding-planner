@@ -31,12 +31,12 @@ describe("semanticSearch tool", () => {
     await service.upsert("communications", 5, "Email about pricing");
 
     const tool = makeSemanticSearchTool(service);
-    const result = await tool.execute(
+    const result = await tool.execute!(
       { query: "wedding venue", limit: 10 },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
+    ) as { results: unknown[] };
     expect(result).toHaveProperty("results");
-    expect((result as any).results.length).toBe(2);
+    expect(result.results.length).toBe(2);
   });
 
   it("filters by sourceType", async () => {
@@ -44,22 +44,22 @@ describe("semanticSearch tool", () => {
     await service.upsert("communications", 5, "Email about pricing");
 
     const tool = makeSemanticSearchTool(service);
-    const result = await tool.execute(
+    const result = await tool.execute!(
       { query: "anything", sourceType: "vendors", limit: 10 },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
-    expect((result as any).results.length).toBe(1);
-    expect((result as any).results[0].sourceTable).toBe("vendors");
+    ) as { results: { sourceTable: string }[] };
+    expect(result.results.length).toBe(1);
+    expect(result.results[0].sourceTable).toBe("vendors");
   });
 
   it("returns error message when no embed function", async () => {
     const noEmbedService = new EmbeddingService(sqlite, null);
     const tool = makeSemanticSearchTool(noEmbedService);
-    const result = await tool.execute(
+    const result = await tool.execute!(
       { query: "test", limit: 10 },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
-    );
+    ) as { error: string };
     expect(result).toHaveProperty("error");
-    expect((result as any).error).toContain("OpenAI API key");
+    expect(result.error).toContain("OpenAI API key");
   });
 });

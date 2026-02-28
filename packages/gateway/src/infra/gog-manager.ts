@@ -67,7 +67,7 @@ export class GogManager {
     const targetName = process.platform === "win32" ? "gog.exe" : "gog";
     const extractedPath = path.join(this.dir, extractedName);
     const targetPath = path.join(this.dir, targetName);
-    if (fs.existsSync(extractedPath) && extractedName !== targetName) {
+    if (fs.existsSync(extractedPath) && (extractedName as string) !== (targetName as string)) {
       fs.renameSync(extractedPath, targetPath);
     }
 

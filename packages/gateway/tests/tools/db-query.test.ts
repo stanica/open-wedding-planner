@@ -50,7 +50,7 @@ describe("isBlacklistedSql", () => {
 
 describe("dbQuery tool", () => {
   let sqlite: InstanceType<typeof Database>;
-  let db: ReturnType<typeof drizzle>;
+  let db: ReturnType<typeof drizzle<typeof schema>>;
 
   beforeEach(async () => {
     sqlite = new Database(":memory:");
@@ -64,7 +64,7 @@ describe("dbQuery tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const queryTool = createDbQueryTool(sqlite, callbacks);
     const result = await queryTool.execute!(
-      { sql: "SELECT name FROM categories LIMIT 3" },
+      { params: [], sql: "SELECT name FROM categories LIMIT 3" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     const r = result as { rows: unknown[]; rowCount: number };
@@ -76,7 +76,7 @@ describe("dbQuery tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const queryTool = createDbQueryTool(sqlite, callbacks);
     const result = await queryTool.execute!(
-      { sql: "INSERT INTO vendors (category_id, name, status) VALUES (1, 'Test Vendor', 'researched')" },
+      { params: [], sql: "INSERT INTO vendors (category_id, name, status) VALUES (1, 'Test Vendor', 'researched')" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     const r = result as { changes: number };
@@ -90,7 +90,7 @@ describe("dbQuery tool", () => {
       sqlite.prepare("INSERT INTO vendors (category_id, name, status) VALUES (1, ?, 'researched')").run(`Vendor ${i}`);
     }
     const result = await queryTool.execute!(
-      { sql: "SELECT * FROM vendors" },
+      { params: [], sql: "SELECT * FROM vendors" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     const r = result as { rows: unknown[]; truncated: boolean };
@@ -102,7 +102,7 @@ describe("dbQuery tool", () => {
     const callbacks = { requestPermission: vi.fn().mockResolvedValue("deny") };
     const queryTool = createDbQueryTool(sqlite, callbacks);
     const result = await queryTool.execute!(
-      { sql: "DROP TABLE vendors" },
+      { params: [], sql: "DROP TABLE vendors" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(callbacks.requestPermission).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe("dbQuery tool", () => {
     const callbacks = { requestPermission: vi.fn() };
     const queryTool = createDbQueryTool(sqlite, callbacks);
     const result = await queryTool.execute!(
-      { sql: "SELECTT * FROM nonexistent" },
+      { params: [], sql: "SELECTT * FROM nonexistent" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as unknown as AbortSignal },
     );
     expect(result).toMatchObject({ error: expect.any(String) });

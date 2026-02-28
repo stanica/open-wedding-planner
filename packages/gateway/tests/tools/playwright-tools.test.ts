@@ -35,7 +35,7 @@ describe("createPlaywrightTools", () => {
   it("navigate calls page.goto", async () => {
     const page = mockPage();
     const tools = createPlaywrightTools(page as any);
-    const result = await tools.navigate.execute(
+    const result = await tools.navigate.execute!(
       { url: "https://example.com" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as any },
     );
@@ -46,7 +46,7 @@ describe("createPlaywrightTools", () => {
   it("click calls page.click", async () => {
     const page = mockPage();
     const tools = createPlaywrightTools(page as any);
-    await tools.click.execute(
+    await tools.click.execute!(
       { selector: "button.submit" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as any },
     );
@@ -56,7 +56,7 @@ describe("createPlaywrightTools", () => {
   it("type calls page.fill", async () => {
     const page = mockPage();
     const tools = createPlaywrightTools(page as any);
-    await tools.type.execute(
+    await tools.type.execute!(
       { selector: "input.name", text: "Wedding Co" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as any },
     );
@@ -66,7 +66,7 @@ describe("createPlaywrightTools", () => {
   it("screenshot returns base64 image", async () => {
     const page = mockPage();
     const tools = createPlaywrightTools(page as any);
-    const result = await tools.screenshot.execute(
+    const result = await tools.screenshot.execute!(
       {},
       { toolCallId: "t1", messages: [], abortSignal: undefined as any },
     );
@@ -77,7 +77,7 @@ describe("createPlaywrightTools", () => {
   it("evaluate runs JS in page context", async () => {
     const page = mockPage();
     const tools = createPlaywrightTools(page as any);
-    const result = await tools.evaluate.execute(
+    const result = await tools.evaluate.execute!(
       { script: "document.title" },
       { toolCallId: "t1", messages: [], abortSignal: undefined as any },
     );

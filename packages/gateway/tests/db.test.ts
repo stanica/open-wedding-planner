@@ -54,15 +54,15 @@ describe("database", () => {
   it("seeds default categories", async () => {
     await seedCategories(db);
     const cats = await db.select().from(schema.categories);
-    expect(cats.length).toBe(10);
-    expect(cats.find((c) => c.name === "Venue/Food/Beverage")).toBeDefined();
+    expect(cats.length).toBe(11);
+    expect(cats.find((c) => c.name === "Venue")).toBeDefined();
   });
 
   it("does not re-seed if categories exist", async () => {
     await seedCategories(db);
     await seedCategories(db);
     const cats = await db.select().from(schema.categories);
-    expect(cats.length).toBe(10);
+    expect(cats.length).toBe(11);
   });
 
   it("creates vendor_images table", () => {

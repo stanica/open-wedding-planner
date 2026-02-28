@@ -17,12 +17,12 @@ export function createTray(getWindow: () => BrowserWindow | null): Tray {
   }
 
   tray = new Tray(image);
-  tray.setToolTip("Wedding Planner");
+  tray.setToolTip("Open Wedding Planner");
 
   function updateMenu(connected: boolean) {
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: "Wedding Planner",
+        label: "Open Wedding Planner",
         enabled: false,
       },
       { type: "separator" },
@@ -71,7 +71,7 @@ export function createTray(getWindow: () => BrowserWindow | null): Tray {
 export function updateTrayStatus(connected: boolean): void {
   if (!tray) return;
   tray.setToolTip(
-    connected ? "Wedding Planner - Gateway Connected" : "Wedding Planner - Disconnected",
+    connected ? "Open Wedding Planner - Gateway Connected" : "Open Wedding Planner - Disconnected",
   );
 }
 

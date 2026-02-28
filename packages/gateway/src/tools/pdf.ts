@@ -39,8 +39,13 @@ export const pdfTool = tool({
   }),
   execute: async ({ url }) => {
     const buffer = await pdfFetchFn(url);
-    const pdfParse = await import("pdf-parse");
-    const parse = pdfParseFn ?? (pdfParse as any).default ?? pdfParse;
+    let parse: PdfParseFn;
+    if (pdfParseFn) {
+      parse = pdfParseFn;
+    } else {
+      const pdfParse = await import("pdf-parse");
+      parse = (pdfParse as any).default ?? pdfParse;
+    }
     const result = await parse(buffer);
     return {
       url,

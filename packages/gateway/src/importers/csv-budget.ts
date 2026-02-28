@@ -5,7 +5,7 @@ import type { Db } from "../infra/router.js";
 
 // Category name mapping from CSV header to DB category name
 const CATEGORY_MAP: Record<string, string> = {
-  "Venue, Food, and Beverage": "Venue/Food/Beverage",
+  "Venue, Food, and Beverage": "Venue",
   "Ceremony": "Ceremony",
   "Photography/Videography": "Photography/Videography",
   "Decor": "Decor",

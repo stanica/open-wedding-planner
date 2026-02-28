@@ -99,7 +99,7 @@ DJ,• Dj Set,1000,1000,,,,,,,`;
 
     const vendorRows = await db.select().from(schema.vendors);
     expect(vendorRows).toHaveLength(1);
-    expect(vendorRows[0].name).toBe("Ischia Wedding Planner");
+    expect(vendorRows[0].name).toBe("Ischia Open Wedding Planner");
 
     if (result.quoteId) {
       const quoteRows = await db.select().from(schema.quotes);
