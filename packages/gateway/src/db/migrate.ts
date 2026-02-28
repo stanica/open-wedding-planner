@@ -288,6 +288,7 @@ function migrateCommunicationsConstraints(sqlite: Database.Database) {
 
   // Recreate table with CHECK constraints (SQLite doesn't support ALTER TABLE ADD CHECK)
   sqlite.exec(`
+    DROP TABLE IF EXISTS communications_new;
     CREATE TABLE communications_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vendor_id INTEGER NOT NULL REFERENCES vendors(id),
