@@ -10,6 +10,10 @@ import { VendorTableView } from "./VendorTableView";
 import { EmptyState } from "../common/EmptyState";
 import { SkeletonCard } from "../common/Skeleton";
 
+const STATUS_ORDER: Record<string, number> = {
+  booked: 0, quoted: 1, contacted: 2, researched: 3, rejected: 4,
+};
+
 export function VendorListView() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -45,9 +49,6 @@ export function VendorListView() {
       );
     }
     // Sort
-    const STATUS_ORDER: Record<string, number> = {
-      booked: 0, quoted: 1, contacted: 2, researched: 3, rejected: 4,
-    };
     switch (sortBy) {
       case "name-asc":
         result.sort((a, b) => a.name.localeCompare(b.name));
