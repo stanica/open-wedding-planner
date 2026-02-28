@@ -8,6 +8,7 @@ import { ThreadList } from "./ThreadList";
 import { ChatMessage } from "./ChatMessage";
 import { ComposeBox } from "../common/ComposeBox";
 import { PermissionRequestCard } from "./PermissionRequestCard";
+import { TokenUsageBar } from "./TokenUsageBar";
 
 interface Thread {
   id: number;
@@ -213,6 +214,7 @@ export function ResearchView() {
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0">
+        <TokenUsageBar />
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6">
           {activeThreadId && messages ? (
