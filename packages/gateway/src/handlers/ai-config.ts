@@ -128,6 +128,7 @@ export function registerAIConfigHandlers(
         model: data.model ?? "claude-sonnet-4-20250514",
         proxyUrl: data.proxyUrl ?? "http://localhost:3456/v1",
         apiKey: data.apiKey ?? null,
+        openaiApiKey: (data as any).openaiApiKey ?? null,
       });
     }
 

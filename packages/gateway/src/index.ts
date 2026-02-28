@@ -26,7 +26,6 @@ import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
 import { setAIConfig } from "./agents/model-provider.js";
 import { setSearchConfig, type SearchProviderType } from "./tools/search.js";
 import { aiConfig, searchConfig } from "./db/schema.js";
-import { buildEmbeddingText } from "./db/text-builders.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
