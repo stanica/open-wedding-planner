@@ -100,7 +100,8 @@ function buildCommunicationText(
 
   const parts: string[] = [];
   if (row.subject) parts.push(row.subject);
-  parts.push(row.body_translated ?? row.body_original ?? "");
+  const body = row.body_translated ?? row.body_original;
+  if (body) parts.push(body);
   return parts.join(". ") || null;
 }
 
@@ -168,7 +169,7 @@ function buildBudgetEntryText(
   if (row.category) parts.push(row.category);
   if (row.description) parts.push(row.description);
   if (row.notes) parts.push(row.notes);
-  return parts.join(": ") || null;
+  return parts.join(". ") || null;
 }
 
 function buildResearchMessageText(
