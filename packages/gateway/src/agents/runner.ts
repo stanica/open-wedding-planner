@@ -196,6 +196,25 @@ export class AgentRunner {
       } catch (err) {
         // On abort, return partial result with whatever tool calls completed
         if (err instanceof Error && err.name === "AbortError") {
+          const reason = ctx.signal.reason;
+          if (reason === "interrupt") {
+            // Build context about what was in progress
+            const dispatchCalls = allToolCalls.filter((tc) => tc.toolName === "dispatch");
+            const pendingTaskIds = dispatchCalls
+              .map((tc) => (tc.result as { taskId?: string })?.taskId)
+              .filter(Boolean);
+            const summary = pendingTaskIds.length > 0
+              ? `Research was interrupted while waiting for browser subagents. Pending task IDs: ${pendingTaskIds.join(", ")}. Use awaitTasks with these IDs to collect their results.`
+              : "Research was interrupted. No subagent tasks were pending.";
+
+            ctx.emit("complete", `${config.name} interrupted`);
+            return {
+              summary,
+              data: { toolCalls: allToolCalls, vendorIds },
+              aborted: true,
+            };
+          }
+
           ctx.emit("complete", `${config.name} stopped by user`);
           return {
             summary: "Stopped by user",
@@ -242,6 +261,24 @@ export class AgentRunner {
             usage = retryResult.usage;
           } catch (retryErr) {
             if (retryErr instanceof Error && retryErr.name === "AbortError") {
+              const reason = ctx.signal.reason;
+              if (reason === "interrupt") {
+                const dispatchCalls = allToolCalls.filter((tc) => tc.toolName === "dispatch");
+                const pendingTaskIds = dispatchCalls
+                  .map((tc) => (tc.result as { taskId?: string })?.taskId)
+                  .filter(Boolean);
+                const summary = pendingTaskIds.length > 0
+                  ? `Research was interrupted while waiting for browser subagents. Pending task IDs: ${pendingTaskIds.join(", ")}. Use awaitTasks with these IDs to collect their results.`
+                  : "Research was interrupted. No subagent tasks were pending.";
+
+                ctx.emit("complete", `${config.name} interrupted`);
+                return {
+                  summary,
+                  data: { toolCalls: allToolCalls, vendorIds },
+                  aborted: true,
+                };
+              }
+
               ctx.emit("complete", `${config.name} stopped by user`);
               return {
                 summary: "Stopped by user",

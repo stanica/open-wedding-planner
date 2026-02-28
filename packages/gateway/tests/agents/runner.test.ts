@@ -406,4 +406,66 @@ describe("AgentRunner", () => {
 
     expect(cleanupSpy).toHaveBeenCalled();
   });
+
+  it("returns pending task context on interrupt abort", async () => {
+    const { getModel } = await import("../../src/agents/model-provider.js");
+
+    // Create an AbortController and abort it with reason "interrupt"
+    const controller = new AbortController();
+
+    (getModel as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      specificationVersion: "v2",
+      provider: "test",
+      modelId: "test-model",
+      supportedUrls: {},
+      doGenerate: vi.fn().mockImplementation(async () => {
+        // Simulate being aborted mid-run
+        controller.abort("interrupt");
+        const err = new Error("This operation was aborted");
+        err.name = "AbortError";
+        throw err;
+      }),
+    });
+
+    const { AgentRunner } = await import("../../src/agents/runner.js");
+
+    const ctx: AgentContext = {
+      db,
+      sessionKey: "test-session",
+      emit: vi.fn(),
+      signal: controller.signal,
+      toolRegistry: registry,
+      permissionManager,
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const toolCtx: ToolFactoryContext = {
+      db,
+      emit: vi.fn(),
+      sqlite,
+      workspaceDir: "/tmp/test",
+      permissionCallbacks: {
+        requestPermission: vi.fn().mockResolvedValue("allow"),
+      },
+    };
+
+    const runner = new AgentRunner();
+    const result = await runner.run(
+      {
+        name: "research",
+        systemPrompt: "Test.",
+        tools: [],
+      },
+      ctx,
+      [{ role: "user", content: "Hello" }],
+      toolCtx,
+    );
+
+    expect(result.aborted).toBe(true);
+    // Interrupt should NOT say "Stopped by user"
+    expect(result.summary).not.toContain("Stopped by user");
+    expect(result.summary).toContain("interrupted");
+  });
 });
