@@ -184,6 +184,29 @@ export class Orchestrator {
       let result;
 
       if (taskConfig) {
+        // Resolve threadId: from input directly, or from parent task
+        let resolvedThreadId = (input as any)?.threadId;
+        if (!resolvedThreadId) {
+          const [task] = await this.db
+            .select({ parentTaskId: agentTasks.parentTaskId })
+            .from(agentTasks)
+            .where(eq(agentTasks.sessionId, sessionKey))
+            .limit(1);
+          if (task?.parentTaskId) {
+            const [parentTask] = await this.db
+              .select({ input: agentTasks.input })
+              .from(agentTasks)
+              .where(eq(agentTasks.id, task.parentTaskId))
+              .limit(1);
+            if (parentTask?.input) {
+              try {
+                const parentInput = JSON.parse(parentTask.input as string);
+                resolvedThreadId = parentInput.threadId;
+              } catch {}
+            }
+          }
+        }
+
         const toolCtx: ToolFactoryContext = {
           db: this.db,
           emit,
@@ -193,7 +216,7 @@ export class Orchestrator {
           orchestrator: this,
           parentSessionKey: sessionKey,
           ...this.extraToolCtx,
-          threadId: (input as any)?.threadId,
+          threadId: resolvedThreadId,
           broadcast: this.broadcast,
         };
 

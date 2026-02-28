@@ -19,6 +19,7 @@ interface ResearchStore {
   completedAt: number | null;
   contextCompactedAt: number | null;
   tokenUsage: { inputTokens: number; contextWindow: number; modelName: string } | null;
+  subagentTokens: Record<string, number>; // sessionKey -> latest inputTokens
 
   setActiveThreadId: (id: number | null) => void;
   setActiveSession: (key: string | null, threadId: number) => void;
@@ -40,6 +41,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
   completedAt: null,
   contextCompactedAt: null,
   tokenUsage: null,
+  subagentTokens: {},
 
   setActiveThreadId: (id) => set({ activeThreadId: id }),
 
@@ -76,6 +78,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
       liveToolCalls: [],
       pendingPermissions: [],
       completedAt: Date.now(),
+      subagentTokens: {},
     }),
 
   resolvePermission: (requestId, decision) =>
@@ -111,13 +114,25 @@ wsClient.onEvent((event: GatewayEvent) => {
 
   if (event.name === "research.tokenUsage") {
     const data = event.data;
-    useResearchStore.setState({
-      tokenUsage: {
-        inputTokens: data.inputTokens,
-        contextWindow: data.contextWindow,
-        modelName: data.modelName,
-      },
-    });
+    const { activeSession } = useResearchStore.getState();
+    if (data.sessionKey === activeSession) {
+      // Main agent — update primary token usage
+      useResearchStore.setState({
+        tokenUsage: {
+          inputTokens: data.inputTokens,
+          contextWindow: data.contextWindow,
+          modelName: data.modelName,
+        },
+      });
+    } else {
+      // Sub-agent — track separately
+      useResearchStore.setState((state) => ({
+        subagentTokens: {
+          ...state.subagentTokens,
+          [data.sessionKey]: data.inputTokens,
+        },
+      }));
+    }
   }
 
   if (event.name === "research.permissionRequest") {

@@ -15,9 +15,12 @@ function formatTokenCount(n: number): string {
 
 export function TokenUsageBar() {
   const tokenUsage = useResearchStore((s) => s.tokenUsage);
+  const subagentTokens = useResearchStore((s) => s.subagentTokens);
   if (!tokenUsage) return null;
 
   const { inputTokens, contextWindow, modelName } = tokenUsage;
+  const subTotal = Object.values(subagentTokens).reduce((a, b) => a + b, 0);
+  const totalTokens = inputTokens + subTotal;
   const pct = Math.min(100, Math.round((inputTokens / contextWindow) * 100));
 
   return (
@@ -30,7 +33,7 @@ export function TokenUsageBar() {
           />
         </div>
         <span className="text-xs text-gray-500 tabular-nums">
-          {formatTokenCount(inputTokens)} / {formatTokenCount(contextWindow)} ({pct}%)
+          {formatTokenCount(totalTokens)}{subTotal > 0 ? ` (${formatTokenCount(subTotal)} sub)` : ""} / {formatTokenCount(contextWindow)} ({pct}%)
         </span>
       </div>
       <span className="text-xs text-gray-600">{modelName}</span>
