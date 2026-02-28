@@ -21,15 +21,17 @@ interface ChatMessage {
 export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const { mutate: dispatchAction } = useMutation<
     { communicationId: number; instruction: string; history: ChatMessage[] },
-    { sessionKey: string }
+    { taskId: string; sessionKey: string }
   >("agent.action");
 
   // Reset chat when communication changes
   useEffect(() => {
     setMessages([]);
+    setActiveTaskId(null);
   }, [communication?.id]);
 
   // Auto-scroll
@@ -37,20 +39,21 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Listen for agent responses
+  // Listen for agent responses — filter by taskId to avoid picking up unrelated agent completions
   useEffect(() => {
-    if (!loading) return;
+    if (!loading || !activeTaskId) return;
 
     const unsub = wsClient.onEvent((event: GatewayEvent) => {
-      if (event.name === "agent-complete") {
+      if (event.name === "agent-complete" && event.data.taskId === activeTaskId) {
         const { summary } = event.data;
         setMessages((prev) => [...prev, { role: "assistant", content: summary }]);
         setLoading(false);
+        setActiveTaskId(null);
       }
     });
 
     return unsub;
-  }, [loading]);
+  }, [loading, activeTaskId]);
 
   async function handleSend(instruction: string) {
     if (!communication) return;
@@ -60,11 +63,12 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
     setLoading(true);
 
     try {
-      await dispatchAction({
+      const result = await dispatchAction({
         communicationId: communication.id,
         instruction,
         history: [...messages, userMsg],
       });
+      setActiveTaskId(result.taskId);
     } catch {
       setMessages((prev) => [
         ...prev,

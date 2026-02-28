@@ -35,8 +35,8 @@ export function WhatsAppView() {
     (event: GatewayEvent) => {
       if (
         event.name === "communication-received" ||
-        event.name === "draft-ready" ||
-        event.name === "agent-complete"
+        event.name === "agent-complete" ||
+        (event.name === "agent-activity" && event.data.action === "draft-ready")
       ) {
         refetch();
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRequest } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { ConversationThread, type Communication } from "../common/ConversationThread";
@@ -23,8 +23,8 @@ export function VendorComms({ vendorId }: { vendorId: number }) {
     (event: GatewayEvent) => {
       if (
         event.name === "communication-received" ||
-        event.name === "draft-ready" ||
-        event.name === "agent-complete"
+        event.name === "agent-complete" ||
+        (event.name === "agent-activity" && event.data.action === "draft-ready")
       ) {
         refetch();
       }
@@ -36,9 +36,12 @@ export function VendorComms({ vendorId }: { vendorId: number }) {
     return wsClient.onEvent(handleEvent);
   }, [handleEvent]);
 
-  // Sort chronologically (oldest first)
-  const sorted = (messages ?? []).sort(
-    (a, b) => new Date(a.sentAt ?? 0).getTime() - new Date(b.sentAt ?? 0).getTime()
+  // Sort chronologically (oldest first) — spread to avoid mutating state
+  const sorted = useMemo(
+    () => [...(messages ?? [])].sort(
+      (a, b) => new Date(a.sentAt ?? 0).getTime() - new Date(b.sentAt ?? 0).getTime()
+    ),
+    [messages],
   );
 
   if (loading) {
