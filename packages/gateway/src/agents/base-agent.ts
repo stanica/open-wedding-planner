@@ -21,6 +21,11 @@ export interface AgentResult {
   data?: unknown;
   compactionSummary?: string;
   aborted?: boolean;
+  lastTokenUsage?: {
+    inputTokens: number;
+    contextWindow: number;
+    modelName: string;
+  };
 }
 
 export interface BaseAgent {

@@ -196,6 +196,9 @@ export function pushSchema(sqlite: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       category_tags TEXT,
+      last_input_tokens INTEGER,
+      last_context_window INTEGER,
+      last_model_name TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -274,6 +277,24 @@ export function pushSchema(sqlite: Database.Database) {
 
   try {
     sqlite.exec(`ALTER TABLE communications ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    sqlite.exec(`ALTER TABLE research_threads ADD COLUMN last_input_tokens INTEGER`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    sqlite.exec(`ALTER TABLE research_threads ADD COLUMN last_context_window INTEGER`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    sqlite.exec(`ALTER TABLE research_threads ADD COLUMN last_model_name TEXT`);
   } catch {
     // Column already exists
   }

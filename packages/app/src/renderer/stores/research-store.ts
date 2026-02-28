@@ -76,7 +76,6 @@ export const useResearchStore = create<ResearchStore>((set) => ({
       liveToolCalls: [],
       pendingPermissions: [],
       completedAt: Date.now(),
-      tokenUsage: null,
     }),
 
   resolvePermission: (requestId, decision) =>

@@ -280,10 +280,17 @@ Be thorough but concise. This summary will replace the conversation history for 
         }
       }
 
+      const modelName = getAIConfig().model;
+      const contextWindow = getContextWindowForModel(modelName);
       return {
         summary: text || `${config.name} completed`,
         data: { toolCalls: allToolCalls, vendorIds },
         compactionSummary,
+        lastTokenUsage: usage?.inputTokens ? {
+          inputTokens: usage.inputTokens,
+          contextWindow,
+          modelName,
+        } : undefined,
       };
     } finally {
       if (cleanup) {

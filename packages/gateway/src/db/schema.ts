@@ -208,6 +208,9 @@ export const researchThreads = sqliteTable("research_threads", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   categoryTags: text("category_tags"),
+  lastInputTokens: integer("last_input_tokens"),
+  lastContextWindow: integer("last_context_window"),
+  lastModelName: text("last_model_name"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

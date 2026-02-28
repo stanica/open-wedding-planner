@@ -15,6 +15,9 @@ interface Thread {
   title: string;
   categoryTags: string | null;
   updatedAt: string;
+  lastInputTokens: number | null;
+  lastContextWindow: number | null;
+  lastModelName: string | null;
 }
 
 interface Message {
@@ -98,6 +101,26 @@ export function ResearchView() {
       refetchMessages();
     }
   }, [contextCompactedAt, refetchMessages]);
+
+  // Load persisted token usage when switching threads
+  useEffect(() => {
+    if (activeThreadId && threads) {
+      const thread = threads.find((t) => t.id === activeThreadId);
+      if (thread?.lastInputTokens && thread?.lastContextWindow && thread?.lastModelName) {
+        useResearchStore.setState({
+          tokenUsage: {
+            inputTokens: thread.lastInputTokens,
+            contextWindow: thread.lastContextWindow,
+            modelName: thread.lastModelName,
+          },
+        });
+      } else {
+        useResearchStore.setState({ tokenUsage: null });
+      }
+    } else {
+      useResearchStore.setState({ tokenUsage: null });
+    }
+  }, [activeThreadId, threads]);
 
   // Handlers
   async function handleCreateThread() {

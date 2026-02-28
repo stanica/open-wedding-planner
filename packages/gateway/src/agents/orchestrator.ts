@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { eq, sql } from "drizzle-orm";
 import type { ModelMessage } from "ai";
-import { agentTasks, researchMessages } from "../db/schema.js";
+import { agentTasks, researchMessages, researchThreads } from "../db/schema.js";
 import { CommandQueue } from "../infra/command-queue.js";
 import { SessionManager } from "../infra/sessions.js";
 import { Guardrails } from "./safety/guardrails.js";
@@ -243,6 +243,15 @@ export class Orchestrator {
           name: "research.messageComplete",
           data: { threadId: researchInput.threadId },
         });
+
+        // Persist last token usage to thread for UI on reload
+        if (result.lastTokenUsage) {
+          await this.db.update(researchThreads).set({
+            lastInputTokens: result.lastTokenUsage.inputTokens,
+            lastContextWindow: result.lastTokenUsage.contextWindow,
+            lastModelName: result.lastTokenUsage.modelName,
+          }).where(eq(researchThreads.id, researchInput.threadId));
+        }
 
         // Trigger completion callback for queue processing
         const threadCallback = this.completionCallbacks.get(`thread-${researchInput.threadId}`);
