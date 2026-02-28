@@ -69,6 +69,30 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
     return { taskId, sessionKey };
   });
 
+  router.register("agent.action", async (_db, params) => {
+    const { communicationId, instruction, history } = params as {
+      communicationId: number;
+      instruction: string;
+      history?: Array<{ role: string; content: string }>;
+    };
+
+    // Build context message with the communication content
+    const contextMessages = [
+      {
+        role: "user",
+        content: `Communication ID: ${communicationId}\n\nUser instruction: ${instruction}`,
+      },
+      ...(history ?? []).slice(0, -1), // Include prior conversation turns if any
+    ];
+
+    const { taskId, sessionKey } = await orchestrator.dispatch("action", {
+      communicationId,
+      instruction,
+      messages: contextMessages,
+    });
+    return { taskId, sessionKey };
+  });
+
   router.register("agent.status", async (_db) => {
     return orchestrator.getQueueStatus();
   });

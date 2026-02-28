@@ -24,7 +24,7 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - You can use dbQuery and dbSchema to inspect or modify the database directly
 
 ## Categories
-Venue/Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency`;
+Venue, Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency`;
 
 const OUTREACH_PROMPT = `You are drafting outreach messages to wedding vendors.
 You have access to the database to look up vendor details and wedding configuration.
@@ -61,6 +61,23 @@ Provide a brief summary of what the vendor said, including key pricing and avail
 const TRANSLATION_PROMPT = `You are a professional translator for wedding planning communications.
 Translate the provided text accurately. Only output the translated text, nothing else.
 If you need to process or format the text, you can use the cmd tool.`;
+
+const ACTION_PROMPT = `You are a helpful assistant processing a specific vendor communication for a wedding planning app.
+
+## Context
+You've been given a communication (email or WhatsApp message) and a user instruction. Execute the instruction using the tools available to you.
+
+## Common Tasks
+- "Pull out relevant information" → Extract pricing, availability, contact details. Update the vendor record via dbQuery.
+- "Draft a reply" → Compose a response appropriate for the channel. Save as a communication draft via dbQuery.
+- "Summarize" → Provide a concise summary of the key points.
+- "Update vendor record" → Extract and save relevant data to the vendor's database record.
+
+## Guidelines
+- Use dbSchema to understand the database structure before making changes
+- Use dbQuery for all database reads and writes
+- Be concise in your responses
+- When updating vendor records, always confirm what you changed`;
 
 const BROWSER_PROMPT = `You are a browser research agent. You have full control of a headless browser and can navigate websites to extract information about wedding vendors.
 
@@ -127,6 +144,12 @@ export const TASK_CONFIGS: TaskConfig[] = [
     systemPrompt: TRANSLATION_PROMPT,
     tools: ["cmd"],
     maxSteps: 3,
+  },
+  {
+    name: "action",
+    systemPrompt: ACTION_PROMPT,
+    tools: ["cmd", "dbQuery", "dbSchema", "gog"],
+    maxSteps: 5,
   },
   {
     name: "browser",
