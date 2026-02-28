@@ -1,18 +1,21 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Store, ChevronDown, ChevronRight } from "lucide-react";
+import { Store } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useVendors, useCategories } from "../../hooks/useVendors";
 import { useMutation } from "../../hooks/useRequest";
 import { VendorCard } from "./VendorCard";
-import { VendorFilters } from "./VendorFilters";
+import { VendorFilters, type SortOption, type ViewMode } from "./VendorFilters";
+import { VendorTableView } from "./VendorTableView";
 import { EmptyState } from "../common/EmptyState";
 import { SkeletonCard } from "../common/Skeleton";
 
 export function VendorListView() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<number>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const navigate = useNavigate();
 
   const { data: vendors, loading: vendorsLoading } = useVendors(
@@ -31,6 +34,7 @@ export function VendorListView() {
       const optimistic = optimisticFavorites.get(v.id);
       return optimistic !== undefined ? { ...v, favorite: optimistic } : v;
     });
+    if (categoryFilter !== null) result = result.filter((v) => v.categoryId === categoryFilter);
     if (favoritesOnly) result = result.filter((v) => v.favorite);
     if (search) {
       const q = search.toLowerCase();
@@ -40,30 +44,35 @@ export function VendorListView() {
           v.location?.toLowerCase().includes(q),
       );
     }
-    return result;
-  }, [vendors, search, favoritesOnly, optimisticFavorites]);
-
-  const grouped = useMemo(() => {
-    if (!categories) return [];
-    const map = new Map<number, typeof filtered>();
-    for (const v of filtered) {
-      const list = map.get(v.categoryId) ?? [];
-      list.push(v);
-      map.set(v.categoryId, list);
+    // Sort
+    const STATUS_ORDER: Record<string, number> = {
+      booked: 0, quoted: 1, contacted: 2, researched: 3, rejected: 4,
+    };
+    switch (sortBy) {
+      case "name-asc":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "newest":
+        result.sort((a, b) => b.id - a.id);
+        break;
+      case "status":
+        result.sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9));
+        break;
     }
-    return categories
-      .filter((c) => map.has(c.id))
-      .map((c) => ({ category: c, vendors: map.get(c.id)! }));
-  }, [filtered, categories]);
+    return result;
+  }, [vendors, search, favoritesOnly, optimisticFavorites, categoryFilter, sortBy]);
 
-  function toggleCategory(id: number) {
-    setCollapsedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<number, number>();
+    if (!vendors) return counts;
+    for (const v of vendors) {
+      counts.set(v.categoryId, (counts.get(v.categoryId) ?? 0) + 1);
+    }
+    return counts;
+  }, [vendors]);
 
   return (
     <div className="p-6 space-y-4">
@@ -81,6 +90,14 @@ export function VendorListView() {
         onStatusChange={setStatusFilter}
         favoritesOnly={favoritesOnly}
         onFavoritesChange={setFavoritesOnly}
+        categories={categories ?? []}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+        categoryCounts={categoryCounts}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       {loading ? (
@@ -95,69 +112,39 @@ export function VendorListView() {
           title="No vendors found"
           description={search || statusFilter ? "Try adjusting your filters" : "Import vendor data to get started"}
         />
-      ) : (
-        <div className="space-y-6">
-          {grouped.map(({ category, vendors: categoryVendors }) => {
-            const isCollapsed = collapsedCategories.has(category.id);
-            return (
-              <div key={category.id}>
-                <button
-                  onClick={() => toggleCategory(category.id)}
-                  className="flex w-full items-center gap-2 text-left mb-3"
-                >
-                  {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  )}
-                  <span className="text-sm font-semibold text-gray-300">
-                    {category.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    ({categoryVendors.length})
-                  </span>
-                </button>
-
-                <AnimatePresence>
-                  {!isCollapsed && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 [&>*]:mb-3">
-                        <AnimatePresence mode="popLayout">
-                          {categoryVendors.map((vendor) => (
-                            <motion.div
-                              key={vendor.id}
-                              layout
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              transition={{ duration: 0.15 }}
-                              className="break-inside-avoid"
-                            >
-                              <VendorCard
-                                vendor={vendor}
-                                onClick={() => navigate(`/vendors/${vendor.id}`)}
-                                onToggleFavorite={(id, favorite) => {
-                                  setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
-                                  updateVendor({ id, favorite });
-                                }}
-                              />
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+      ) : viewMode === "grid" ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((vendor) => (
+              <motion.div
+                key={vendor.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+              >
+                <VendorCard
+                  vendor={vendor}
+                  onClick={() => navigate(`/vendors/${vendor.id}`)}
+                  onToggleFavorite={(id, favorite) => {
+                    setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
+                    updateVendor({ id, favorite });
+                  }}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
+      ) : (
+        <VendorTableView
+          vendors={filtered}
+          onVendorClick={(id) => navigate(`/vendors/${id}`)}
+          onToggleFavorite={(id, favorite) => {
+            setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
+            updateVendor({ id, favorite });
+          }}
+        />
       )}
     </div>
   );
