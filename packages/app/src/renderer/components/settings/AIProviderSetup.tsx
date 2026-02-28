@@ -13,6 +13,8 @@ interface AIConfig {
   proxyUrl: string;
   hasApiKey: boolean;
   maskedApiKey: string | null;
+  hasOpenaiApiKey: boolean;
+  maskedOpenaiApiKey: string | null;
   proxyStatus: ProxyStatus;
   availableModels: string[];
 }
@@ -25,6 +27,7 @@ export function AIProviderSetup() {
     "api-key",
   );
   const [apiKey, setApiKey] = useState("");
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{
@@ -124,6 +127,7 @@ export function AIProviderSetup() {
         provider,
         model,
         ...(apiKey ? { apiKey } : {}),
+        ...(openaiApiKey ? { openaiApiKey } : {}),
       });
 
       setProxyStatus(result.proxyStatus);
@@ -134,6 +138,7 @@ export function AIProviderSetup() {
       const cfg = await wsClient.request<AIConfig>("ai-config.get");
       setConfig(cfg);
       setApiKey("");
+      setOpenaiApiKey("");
       if (cfg.availableModels.length > 0) {
         setModels(cfg.availableModels);
       }
@@ -144,7 +149,7 @@ export function AIProviderSetup() {
 
   if (!config) return null;
 
-  const dirty = provider !== config.provider || model !== config.model || !!apiKey;
+  const dirty = provider !== config.provider || model !== config.model || !!apiKey || !!openaiApiKey;
 
   return (
     <div>
@@ -338,6 +343,48 @@ export function AIProviderSetup() {
               placeholder="e.g. claude-sonnet-4-20250514"
               className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
             />
+          )}
+        </div>
+
+        {/* OpenAI API Key — for semantic search embeddings */}
+        <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">
+                OpenAI API Key
+              </p>
+              <p className="text-xs text-gray-400">
+                Required for semantic search across your data
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  config.hasOpenaiApiKey ? "bg-green-400" : "bg-gray-500"
+                }`}
+              />
+              <p className="text-xs text-gray-400">
+                {config.hasOpenaiApiKey
+                  ? `Set (${config.maskedOpenaiApiKey})`
+                  : "Not configured"}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              placeholder="sk-..."
+              className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+          {!config.hasOpenaiApiKey && (
+            <p className="text-xs text-gray-500">
+              Uses <code className="rounded bg-white/10 px-1">text-embedding-3-small</code> for vector embeddings.
+              Get a key at{" "}
+              <code className="rounded bg-white/10 px-1">platform.openai.com/api-keys</code>
+            </p>
           )}
         </div>
 
