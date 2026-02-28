@@ -61,6 +61,7 @@ export function pushSchema(sqlite: Database.Database) {
       source_url TEXT,
       image_url TEXT,
       thread_id INTEGER,
+      favorite INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'researched',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -109,14 +110,14 @@ export function pushSchema(sqlite: Database.Database) {
     CREATE TABLE IF NOT EXISTS communications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vendor_id INTEGER NOT NULL REFERENCES vendors(id),
-      direction TEXT NOT NULL,
-      channel TEXT NOT NULL,
+      direction TEXT NOT NULL CHECK(direction IN ('in', 'out')),
+      channel TEXT NOT NULL CHECK(channel IN ('email', 'whatsapp')),
       subject TEXT,
       body_original TEXT NOT NULL,
       body_translated TEXT,
       language TEXT,
       sent_at TEXT,
-      status TEXT NOT NULL DEFAULT 'draft',
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'approved', 'sent', 'received', 'rejected', 'pending_approval')),
       thread_id TEXT,
       parsed_at TEXT
     );
@@ -263,4 +264,46 @@ export function pushSchema(sqlite: Database.Database) {
   } catch {
     // Column already exists
   }
+
+  try {
+    sqlite.exec(`ALTER TABLE vendors ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column already exists
+  }
+
+  // Normalize direction values and add CHECK constraints to communications table
+  migrateCommunicationsConstraints(sqlite);
+}
+
+function migrateCommunicationsConstraints(sqlite: Database.Database) {
+  // Check if the table already has CHECK constraints by inspecting the DDL
+  const row = sqlite
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='communications'")
+    .get() as { sql: string } | undefined;
+  if (!row || row.sql.includes("CHECK")) return; // Already has constraints or table doesn't exist
+
+  // Normalize existing direction values
+  sqlite.exec(`UPDATE communications SET direction = 'in' WHERE direction = 'inbound';`);
+  sqlite.exec(`UPDATE communications SET direction = 'out' WHERE direction = 'outbound';`);
+
+  // Recreate table with CHECK constraints (SQLite doesn't support ALTER TABLE ADD CHECK)
+  sqlite.exec(`
+    CREATE TABLE communications_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vendor_id INTEGER NOT NULL REFERENCES vendors(id),
+      direction TEXT NOT NULL CHECK(direction IN ('in', 'out')),
+      channel TEXT NOT NULL CHECK(channel IN ('email', 'whatsapp')),
+      subject TEXT,
+      body_original TEXT NOT NULL,
+      body_translated TEXT,
+      language TEXT,
+      sent_at TEXT,
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'approved', 'sent', 'received', 'rejected', 'pending_approval')),
+      thread_id TEXT,
+      parsed_at TEXT
+    );
+    INSERT INTO communications_new SELECT * FROM communications;
+    DROP TABLE communications;
+    ALTER TABLE communications_new RENAME TO communications;
+  `);
 }
