@@ -18,14 +18,15 @@ export interface DefaultCategory {
 }
 
 export const DEFAULT_CATEGORIES: DefaultCategory[] = [
-  { name: "Venue/Food/Beverage", budgetPercentLow: 42, budgetPercentHigh: 50, sortOrder: 1 },
-  { name: "Ceremony", budgetPercentLow: 2, budgetPercentHigh: 3, sortOrder: 2 },
-  { name: "Photography/Videography", budgetPercentLow: 18, budgetPercentHigh: 20, sortOrder: 3 },
-  { name: "Decor", budgetPercentLow: 5, budgetPercentHigh: 8, sortOrder: 4 },
-  { name: "Stationery", budgetPercentLow: 1, budgetPercentHigh: 2, sortOrder: 5 },
-  { name: "Attire", budgetPercentLow: 3, budgetPercentHigh: 5, sortOrder: 6 },
-  { name: "Entertainment", budgetPercentLow: 5, budgetPercentHigh: 8, sortOrder: 7 },
-  { name: "Planner/Coordinator", budgetPercentLow: 8, budgetPercentHigh: 10, sortOrder: 8 },
-  { name: "Miscellaneous", budgetPercentLow: 2, budgetPercentHigh: 3, sortOrder: 9 },
-  { name: "Contingency", budgetPercentLow: 3, budgetPercentHigh: 5, sortOrder: 10 },
+  { name: "Venue", budgetPercentLow: 25, budgetPercentHigh: 30, sortOrder: 1 },
+  { name: "Food/Beverage", budgetPercentLow: 17, budgetPercentHigh: 20, sortOrder: 2 },
+  { name: "Ceremony", budgetPercentLow: 2, budgetPercentHigh: 3, sortOrder: 3 },
+  { name: "Photography/Videography", budgetPercentLow: 18, budgetPercentHigh: 20, sortOrder: 4 },
+  { name: "Decor", budgetPercentLow: 5, budgetPercentHigh: 8, sortOrder: 5 },
+  { name: "Stationery", budgetPercentLow: 1, budgetPercentHigh: 2, sortOrder: 6 },
+  { name: "Attire", budgetPercentLow: 3, budgetPercentHigh: 5, sortOrder: 7 },
+  { name: "Entertainment", budgetPercentLow: 5, budgetPercentHigh: 8, sortOrder: 8 },
+  { name: "Planner/Coordinator", budgetPercentLow: 8, budgetPercentHigh: 10, sortOrder: 9 },
+  { name: "Miscellaneous", budgetPercentLow: 2, budgetPercentHigh: 3, sortOrder: 10 },
+  { name: "Contingency", budgetPercentLow: 3, budgetPercentHigh: 5, sortOrder: 11 },
 ];

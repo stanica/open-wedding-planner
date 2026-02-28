@@ -30,7 +30,7 @@ export type GatewayEvent =
   | { name: "vendor-created"; data: { vendor: Vendor } }
   | { name: "vendor-updated"; data: { vendor: Vendor } }
   | { name: "agent-activity"; data: { sessionKey: string; action: string; detail?: string } }
-  | { name: "agent-complete"; data: { taskId: string; summary: string } }
+  | { name: "agent-complete"; data: { taskId: string; sessionKey: string; summary: string } }
   | { name: "communication-received"; data: { vendorId: number; channel: string } }
   | { name: "draft-ready"; data: { communicationId: number; vendorName: string } }
   | { name: "channel-status"; data: { channel: string; status: ChannelStatus } }

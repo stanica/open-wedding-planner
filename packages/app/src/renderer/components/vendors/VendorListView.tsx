@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Store, ChevronDown, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useVendors, useCategories } from "../../hooks/useVendors";
+import { useMutation } from "../../hooks/useRequest";
 import { VendorCard } from "./VendorCard";
 import { VendorFilters } from "./VendorFilters";
 import { EmptyState } from "../common/EmptyState";
@@ -17,20 +18,30 @@ export function VendorListView() {
   const { data: vendors, loading: vendorsLoading } = useVendors(
     statusFilter ? { status: statusFilter } : undefined,
   );
+  const { mutate: updateVendor } = useMutation("vendors.update");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [optimisticFavorites, setOptimisticFavorites] = useState<Map<number, boolean>>(new Map());
   const { data: categories, loading: categoriesLoading } = useCategories();
 
   const loading = vendorsLoading || categoriesLoading;
 
   const filtered = useMemo(() => {
     if (!vendors) return [];
-    if (!search) return vendors;
-    const q = search.toLowerCase();
-    return vendors.filter(
-      (v) =>
-        v.name.toLowerCase().includes(q) ||
-        v.location?.toLowerCase().includes(q),
-    );
-  }, [vendors, search]);
+    let result = vendors.map((v) => {
+      const optimistic = optimisticFavorites.get(v.id);
+      return optimistic !== undefined ? { ...v, favorite: optimistic } : v;
+    });
+    if (favoritesOnly) result = result.filter((v) => v.favorite);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (v) =>
+          v.name.toLowerCase().includes(q) ||
+          v.location?.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [vendors, search, favoritesOnly, optimisticFavorites]);
 
   const grouped = useMemo(() => {
     if (!categories) return [];
@@ -68,6 +79,8 @@ export function VendorListView() {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
+        favoritesOnly={favoritesOnly}
+        onFavoritesChange={setFavoritesOnly}
       />
 
       {loading ? (
@@ -114,7 +127,7 @@ export function VendorListView() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="columns-1 gap-3 sm:columns-2 lg:columns-3 [&>*]:mb-3">
                         <AnimatePresence mode="popLayout">
                           {categoryVendors.map((vendor) => (
                             <motion.div
@@ -124,10 +137,15 @@ export function VendorListView() {
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
                               transition={{ duration: 0.15 }}
+                              className="break-inside-avoid"
                             >
                               <VendorCard
                                 vendor={vendor}
                                 onClick={() => navigate(`/vendors/${vendor.id}`)}
+                                onToggleFavorite={(id, favorite) => {
+                                  setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
+                                  updateVendor({ id, favorite });
+                                }}
                               />
                             </motion.div>
                           ))}

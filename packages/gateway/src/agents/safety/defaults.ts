@@ -1,12 +1,12 @@
 import type { GuardrailsConfig } from "./types.js";
 
 export const DEFAULT_GUARDRAILS_CONFIG: GuardrailsConfig = {
-  enabled: false,
+  enabled: true,
   historySize: 50,
   repeat: {
     enabled: true,
-    warnThreshold: 5,
-    criticalThreshold: 0,
+    warnThreshold: 3,
+    criticalThreshold: 5,
   },
   polling: {
     enabled: true,

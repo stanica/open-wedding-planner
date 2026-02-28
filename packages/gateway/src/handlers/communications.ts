@@ -27,6 +27,7 @@ export function registerCommunicationHandlers(router: Router, deliveryQueue?: De
         status: communications.status,
         threadId: communications.threadId,
         parsedAt: communications.parsedAt,
+        isRead: communications.isRead,
       })
       .from(communications)
       .leftJoin(vendors, eq(communications.vendorId, vendors.id))
@@ -108,6 +109,12 @@ export function registerCommunicationHandlers(router: Router, deliveryQueue?: De
       .from(communications)
       .where(eq(communications.id, id));
     return updated;
+  });
+
+  router.register("communications.markRead", async (db: Db, params: unknown) => {
+    const { id } = params as { id: number };
+    await db.update(communications).set({ isRead: 1 }).where(eq(communications.id, id));
+    return { ok: true };
   });
 
   router.register("communications.delete", async (db: Db, params: unknown) => {

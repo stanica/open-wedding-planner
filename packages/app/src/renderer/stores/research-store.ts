@@ -99,7 +99,7 @@ wsClient.onEvent((event: GatewayEvent) => {
     }
   }
 
-  if (event.name === "agent-complete" && activeSession) {
+  if (event.name === "agent-complete" && activeSession && event.data.sessionKey === activeSession) {
     useResearchStore.getState().clearSession();
   }
 

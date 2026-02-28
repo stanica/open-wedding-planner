@@ -15,6 +15,7 @@ export interface Communication {
   status: string;
   threadId: string | null;
   parsedAt: string | null;
+  isRead: number;
 }
 
 interface ConversationThreadProps {

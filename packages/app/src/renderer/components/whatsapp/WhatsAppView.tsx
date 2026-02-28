@@ -70,7 +70,7 @@ export function WhatsAppView() {
           vendorName: latest.vendorName ?? "Unknown",
           lastMessage: latest.bodyOriginal.slice(0, 80),
           lastMessageAt: latest.sentAt,
-          unreadCount: msgs.filter((m) => !isOutbound(m.direction) && m.status === "received" && !m.parsedAt).length,
+          unreadCount: msgs.filter((m) => !isOutbound(m.direction) && !m.isRead).length,
           channel: "whatsapp",
         };
       })

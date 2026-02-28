@@ -65,13 +65,17 @@ function QuoteCard({
 
   if (!quote) return null;
 
+  const displayTotal = quote.lineItems.length > 0
+    ? quote.lineItems.reduce((sum, li) => sum + (li.unitPrice != null && li.quantity != null ? li.unitPrice * li.quantity : li.amount), 0)
+    : quote.totalAmount;
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <span className="text-sm font-semibold text-white">
-              <CurrencyDisplay amount={quote.totalAmount} currency={currency} />
+              <CurrencyDisplay amount={displayTotal} currency={currency} />
             </span>
             {quote.source && (
               <span className="ml-2 text-xs text-gray-500">via {quote.source}</span>
@@ -99,7 +103,7 @@ function QuoteCard({
       <ConfirmDialog
         open={showConfirm}
         title="Delete quote?"
-        message={`Delete this ${currency} ${quote.totalAmount.toLocaleString()} quote and all its line items?`}
+        message={`Delete this ${currency} ${displayTotal.toLocaleString()} quote and all its line items?`}
         onConfirm={handleDelete}
         onCancel={() => setShowConfirm(false)}
         loading={deleting}

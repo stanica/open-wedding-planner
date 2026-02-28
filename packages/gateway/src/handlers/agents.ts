@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { researchMessages } from "../db/schema.js";
+import { eq, desc } from "drizzle-orm";
+import { researchMessages, communications, vendors } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 import type { Orchestrator } from "../agents/orchestrator.js";
 
@@ -69,24 +69,57 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
     return { taskId, sessionKey };
   });
 
-  router.register("agent.action", async (_db, params) => {
-    const { communicationId, instruction, history } = params as {
-      communicationId: number;
+  router.register("agent.action", async (db, params) => {
+    const { communicationId, vendorId, instruction, history } = params as {
+      communicationId?: number;
+      vendorId?: number;
       instruction: string;
       history?: Array<{ role: string; content: string }>;
     };
 
-    // Build context message with the communication content
+    // Fetch the full email thread for this vendor to give the agent complete context
+    let contextText = "";
+    const targetVendorId = vendorId ?? (communicationId
+      ? (await db.select({ vendorId: communications.vendorId }).from(communications).where(eq(communications.id, communicationId)))[0]?.vendorId
+      : undefined);
+
+    if (targetVendorId) {
+      const [vendor] = await db.select({ name: vendors.name }).from(vendors).where(eq(vendors.id, targetVendorId));
+      const thread = await db
+        .select({
+          id: communications.id,
+          direction: communications.direction,
+          channel: communications.channel,
+          subject: communications.subject,
+          bodyOriginal: communications.bodyOriginal,
+          sentAt: communications.sentAt,
+        })
+        .from(communications)
+        .where(eq(communications.vendorId, targetVendorId))
+        .orderBy(communications.sentAt);
+
+      contextText = `## Vendor: ${vendor?.name ?? "Unknown"} (ID: ${targetVendorId})\n\n`;
+      contextText += `## Full email thread (${thread.length} messages):\n\n`;
+      for (const msg of thread) {
+        const dir = msg.direction === "out" ? "SENT" : "RECEIVED";
+        const date = msg.sentAt ? new Date(msg.sentAt).toLocaleString() : "unknown date";
+        contextText += `--- ${dir} | ${date} ---\n`;
+        if (msg.subject) contextText += `Subject: ${msg.subject}\n`;
+        contextText += `${msg.bodyOriginal}\n\n`;
+      }
+    }
+
     const contextMessages = [
       {
         role: "user",
-        content: `Communication ID: ${communicationId}\n\nUser instruction: ${instruction}`,
+        content: `${contextText}\nUser instruction: ${instruction}`,
       },
-      ...(history ?? []).slice(0, -1), // Include prior conversation turns if any
+      ...(history ?? []).slice(0, -1),
     ];
 
     const { taskId, sessionKey } = await orchestrator.dispatch("action", {
       communicationId,
+      vendorId: targetVendorId,
       instruction,
       messages: contextMessages,
     });

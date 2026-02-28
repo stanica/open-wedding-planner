@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin } from "lucide-react";
+import { MapPin, Heart } from "lucide-react";
 import { Card, CardContent } from "../common/Card";
 import { VendorStatusBadge } from "./VendorStatusBadge";
 
@@ -8,14 +8,16 @@ interface VendorCardProps {
     id: number;
     name: string;
     location: string | null;
+    favorite: boolean;
     status: string;
     description: string | null;
     imageUrl: string | null;
   };
   onClick: () => void;
+  onToggleFavorite: (id: number, favorite: boolean) => void;
 }
 
-export function VendorCard({ vendor, onClick }: VendorCardProps) {
+export function VendorCard({ vendor, onClick, onToggleFavorite }: VendorCardProps) {
   const [imgError, setImgError] = useState(false);
   const showImage = vendor.imageUrl && !imgError;
 
@@ -33,8 +35,21 @@ export function VendorCard({ vendor, onClick }: VendorCardProps) {
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-medium text-white truncate">{vendor.name}</h3>
-              <VendorStatusBadge status={vendor.status} />
+              <h3 className="font-medium text-white">{vendor.name}</h3>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(vendor.id, !vendor.favorite);
+                  }}
+                  className="text-gray-500 hover:text-rose-400 transition-colors"
+                >
+                  <Heart
+                    className={`h-3.5 w-3.5 ${vendor.favorite ? "fill-rose-400 text-rose-400" : ""}`}
+                  />
+                </button>
+                <VendorStatusBadge status={vendor.status} />
+              </div>
             </div>
             {vendor.location && (
               <div className="mt-1 flex items-center gap-1 text-xs text-gray-400">

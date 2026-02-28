@@ -9,6 +9,7 @@ interface Vendor {
   contactEmail: string | null;
   contactPhone: string | null;
   contactWhatsapp: string | null;
+  favorite: boolean;
   status: string;
   description: string | null;
   notes: string | null;

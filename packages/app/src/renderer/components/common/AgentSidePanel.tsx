@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ComposeBox } from "./ComposeBox";
 import { useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import type { Communication } from "./ConversationThread";
+import { Markdown } from "../shared/Markdown";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
 interface AgentSidePanelProps {
@@ -21,62 +22,69 @@ interface ChatMessage {
 export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const unsubRef = useRef<(() => void) | null>(null);
   const { mutate: dispatchAction } = useMutation<
-    { communicationId: number; instruction: string; history: ChatMessage[] },
+    { vendorId: number; instruction: string; history: ChatMessage[] },
     { taskId: string; sessionKey: string }
   >("agent.action");
 
   // Reset chat when communication changes
   useEffect(() => {
     setMessages([]);
-    setActiveTaskId(null);
+    setLoading(false);
+    unsubRef.current?.();
+    unsubRef.current = null;
   }, [communication?.id]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => unsubRef.current?.();
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Listen for agent responses — filter by taskId to avoid picking up unrelated agent completions
-  useEffect(() => {
-    if (!loading || !activeTaskId) return;
-
-    const unsub = wsClient.onEvent((event: GatewayEvent) => {
-      if (event.name === "agent-complete" && event.data.taskId === activeTaskId) {
-        const { summary } = event.data;
-        setMessages((prev) => [...prev, { role: "assistant", content: summary }]);
-        setLoading(false);
-        setActiveTaskId(null);
-      }
-    });
-
-    return unsub;
-  }, [loading, activeTaskId]);
-
-  async function handleSend(instruction: string) {
+  const handleSend = useCallback(async (instruction: string) => {
     if (!communication) return;
 
     const userMsg: ChatMessage = { role: "user", content: instruction };
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
+    // Subscribe to events BEFORE dispatching so we never miss the response
+    unsubRef.current?.();
+    let taskId: string | null = null;
+
+    unsubRef.current = wsClient.onEvent((event: GatewayEvent) => {
+      if (event.name === "agent-complete" && taskId && event.data.taskId === taskId) {
+        const { summary } = event.data;
+        setMessages((prev) => [...prev, { role: "assistant", content: summary }]);
+        setLoading(false);
+        unsubRef.current?.();
+        unsubRef.current = null;
+      }
+    });
+
     try {
       const result = await dispatchAction({
-        communicationId: communication.id,
+        vendorId: communication.vendorId,
         instruction,
         history: [...messages, userMsg],
       });
-      setActiveTaskId(result.taskId);
+      taskId = result.taskId;
     } catch {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Failed to start agent. Please try again." },
       ]);
       setLoading(false);
+      unsubRef.current?.();
+      unsubRef.current = null;
     }
-  }
+  }, [communication, messages, dispatchAction]);
 
   return (
     <AnimatePresence>
@@ -118,7 +126,7 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="text-center text-gray-500 text-xs mt-8">
-                <p>Ask the AI to analyze this message.</p>
+                <p>Ask the AI to analyze this conversation.</p>
                 <p className="mt-1 text-gray-600">
                   e.g. "Pull out pricing info" or "Draft a reply"
                 </p>
@@ -132,7 +140,11 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
                 <span className="text-xs font-medium text-gray-500 block mb-0.5">
                   {msg.role === "user" ? "You" : "AI"}
                 </span>
-                <div className="whitespace-pre-wrap">{msg.content}</div>
+                {msg.role === "assistant" ? (
+                  <Markdown content={msg.content} />
+                ) : (
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                )}
               </div>
             ))}
 
@@ -149,7 +161,7 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
           <ComposeBox
             onSend={handleSend}
             disabled={loading}
-            placeholder="Ask about this message..."
+            placeholder="Ask about this conversation..."
           />
         </motion.div>
       )}

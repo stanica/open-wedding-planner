@@ -24,6 +24,7 @@ export const Vendor = z.object({
   description: z.string().nullable(),
   notes: z.string().nullable(),
   sourceUrl: z.string().nullable(),
+  favorite: z.boolean(),
   status: VendorStatus,
   createdAt: z.string(),
   updatedAt: z.string(),

@@ -206,11 +206,12 @@ export class Orchestrator {
         throw new Error("No task config or agent provided");
       }
 
-      // Mark completed
+      // Mark completed or cancelled
+      const status = result.aborted ? "cancelled" : "completed";
       await this.db
         .update(agentTasks)
         .set({
-          status: "completed",
+          status,
           output: JSON.stringify(result),
           completedAt: sql`datetime('now')`,
         })
@@ -218,10 +219,11 @@ export class Orchestrator {
 
       this.broadcast({
         name: "agent-complete",
-        data: { taskId, summary: result.summary },
+        data: { taskId, sessionKey, summary: result.summary },
       });
 
-      // Save assistant message to thread if this was a research chat
+      // Always save assistant message to thread — even on abort, so the agent
+      // has full context of what it did on subsequent runs
       const researchInput = input as { threadId?: number };
       if (researchInput.threadId) {
         const resultData = result.data as {
@@ -260,33 +262,41 @@ export class Orchestrator {
         }
       }
     } catch (err) {
-      const aborted = controller.signal.aborted;
-      const message = aborted ? "Stopped by user" : (err instanceof Error ? err.message : "Unknown error");
+      const message = err instanceof Error ? err.message : "Unknown error";
 
       await this.db
         .update(agentTasks)
         .set({
-          status: aborted ? "cancelled" : "failed",
+          status: "failed",
           output: JSON.stringify({ error: message }),
           completedAt: sql`datetime('now')`,
         })
         .where(eq(agentTasks.sessionId, sessionKey));
 
-      if (aborted) {
-        this.broadcast({
-          name: "agent-complete",
-          data: { taskId, summary: "Stopped by user" },
-        });
-      } else {
-        this.broadcast({
-          name: "agent-activity",
-          data: { sessionKey, action: "error", detail: message },
-        });
-      }
+      this.broadcast({
+        name: "agent-activity",
+        data: { sessionKey, action: "error", detail: message },
+      });
 
-      // Clean up activeThreads on failure too
+      this.broadcast({
+        name: "agent-complete",
+        data: { taskId, sessionKey, summary: `Error: ${message}` },
+      });
+
+      // Save error as assistant message so the retry loop doesn't see an
+      // unanswered user message and re-dispatch infinitely
       const failedInput = input as { threadId?: number };
       if (failedInput.threadId) {
+        await this.db.insert(researchMessages).values({
+          threadId: failedInput.threadId,
+          role: "assistant",
+          content: `I encountered an error and couldn't complete this task: ${message}`,
+        });
+        this.broadcast({
+          name: "research.messageComplete",
+          data: { threadId: failedInput.threadId },
+        });
+
         const threadCallback = this.completionCallbacks.get(`thread-${failedInput.threadId}`);
         if (threadCallback) {
           threadCallback(failedInput.threadId);

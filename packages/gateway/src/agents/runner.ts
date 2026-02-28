@@ -5,6 +5,12 @@ import { getModel, getBuiltInTools, getContextWindowForModel, getSummarizationMo
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 import { StuckError } from "./safety/guardrails.js";
 
+function isContextOverflowError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return msg.includes("prompt is too long") || msg.includes("context_length_exceeded") || msg.includes("request too large");
+}
+
 /** ~25K tokens — leaves plenty of room for system prompt + conversation history */
 const MAX_TOOL_RESULT_CHARS = 100_000;
 
@@ -82,7 +88,9 @@ export class AgentRunner {
       }
 
       // Wrap all tools to truncate oversized results before they hit the model
+      // Skip dbSchema — the agent always needs the full schema to write correct queries
       for (const [name, t] of Object.entries(tools)) {
+        if (name === "dbSchema") continue;
         tools[name] = withTruncation(t);
       }
 
@@ -96,50 +104,123 @@ export class AgentRunner {
       const model = await getModel();
       const maxSteps = config.maxSteps ?? 15;
 
-      const { text, steps, usage } = await generateText({
-        model,
-        system: systemPrompt,
-        messages,
-        tools: Object.keys(tools).length > 0 ? tools : undefined,
-        stopWhen: stepCountIs(maxSteps),
-        abortSignal: ctx.signal,
-        onStepFinish: ({ toolCalls: stepToolCalls, toolResults: stepToolResults }) => {
-          // Emit events for debug console
-          for (const tc of stepToolCalls) {
-            ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 500)}`);
-          }
-          for (const tr of stepToolResults) {
-            ctx.emit("tool-result", `${(tr as any).toolName}: ${JSON.stringify((tr as any).output).slice(0, 500)}`);
-          }
-
-          // Run guardrails: check each tool call against history, then record its outcome
-          for (const tc of stepToolCalls) {
-            const { record, signal } = ctx.guardrails.preToolCheck(tc.toolName, tc.input);
-            const tr = stepToolResults.find((r: any) => r.toolCallId === tc.toolCallId);
-            if (tr) {
-              ctx.guardrails.recordOutcome(record, (tr as any).output);
-            }
-            if (signal) {
-              if (signal.severity === "critical") {
-                throw new StuckError(signal);
-              }
-              ctx.emit("warning", `Guardrail: ${signal.message}`);
-            }
-          }
-        },
-      });
-
-      // Collect all tool calls and extract vendorIds from createVendor results
+      // Accumulate tool calls progressively so they survive abort
       const allToolCalls: Array<{ toolName: string; args: unknown; result: unknown }> = [];
       const vendorIds: number[] = [];
-      for (const step of steps) {
-        for (const tc of step.toolCalls) {
-          const tr = step.toolResults.find((r: any) => r.toolCallId === tc.toolCallId);
+
+      const onStepFinish = ({ toolCalls: stepToolCalls, toolResults: stepToolResults }: any) => {
+        // Emit events for debug console
+        for (const tc of stepToolCalls) {
+          ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 500)}`);
+        }
+        for (const tr of stepToolResults) {
+          ctx.emit("tool-result", `${(tr as any).toolName}: ${JSON.stringify((tr as any).output).slice(0, 500)}`);
+        }
+
+        // Accumulate completed tool calls
+        for (const tc of stepToolCalls) {
+          const tr = stepToolResults.find((r: any) => r.toolCallId === tc.toolCallId);
           allToolCalls.push({ toolName: tc.toolName, args: tc.input, result: tr?.output });
           if (tc.toolName === "createVendor" && tr?.output && typeof tr.output === "object") {
             const r = tr.output as { vendorId?: number };
             if (r.vendorId) vendorIds.push(r.vendorId);
           }
+        }
+
+        // Run guardrails: check each tool call against history, then record its outcome
+        for (const tc of stepToolCalls) {
+          const { record, signal } = ctx.guardrails.preToolCheck(tc.toolName, tc.input);
+          const tr = stepToolResults.find((r: any) => r.toolCallId === tc.toolCallId);
+          if (tr) {
+            ctx.guardrails.recordOutcome(record, (tr as any).output);
+          }
+          if (signal) {
+            if (signal.severity === "critical") {
+              throw new StuckError(signal);
+            }
+            ctx.emit("warning", `Guardrail: ${signal.message}`);
+          }
+        }
+      };
+
+      const toolsOption = Object.keys(tools).length > 0 ? tools : undefined;
+
+      let text = "";
+      let usage: { inputTokens?: number } | undefined;
+
+      try {
+        const result = await generateText({
+          model,
+          system: systemPrompt,
+          messages,
+          tools: toolsOption,
+          stopWhen: stepCountIs(maxSteps),
+          abortSignal: ctx.signal,
+          onStepFinish,
+        });
+
+        text = result.text;
+        usage = result.usage;
+      } catch (err) {
+        // On abort, return partial result with whatever tool calls completed
+        if (err instanceof Error && err.name === "AbortError") {
+          ctx.emit("complete", `${config.name} stopped by user`);
+          return {
+            summary: "Stopped by user",
+            data: { toolCalls: allToolCalls, vendorIds },
+            aborted: true,
+          };
+        }
+
+        // On context overflow, retry with a hint about the oversized tool result
+        if (isContextOverflowError(err) && allToolCalls.length > 0) {
+          const lastTool = allToolCalls[allToolCalls.length - 1];
+          ctx.emit("warning", `Context overflow after ${lastTool.toolName} — retrying with smaller context`);
+
+          // Build a summary of tool calls so far for context
+          const toolSummary = allToolCalls.map((tc) => {
+            const resultPreview = tc.result ? JSON.stringify(tc.result).slice(0, 200) : "no result";
+            return `- ${tc.toolName}(${JSON.stringify(tc.args).slice(0, 200)}): ${resultPreview}`;
+          }).join("\n");
+
+          const retryMessages: ModelMessage[] = [
+            ...messages,
+            {
+              role: "assistant" as const,
+              content: `I was working on this and made the following tool calls:\n${toolSummary}\n\nMy last tool call (${lastTool.toolName}) returned a result that exceeded the context window. I need to retry with more specific parameters to get a smaller result.`,
+            },
+            {
+              role: "user" as const,
+              content: "Continue — use more specific queries or request less data to avoid exceeding the context limit.",
+            },
+          ];
+
+          try {
+            const retryResult = await generateText({
+              model,
+              system: systemPrompt,
+              messages: retryMessages,
+              tools: toolsOption,
+              stopWhen: stepCountIs(maxSteps),
+              abortSignal: ctx.signal,
+              onStepFinish,
+            });
+
+            text = retryResult.text;
+            usage = retryResult.usage;
+          } catch (retryErr) {
+            if (retryErr instanceof Error && retryErr.name === "AbortError") {
+              ctx.emit("complete", `${config.name} stopped by user`);
+              return {
+                summary: "Stopped by user",
+                data: { toolCalls: allToolCalls, vendorIds },
+                aborted: true,
+              };
+            }
+            throw retryErr;
+          }
+        } else {
+          throw err;
         }
       }
 

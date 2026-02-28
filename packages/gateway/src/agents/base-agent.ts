@@ -20,6 +20,7 @@ export interface AgentResult {
   summary: string;
   data?: unknown;
   compactionSummary?: string;
+  aborted?: boolean;
 }
 
 export interface BaseAgent {

@@ -40,6 +40,7 @@ export const vendors = sqliteTable("vendors", {
   sourceUrl: text("source_url"),
   imageUrl: text("image_url"),
   threadId: integer("thread_id"),
+  favorite: integer("favorite").notNull().default(0),
   status: text("status").notNull().default("researched"),
   createdAt: text("created_at")
     .notNull()
@@ -116,6 +117,7 @@ export const communications = sqliteTable("communications", {
   status: text("status").notNull().default("draft"),
   threadId: text("thread_id"),
   parsedAt: text("parsed_at"),
+  isRead: integer("is_read").notNull().default(0),
 });
 
 export const researchNotes = sqliteTable("research_notes", {

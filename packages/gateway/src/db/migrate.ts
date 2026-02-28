@@ -119,7 +119,8 @@ export function pushSchema(sqlite: Database.Database) {
       sent_at TEXT,
       status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'approved', 'sent', 'received', 'rejected', 'pending_approval')),
       thread_id TEXT,
-      parsed_at TEXT
+      parsed_at TEXT,
+      is_read INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS research_notes (
@@ -271,6 +272,12 @@ export function pushSchema(sqlite: Database.Database) {
     // Column already exists
   }
 
+  try {
+    sqlite.exec(`ALTER TABLE communications ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0`);
+  } catch {
+    // Column already exists
+  }
+
   // Normalize direction values and add CHECK constraints to communications table
   migrateCommunicationsConstraints(sqlite);
 }
@@ -301,10 +308,11 @@ function migrateCommunicationsConstraints(sqlite: Database.Database) {
       sent_at TEXT,
       status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'approved', 'sent', 'received', 'rejected', 'pending_approval')),
       thread_id TEXT,
-      parsed_at TEXT
+      parsed_at TEXT,
+      is_read INTEGER NOT NULL DEFAULT 0
     );
-    INSERT INTO communications_new (id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id)
-      SELECT id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id FROM communications;
+    INSERT INTO communications_new (id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id, is_read)
+      SELECT id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id, is_read FROM communications;
     DROP TABLE communications;
     ALTER TABLE communications_new RENAME TO communications;
   `);

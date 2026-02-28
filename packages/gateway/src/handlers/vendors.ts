@@ -49,6 +49,7 @@ export function registerVendorHandlers(router: Router) {
 
   router.register("vendors.update", async (db: Db, params: unknown) => {
     const { id, ...data } = params as { id: number } & Record<string, unknown>;
+    if (typeof data.favorite === "boolean") data.favorite = data.favorite ? 1 : 0;
     data.updatedAt = sql`datetime('now')`;
     await db.update(vendors).set(data).where(eq(vendors.id, id));
     const [updated] = await db.select().from(vendors).where(eq(vendors.id, id));

@@ -56,19 +56,37 @@ export function DashboardView() {
   const connected = useGatewayStore((s) => s.connected);
   const state = useGatewayStore((s) => s.state);
   const { data: stats, loading } = useRequest<DashboardStats>("dashboard.stats");
-  const { mutate: startResearch, loading: researching } = useMutation<
-    { query: string },
+  const { mutate: createThread } = useMutation<
+    { title: string },
+    { id: number }
+  >("research.threads.create");
+  const { mutate: createMessage } = useMutation<
+    { threadId: number; role: string; content: string },
+    unknown
+  >("research.messages.create");
+  const { mutate: startResearch } = useMutation<
+    { threadId: number; messages: Array<{ role: string; content: string }> },
     { taskId: string }
   >("agent.research");
   const [query, setQuery] = useState("");
+  const [researching, setResearching] = useState(false);
   const navigate = useNavigate();
 
   async function handleResearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
-    await startResearch({ query: query.trim() });
-    setQuery("");
-    navigate("/research");
+    const q = query.trim();
+    if (!q || researching) return;
+    setResearching(true);
+    try {
+      const thread = await createThread({ title: q });
+      const message = { role: "user", content: q };
+      await createMessage({ threadId: thread.id, ...message });
+      await startResearch({ threadId: thread.id, messages: [message] });
+      setQuery("");
+      navigate("/research");
+    } finally {
+      setResearching(false);
+    }
   }
 
   return (
