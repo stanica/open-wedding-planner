@@ -6,7 +6,7 @@ import { useVendors } from "../../hooks/useVendors";
 import { useResearchStore } from "../../stores/research-store";
 import { ThreadList } from "./ThreadList";
 import { ChatMessage } from "./ChatMessage";
-import { ComposeBox } from "./ComposeBox";
+import { ComposeBox } from "../common/ComposeBox";
 import { PermissionRequestCard } from "./PermissionRequestCard";
 
 interface Thread {
