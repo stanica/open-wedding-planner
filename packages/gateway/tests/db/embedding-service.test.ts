@@ -155,4 +155,51 @@ describe("EmbeddingService", () => {
       expect(pending.length).toBe(1);
     });
   });
+
+  describe("triggers", () => {
+    beforeEach(() => {
+      // Create a minimal vendors table for trigger testing
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS vendors (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          notes TEXT,
+          location TEXT
+        );
+      `);
+      // Re-init service to install triggers on the now-existing table
+      service = new EmbeddingService(sqlite, async () => fakeEmbedding(1));
+    });
+
+    it("queues an upsert on INSERT", () => {
+      sqlite.prepare("INSERT INTO vendors (name) VALUES (?)").run("Test Vendor");
+      const pending = sqlite.prepare("SELECT * FROM pending_embeddings").all() as any[];
+      expect(pending.length).toBe(1);
+      expect(pending[0].source_table).toBe("vendors");
+      expect(pending[0].source_id).toBe(1);
+      expect(pending[0].action).toBe("upsert");
+    });
+
+    it("queues an upsert on UPDATE", () => {
+      sqlite.prepare("INSERT INTO vendors (name) VALUES (?)").run("Test Vendor");
+      // Clear the insert pending
+      sqlite.prepare("DELETE FROM pending_embeddings").run();
+
+      sqlite.prepare("UPDATE vendors SET name = ? WHERE id = ?").run("Updated", 1);
+      const pending = sqlite.prepare("SELECT * FROM pending_embeddings").all() as any[];
+      expect(pending.length).toBe(1);
+      expect(pending[0].action).toBe("upsert");
+    });
+
+    it("queues a delete on DELETE", () => {
+      sqlite.prepare("INSERT INTO vendors (name) VALUES (?)").run("Test Vendor");
+      sqlite.prepare("DELETE FROM pending_embeddings").run();
+
+      sqlite.prepare("DELETE FROM vendors WHERE id = ?").run(1);
+      const pending = sqlite.prepare("SELECT * FROM pending_embeddings").all() as any[];
+      expect(pending.length).toBe(1);
+      expect(pending[0].action).toBe("delete");
+    });
+  });
 });

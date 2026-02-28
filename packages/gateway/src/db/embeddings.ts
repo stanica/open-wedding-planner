@@ -9,6 +9,18 @@ export type EmbedFn = (text: string) => Promise<number[]>;
 export type TextBuilder = (sourceTable: string, sourceId: number) => string | null;
 
 export class EmbeddingService {
+  // Tables that should have embedding triggers
+  private static readonly EMBEDDABLE_TABLES = [
+    "vendors",
+    "vendor_attributes",
+    "research_notes",
+    "communications",
+    "quotes",
+    "tasks",
+    "budget_entries",
+    "research_messages",
+  ];
+
   constructor(
     private sqlite: Database.Database,
     private embedFn: EmbedFn | null,
@@ -45,6 +57,47 @@ export class EmbeddingService {
     // Drop old vendor-only tables if they exist (never had data)
     this.sqlite.exec("DROP TABLE IF EXISTS vendor_embedding_map");
     this.sqlite.exec("DROP TABLE IF EXISTS vendor_embeddings");
+
+    this.installTriggers();
+  }
+
+  private installTriggers() {
+    for (const table of EmbeddingService.EMBEDDABLE_TABLES) {
+      // Check if table exists before creating triggers
+      const exists = this.sqlite
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+        .get(table);
+      if (!exists) continue;
+
+      const idCol = table === "vendor_attributes" ? "vendor_id" : "id";
+
+      this.sqlite.exec(`
+        CREATE TRIGGER IF NOT EXISTS embed_after_insert_${table}
+        AFTER INSERT ON ${table}
+        BEGIN
+          INSERT INTO pending_embeddings (source_table, source_id, action)
+          VALUES ('${table}', NEW.${idCol}, 'upsert');
+        END;
+      `);
+
+      this.sqlite.exec(`
+        CREATE TRIGGER IF NOT EXISTS embed_after_update_${table}
+        AFTER UPDATE ON ${table}
+        BEGIN
+          INSERT INTO pending_embeddings (source_table, source_id, action)
+          VALUES ('${table}', NEW.${idCol}, 'upsert');
+        END;
+      `);
+
+      this.sqlite.exec(`
+        CREATE TRIGGER IF NOT EXISTS embed_after_delete_${table}
+        AFTER DELETE ON ${table}
+        BEGIN
+          INSERT INTO pending_embeddings (source_table, source_id, action)
+          VALUES ('${table}', OLD.${idCol}, 'delete');
+        END;
+      `);
+    }
   }
 
   setEmbedFn(fn: EmbedFn | null) {
