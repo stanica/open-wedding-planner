@@ -321,6 +321,10 @@ export class Orchestrator {
     return this.queue.getStatus();
   }
 
+  broadcastEvent(event: GatewayEvent): void {
+    this.broadcast(event);
+  }
+
   async waitForDrain(maxWaitMs?: number): Promise<void> {
     return this.queue.waitForDrain(maxWaitMs);
   }

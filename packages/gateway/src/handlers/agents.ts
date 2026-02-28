@@ -1,7 +1,9 @@
 import { eq, desc } from "drizzle-orm";
+import { generateText } from "ai";
 import { researchMessages, communications, vendors } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 import type { Orchestrator } from "../agents/orchestrator.js";
+import { getSummarizationModel, setAIConfig, getAIConfig } from "../agents/model-provider.js";
 
 // Track threads with running agents
 const activeThreads = new Set<number>();
@@ -128,6 +130,73 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
 
   router.register("agent.status", async (_db) => {
     return orchestrator.getQueueStatus();
+  });
+
+  router.register("research.compact", async (db, params) => {
+    const { threadId } = params as { threadId: number };
+    if (!threadId) throw new Error("threadId is required");
+
+    const allMessages = await db
+      .select()
+      .from(researchMessages)
+      .where(eq(researchMessages.threadId, threadId))
+      .orderBy(researchMessages.createdAt)
+      .all();
+
+    if (allMessages.length === 0) {
+      return { ok: false, reason: "No messages to compact" };
+    }
+
+    const messageText = allMessages
+      .filter((m) => m.role !== "system")
+      .map((m) => `[${m.role}]: ${m.content}`)
+      .join("\n\n");
+
+    const model = await getSummarizationModel();
+    const { text: summary } = await generateText({
+      model,
+      system: `You are summarizing a conversation between a user and a wedding planning research assistant. Produce a concise summary that preserves:
+- All vendor names, pricing, and contact details discovered
+- Key decisions and preferences expressed by the user
+- Outstanding questions or next steps
+- Any important context about the wedding (date, location, guest count, budget)
+
+Be thorough but concise. This summary will replace the conversation history for future interactions.`,
+      messages: [{ role: "user", content: messageText }],
+    });
+
+    await db.insert(researchMessages).values({
+      threadId,
+      role: "system",
+      content: summary,
+    });
+
+    orchestrator.broadcastEvent({
+      name: "context-compacted",
+      data: { threadId },
+    });
+
+    return { ok: true };
+  });
+
+  router.register("research.clear", async (db, params) => {
+    const { threadId } = params as { threadId: number };
+    if (!threadId) throw new Error("threadId is required");
+
+    await db
+      .delete(researchMessages)
+      .where(eq(researchMessages.threadId, threadId));
+
+    return { ok: true };
+  });
+
+  router.register("research.switchModel", async (_db, params) => {
+    const { model } = params as { model: string };
+    if (!model) throw new Error("model name is required");
+
+    setAIConfig({ model });
+    const config = getAIConfig();
+    return { ok: true, model: config.model };
   });
 }
 
