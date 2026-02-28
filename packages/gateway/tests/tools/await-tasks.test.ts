@@ -59,4 +59,38 @@ describe("awaitTasks tool", () => {
     expect(result.results[0].status).toBe("failed");
     expect(result.results[0].error).toBe("Timeout");
   });
+
+  it("calls setInterruptible around the poll loop", async () => {
+    // Insert a task that's already completed so poll exits immediately
+    await db.insert(schema.agentTasks).values({
+      type: "browser",
+      status: "completed",
+      sessionId: "browser-task-3",
+      input: JSON.stringify({ url: "https://test.com" }),
+      output: JSON.stringify({ summary: "Done" }),
+    });
+
+    const orchestrator = {
+      setInterruptible: vi.fn(),
+    };
+
+    const awaitTool = makeAwaitTasksTool({
+      db,
+      orchestrator: orchestrator as any,
+      parentSessionKey: "research-session-1",
+    });
+
+    await awaitTool.execute!(
+      { taskIds: ["browser-task-3"] },
+      { toolCallId: "tc1", messages: [], abortSignal: undefined as any },
+    );
+
+    expect(orchestrator.setInterruptible).toHaveBeenCalledWith("research-session-1", true);
+    expect(orchestrator.setInterruptible).toHaveBeenCalledWith("research-session-1", false);
+    // false should be called after true
+    const calls = orchestrator.setInterruptible.mock.calls;
+    const trueIdx = calls.findIndex((c: any) => c[1] === true);
+    const falseIdx = calls.findIndex((c: any) => c[1] === false);
+    expect(falseIdx).toBeGreaterThan(trueIdx);
+  });
 });

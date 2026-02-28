@@ -137,8 +137,8 @@ export function createToolRegistry(): ToolRegistry {
     description: "Wait for dispatched subagent tasks to complete",
     category: "agent",
     create: (ctx: unknown) => {
-      const { db } = ctx as any;
-      return makeAwaitTasksTool({ db });
+      const { db, orchestrator, parentSessionKey } = ctx as any;
+      return makeAwaitTasksTool({ db, orchestrator, parentSessionKey });
     },
   });
 

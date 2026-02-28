@@ -6,6 +6,8 @@ import type { Db } from "../infra/router.js";
 
 export interface AwaitTasksContext {
   db: Db;
+  orchestrator?: { setInterruptible(sessionKey: string, value: boolean): void };
+  parentSessionKey?: string;
 }
 
 const TERMINAL_STATUSES = ["completed", "failed", "cancelled"];
@@ -22,50 +24,60 @@ export function makeAwaitTasksTool(ctx: AwaitTasksContext) {
     execute: async ({ taskIds }, { abortSignal }) => {
       const deadline = Date.now() + MAX_WAIT_MS;
 
-      while (Date.now() < deadline) {
-        if (abortSignal?.aborted) break;
+      if (ctx.orchestrator && ctx.parentSessionKey) {
+        ctx.orchestrator.setInterruptible(ctx.parentSessionKey, true);
+      }
 
+      try {
+        while (Date.now() < deadline) {
+          if (abortSignal?.aborted) break;
+
+          const rows = await ctx.db
+            .select()
+            .from(agentTasks)
+            .where(inArray(agentTasks.sessionId, taskIds));
+
+          const allDone = rows.every((r) => TERMINAL_STATUSES.includes(r.status));
+
+          if (allDone && rows.length === taskIds.length) {
+            return {
+              results: rows.map((r) => {
+                const output = r.output ? JSON.parse(r.output) : {};
+                return {
+                  taskId: r.sessionId ?? String(r.id),
+                  status: r.status,
+                  summary: output.summary ?? undefined,
+                  error: output.error ?? undefined,
+                };
+              }),
+            };
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+        }
+
+        // Timeout or aborted — return partial results
         const rows = await ctx.db
           .select()
           .from(agentTasks)
           .where(inArray(agentTasks.sessionId, taskIds));
 
-        const allDone = rows.every((r) => TERMINAL_STATUSES.includes(r.status));
-
-        if (allDone && rows.length === taskIds.length) {
-          return {
-            results: rows.map((r) => {
-              const output = r.output ? JSON.parse(r.output) : {};
-              return {
-                taskId: r.sessionId ?? String(r.id),
-                status: r.status,
-                summary: output.summary ?? undefined,
-                error: output.error ?? undefined,
-              };
-            }),
-          };
+        return {
+          results: rows.map((r) => {
+            const output = r.output ? JSON.parse(r.output) : {};
+            return {
+              taskId: r.sessionId ?? String(r.id),
+              status: r.status,
+              summary: output.summary ?? undefined,
+              error: r.status === "running" ? "Timed out waiting for completion" : output.error,
+            };
+          }),
+        };
+      } finally {
+        if (ctx.orchestrator && ctx.parentSessionKey) {
+          ctx.orchestrator.setInterruptible(ctx.parentSessionKey, false);
         }
-
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
       }
-
-      // Timeout or aborted — return partial results
-      const rows = await ctx.db
-        .select()
-        .from(agentTasks)
-        .where(inArray(agentTasks.sessionId, taskIds));
-
-      return {
-        results: rows.map((r) => {
-          const output = r.output ? JSON.parse(r.output) : {};
-          return {
-            taskId: r.sessionId ?? String(r.id),
-            status: r.status,
-            summary: output.summary ?? undefined,
-            error: r.status === "running" ? "Timed out waiting for completion" : output.error,
-          };
-        }),
-      };
     },
   });
 }
