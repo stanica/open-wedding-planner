@@ -3,6 +3,7 @@ import { useRequest, useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { ContactList, type ContactSummary } from "../common/ContactList";
 import { ConversationThread, type Communication } from "../common/ConversationThread";
+import { isOutbound } from "../common/MessageBubble";
 import { ComposeBox } from "../common/ComposeBox";
 import { AgentSidePanel } from "../common/AgentSidePanel";
 import { ApprovalActions } from "../outreach/ApprovalActions";
@@ -69,7 +70,7 @@ export function WhatsAppView() {
           vendorName: latest.vendorName ?? "Unknown",
           lastMessage: latest.bodyOriginal.slice(0, 80),
           lastMessageAt: latest.sentAt,
-          unreadCount: msgs.filter((m) => m.direction === "in" && m.status === "received" && !m.parsedAt).length,
+          unreadCount: msgs.filter((m) => !isOutbound(m.direction) && m.status === "received" && !m.parsedAt).length,
           channel: "whatsapp",
         };
       })

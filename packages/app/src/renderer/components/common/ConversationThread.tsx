@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { MessageBubble } from "./MessageBubble";
+import { MessageBubble, isOutbound } from "./MessageBubble";
 
 export interface Communication {
   id: number;
@@ -48,12 +48,12 @@ export function ConversationThread({
       {messages.map((msg) => (
         <div key={msg.id} className="group relative">
           <MessageBubble
-            direction={msg.direction as "in" | "out"}
+            direction={msg.direction}
             channel={msg.channel}
             body={msg.bodyOriginal}
             translatedBody={msg.bodyTranslated}
             subject={msg.subject}
-            senderName={msg.direction === "in" ? (msg.vendorName ?? "Vendor") : "You"}
+            senderName={isOutbound(msg.direction) ? "You" : (msg.vendorName ?? "Vendor")}
             sentAt={msg.sentAt}
             status={msg.status}
           />

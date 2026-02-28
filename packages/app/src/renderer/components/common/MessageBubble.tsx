@@ -1,7 +1,12 @@
 import { Mail, MessageCircle } from "lucide-react";
 
+/** Normalize direction values — DB may have "in"/"out" or "inbound"/"outbound" */
+export function isOutbound(direction: string): boolean {
+  return direction === "out" || direction === "outbound";
+}
+
 export interface MessageBubbleProps {
-  direction: "in" | "out";
+  direction: string;
   channel: "whatsapp" | "email" | string;
   body: string;
   translatedBody?: string | null;
@@ -20,7 +25,7 @@ export function MessageBubble({
   senderName,
   sentAt,
 }: MessageBubbleProps) {
-  const isOut = direction === "out";
+  const isOut = isOutbound(direction);
   const ChannelIcon = channel === "email" ? Mail : MessageCircle;
   const displayBody = translatedBody ?? body;
 
