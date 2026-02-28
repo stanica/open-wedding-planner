@@ -1,1 +1,115 @@
 @import "tailwindcss";
+
+/* ── Theme tokens ── */
+@theme {
+  --color-surface: var(--theme-surface);
+  --color-surface-elevated: var(--theme-surface-elevated);
+  --color-surface-hover: var(--theme-surface-hover);
+  --color-surface-active: var(--theme-surface-active);
+  --color-surface-overlay: var(--theme-surface-overlay);
+  --color-surface-dropdown: var(--theme-surface-dropdown);
+  --color-surface-subtle: var(--theme-surface-subtle);
+
+  --color-on-surface: var(--theme-on-surface);
+  --color-on-surface-secondary: var(--theme-on-surface-secondary);
+  --color-on-surface-tertiary: var(--theme-on-surface-tertiary);
+  --color-on-surface-faint: var(--theme-on-surface-faint);
+
+  --color-border: var(--theme-border);
+  --color-border-hover: var(--theme-border-hover);
+  --color-border-subtle: var(--theme-border-subtle);
+
+  --color-accent: var(--theme-accent);
+  --color-accent-hover: var(--theme-accent-hover);
+  --color-accent-subtle: var(--theme-accent-subtle);
+
+  --color-success: var(--theme-success);
+  --color-success-bg: var(--theme-success-bg);
+  --color-warning: var(--theme-warning);
+  --color-warning-bg: var(--theme-warning-bg);
+  --color-error: var(--theme-error);
+  --color-error-bg: var(--theme-error-bg);
+  --color-error-hover: var(--theme-error-hover);
+  --color-info: var(--theme-info);
+  --color-info-bg: var(--theme-info-bg);
+
+  --color-placeholder: var(--theme-placeholder);
+
+  --color-skeleton: var(--theme-skeleton);
+}
+
+/* ── Dark theme (default) ── */
+:root {
+  --theme-surface: #0a0a0f;
+  --theme-surface-elevated: rgba(255, 255, 255, 0.05);
+  --theme-surface-hover: rgba(255, 255, 255, 0.07);
+  --theme-surface-active: rgba(255, 255, 255, 0.1);
+  --theme-surface-overlay: rgba(0, 0, 0, 0.6);
+  --theme-surface-dropdown: #18181b;
+  --theme-surface-subtle: rgba(255, 255, 255, 0.02);
+
+  --theme-on-surface: #ffffff;
+  --theme-on-surface-secondary: #a1a1aa;
+  --theme-on-surface-tertiary: #71717a;
+  --theme-on-surface-faint: #52525b;
+
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-border-hover: rgba(255, 255, 255, 0.2);
+  --theme-border-subtle: rgba(255, 255, 255, 0.05);
+
+  --theme-accent: #3b82f6;
+  --theme-accent-hover: #2563eb;
+  --theme-accent-subtle: rgba(59, 130, 246, 0.15);
+
+  --theme-success: #4ade80;
+  --theme-success-bg: rgba(22, 101, 52, 0.5);
+  --theme-warning: #facc15;
+  --theme-warning-bg: rgba(113, 63, 18, 0.5);
+  --theme-error: #f87171;
+  --theme-error-bg: rgba(127, 29, 29, 0.5);
+  --theme-error-hover: #dc2626;
+  --theme-info: #60a5fa;
+  --theme-info-bg: rgba(30, 58, 138, 0.5);
+
+  --theme-placeholder: #71717a;
+
+  --theme-skeleton: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Light theme (warm cream) ── */
+:root[data-theme="light"] {
+  --theme-surface: #faf6f1;
+  --theme-surface-elevated: #ffffff;
+  --theme-surface-hover: rgba(44, 36, 32, 0.04);
+  --theme-surface-active: rgba(44, 36, 32, 0.08);
+  --theme-surface-overlay: rgba(0, 0, 0, 0.4);
+  --theme-surface-dropdown: #ffffff;
+  --theme-surface-subtle: rgba(44, 36, 32, 0.02);
+
+  --theme-on-surface: #1c1917;
+  --theme-on-surface-secondary: #57534e;
+  --theme-on-surface-tertiary: #78716c;
+  --theme-on-surface-faint: #a8a29e;
+
+  --theme-border: rgba(44, 36, 32, 0.12);
+  --theme-border-hover: rgba(44, 36, 32, 0.2);
+  --theme-border-subtle: rgba(44, 36, 32, 0.06);
+
+  --theme-accent: #2563eb;
+  --theme-accent-hover: #1d4ed8;
+  --theme-accent-subtle: rgba(37, 99, 235, 0.1);
+
+  --theme-success: #16a34a;
+  --theme-success-bg: rgba(22, 163, 74, 0.1);
+  --theme-warning: #ca8a04;
+  --theme-warning-bg: rgba(202, 138, 4, 0.1);
+  --theme-error: #dc2626;
+  --theme-error-bg: rgba(220, 38, 38, 0.1);
+  --theme-error-hover: #b91c1c;
+  --theme-info: #2563eb;
+  --theme-info-bg: rgba(37, 99, 235, 0.1);
+
+  --theme-placeholder: #a8a29e;
+
+  --theme-skeleton: rgba(44, 36, 32, 0.08);
+}
