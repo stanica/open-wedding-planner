@@ -9,5 +9,5 @@ web-dist/
 *.csv
 .worktrees/
 .claude/
-docs/
+/docs/
 .vscode/
