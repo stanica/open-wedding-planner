@@ -289,6 +289,11 @@ export async function startGateway(options: GatewayOptions = {}) {
         })
         .returning();
 
+      wsServer.broadcast({
+        name: "communication-received",
+        data: { vendorId: vendor.id, channel: "whatsapp" },
+      });
+
       orchestrator.dispatch("parse", {
         communicationId: comm.id,
         vendorId: vendor.id,

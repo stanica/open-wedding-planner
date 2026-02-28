@@ -45,7 +45,7 @@ export function makeSendWhatsAppTool(ctx: SendWhatsAppContext) {
         .returning();
 
       ctx.emit(
-        "send-whatsapp",
+        autoSend ? "send-whatsapp" : "draft-ready",
         `${autoSend ? "Queued" : "Drafted"} WhatsApp message to ${vendor.name}`,
       );
 
