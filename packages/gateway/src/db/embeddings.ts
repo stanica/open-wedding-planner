@@ -1,88 +1,172 @@
 import type Database from "better-sqlite3";
 
 const DIMENSIONS = 1536;
-
-export function createEmbeddingsTable(sqlite: Database.Database) {
-  sqlite.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS vendor_embeddings USING vec0(
-      embedding float[${DIMENSIONS}]
-    );
-  `);
-  // Separate mapping table for vendor_id -> rowid
-  sqlite.exec(`
-    CREATE TABLE IF NOT EXISTS vendor_embedding_map (
-      vendor_id INTEGER PRIMARY KEY,
-      vec_rowid INTEGER NOT NULL
-    );
-  `);
-}
+const PREVIEW_LENGTH = 200;
 
 export type EmbedFn = (text: string) => Promise<number[]>;
 
-let embedFn: EmbedFn | null = null;
+/** Callback that builds the text to embed for a given source row. Returns null if row not found. */
+export type TextBuilder = (sourceTable: string, sourceId: number) => string | null;
 
-export function setEmbedFn(fn: EmbedFn) {
-  embedFn = fn;
-}
-
-export async function storeVendorEmbedding(
-  sqlite: Database.Database,
-  vendorId: number,
-  text: string,
-): Promise<void> {
-  if (!embedFn) throw new Error("No embed function configured");
-  const embedding = await embedFn(text);
-  const buf = Buffer.from(new Float32Array(embedding).buffer);
-
-  // Check if mapping exists
-  const existing = sqlite
-    .prepare("SELECT vec_rowid FROM vendor_embedding_map WHERE vendor_id = ?")
-    .get(vendorId) as { vec_rowid: number } | undefined;
-
-  if (existing) {
-    sqlite
-      .prepare("UPDATE vendor_embeddings SET embedding = ? WHERE rowid = ?")
-      .run(buf, existing.vec_rowid);
-  } else {
-    const result = sqlite
-      .prepare("INSERT INTO vendor_embeddings(embedding) VALUES (?)")
-      .run(buf);
-    sqlite
-      .prepare("INSERT INTO vendor_embedding_map(vendor_id, vec_rowid) VALUES (?, ?)")
-      .run(vendorId, result.lastInsertRowid);
+export class EmbeddingService {
+  constructor(
+    private sqlite: Database.Database,
+    private embedFn: EmbedFn | null,
+  ) {
+    this.initSchema();
   }
-}
 
-export interface SimilarVendor {
-  vendorId: number;
-  distance: number;
-}
+  private initSchema() {
+    this.sqlite.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS embeddings USING vec0(
+        embedding float[${DIMENSIONS}]
+      );
+    `);
+    this.sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS embedding_map (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vec_rowid INTEGER NOT NULL,
+        source_table TEXT NOT NULL,
+        source_id INTEGER NOT NULL,
+        text_preview TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(source_table, source_id)
+      );
+    `);
+    this.sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS pending_embeddings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_table TEXT NOT NULL,
+        source_id INTEGER NOT NULL,
+        action TEXT NOT NULL DEFAULT 'upsert',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+    // Drop old vendor-only tables if they exist (never had data)
+    this.sqlite.exec("DROP TABLE IF EXISTS vendor_embedding_map");
+    this.sqlite.exec("DROP TABLE IF EXISTS vendor_embeddings");
+  }
 
-export async function findSimilarVendors(
-  sqlite: Database.Database,
-  text: string,
-  threshold = 0.3,
-  limit = 5,
-): Promise<SimilarVendor[]> {
-  if (!embedFn) throw new Error("No embed function configured");
-  const embedding = await embedFn(text);
-  const buf = Buffer.from(new Float32Array(embedding).buffer);
+  setEmbedFn(fn: EmbedFn | null) {
+    this.embedFn = fn;
+  }
 
-  const rows = sqlite
-    .prepare(
-      `SELECT ve.rowid, ve.distance, vem.vendor_id
-       FROM vendor_embeddings ve
-       JOIN vendor_embedding_map vem ON vem.vec_rowid = ve.rowid
-       WHERE ve.embedding MATCH ?
-         AND ve.k = ?`,
-    )
-    .all(buf, limit) as Array<{
-    rowid: number;
-    distance: number;
-    vendor_id: number;
-  }>;
+  hasEmbedFn(): boolean {
+    return this.embedFn !== null;
+  }
 
-  return rows
-    .filter((r) => r.distance <= threshold)
-    .map((r) => ({ vendorId: r.vendor_id, distance: r.distance }));
+  async upsert(sourceTable: string, sourceId: number, text: string): Promise<void> {
+    if (!this.embedFn) return;
+    const embedding = await this.embedFn(text);
+    const buf = Buffer.from(new Float32Array(embedding).buffer);
+    const preview = text.slice(0, PREVIEW_LENGTH);
+
+    const existing = this.sqlite
+      .prepare("SELECT vec_rowid FROM embedding_map WHERE source_table = ? AND source_id = ?")
+      .get(sourceTable, sourceId) as { vec_rowid: number } | undefined;
+
+    if (existing) {
+      this.sqlite
+        .prepare("UPDATE embeddings SET embedding = ? WHERE rowid = ?")
+        .run(buf, existing.vec_rowid);
+      this.sqlite
+        .prepare(
+          "UPDATE embedding_map SET text_preview = ?, updated_at = datetime('now') WHERE source_table = ? AND source_id = ?",
+        )
+        .run(preview, sourceTable, sourceId);
+    } else {
+      const result = this.sqlite
+        .prepare("INSERT INTO embeddings(embedding) VALUES (?)")
+        .run(buf);
+      this.sqlite
+        .prepare(
+          "INSERT INTO embedding_map(vec_rowid, source_table, source_id, text_preview) VALUES (?, ?, ?, ?)",
+        )
+        .run(result.lastInsertRowid, sourceTable, sourceId, preview);
+    }
+  }
+
+  remove(sourceTable: string, sourceId: number): void {
+    const existing = this.sqlite
+      .prepare("SELECT vec_rowid FROM embedding_map WHERE source_table = ? AND source_id = ?")
+      .get(sourceTable, sourceId) as { vec_rowid: number } | undefined;
+
+    if (existing) {
+      this.sqlite.prepare("DELETE FROM embeddings WHERE rowid = ?").run(existing.vec_rowid);
+      this.sqlite
+        .prepare("DELETE FROM embedding_map WHERE source_table = ? AND source_id = ?")
+        .run(sourceTable, sourceId);
+    }
+  }
+
+  async search(
+    query: string,
+    sourceType?: string,
+    limit = 10,
+  ): Promise<
+    Array<{ sourceTable: string; sourceId: number; distance: number; textPreview: string | null }>
+  > {
+    if (!this.embedFn) return [];
+    const embedding = await this.embedFn(query);
+    const buf = Buffer.from(new Float32Array(embedding).buffer);
+
+    const k = sourceType ? limit * 3 : limit;
+
+    const rows = this.sqlite
+      .prepare(
+        `SELECT e.rowid, e.distance, em.source_table, em.source_id, em.text_preview
+         FROM embeddings e
+         JOIN embedding_map em ON em.vec_rowid = e.rowid
+         WHERE e.embedding MATCH ?
+           AND e.k = ?`,
+      )
+      .all(buf, k) as Array<{
+      rowid: number;
+      distance: number;
+      source_table: string;
+      source_id: number;
+      text_preview: string | null;
+    }>;
+
+    let filtered = rows;
+    if (sourceType) {
+      filtered = rows.filter((r) => r.source_table === sourceType);
+    }
+
+    return filtered.slice(0, limit).map((r) => ({
+      sourceTable: r.source_table,
+      sourceId: r.source_id,
+      distance: r.distance,
+      textPreview: r.text_preview,
+    }));
+  }
+
+  async flush(textBuilder: TextBuilder): Promise<number> {
+    if (!this.embedFn) return 0;
+
+    const pending = this.sqlite
+      .prepare("SELECT id, source_table, source_id, action FROM pending_embeddings ORDER BY id")
+      .all() as Array<{ id: number; source_table: string; source_id: number; action: string }>;
+
+    if (pending.length === 0) return 0;
+
+    let processed = 0;
+    for (const row of pending) {
+      try {
+        if (row.action === "delete") {
+          this.remove(row.source_table, row.source_id);
+        } else {
+          const text = textBuilder(row.source_table, row.source_id);
+          if (text) {
+            await this.upsert(row.source_table, row.source_id, text);
+          }
+        }
+        this.sqlite.prepare("DELETE FROM pending_embeddings WHERE id = ?").run(row.id);
+        processed++;
+      } catch (err) {
+        console.error(`Embedding flush error for ${row.source_table}/${row.source_id}:`, err);
+      }
+    }
+    return processed;
+  }
 }

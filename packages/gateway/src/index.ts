@@ -19,7 +19,7 @@ import { eq } from "drizzle-orm";
 import { Orchestrator } from "./agents/orchestrator.js";
 import { heartbeatAgent } from "./agents/heartbeat.js";
 import { TASK_CONFIGS } from "./agents/task-configs.js";
-import { createEmbeddingsTable } from "./db/embeddings.js";
+import { EmbeddingService } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
 import { createToolRegistry } from "./tools/index.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
@@ -50,7 +50,7 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // 2. Push schema + embeddings
   pushSchema(sqlite);
-  createEmbeddingsTable(sqlite);
+  const embeddingService = new EmbeddingService(sqlite, null);
 
   // 3. Create Drizzle instance
   const db = drizzle(sqlite, { schema });
