@@ -7,6 +7,7 @@ import { getSummarizationModel, setAIConfig, getAIConfig } from "../agents/model
 
 // Track threads with running agents
 const activeThreads = new Set<number>();
+const threadSessionKeys = new Map<number, string>();
 
 export function registerAgentHandlers(router: Router, orchestrator: Orchestrator) {
   router.register("agent.research", async (db, params) => {
@@ -15,8 +16,12 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
       throw new Error("threadId and messages are required");
     }
 
-    // If agent already running on this thread, message is already saved to DB — just return queued status
+    // If agent already running on this thread, check if we can interrupt it
     if (activeThreads.has(threadId)) {
+      const sessionKey = threadSessionKeys.get(threadId);
+      if (sessionKey && orchestrator.isInterruptible(sessionKey)) {
+        orchestrator.abortTask(sessionKey, "interrupt");
+      }
       return { queued: true, threadId };
     }
 
@@ -227,6 +232,7 @@ async function dispatchResearch(
   // Register completion callback to check for queued messages
   orchestrator.onThreadComplete(threadId, async (tid) => {
     activeThreads.delete(tid);
+    threadSessionKeys.delete(tid);
 
     // Check for user messages after the last assistant response
     const allMessages = await db
@@ -249,5 +255,6 @@ async function dispatchResearch(
   });
 
   const { taskId, sessionKey } = await orchestrator.dispatch("research", { threadId, messages: compactedMessages });
+  threadSessionKeys.set(threadId, sessionKey);
   return { taskId, sessionKey };
 }
