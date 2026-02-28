@@ -2,6 +2,8 @@ import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 import type { TaskConfig, AgentContext, AgentResult } from "./base-agent.js";
 import { getModel, getSubagentModel, getBuiltInTools, getContextWindowForModel, getSummarizationModel, getAIConfig } from "./model-provider.js";
+import type { EmbeddingService } from "../db/embeddings.js";
+import { buildEmbeddingText } from "../db/text-builders.js";
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 import { StuckError } from "./safety/guardrails.js";
 
@@ -157,6 +159,15 @@ export class AgentRunner {
               contextWindow,
               modelName,
             },
+          });
+        }
+
+        // Flush pending embeddings after each step
+        if (toolCtx.embeddingService) {
+          const svc = toolCtx.embeddingService as EmbeddingService;
+          const sq = toolCtx.sqlite as import("better-sqlite3").Database;
+          svc.flush((sourceTable, sourceId) => buildEmbeddingText(sq, sourceTable, sourceId)).catch((err) => {
+            console.error("Embedding flush error:", err);
           });
         }
       };
