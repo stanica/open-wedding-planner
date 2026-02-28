@@ -201,5 +201,24 @@ describe("EmbeddingService", () => {
       expect(pending.length).toBe(1);
       expect(pending[0].action).toBe("delete");
     });
+
+    it("queues vendor_attributes trigger using vendor_id as source_id", () => {
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS vendor_attributes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          vendor_id INTEGER NOT NULL,
+          key TEXT NOT NULL,
+          value TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'text'
+        );
+      `);
+      service = new EmbeddingService(sqlite, async () => fakeEmbedding(1));
+
+      sqlite.prepare("INSERT INTO vendor_attributes (vendor_id, key, value, type) VALUES (?, ?, ?, ?)").run(42, "capacity", "200", "number");
+      const pending = sqlite.prepare("SELECT * FROM pending_embeddings").all() as any[];
+      const vaEntry = pending.find((p: any) => p.source_table === "vendor_attributes");
+      expect(vaEntry).toBeDefined();
+      expect(vaEntry.source_id).toBe(42); // vendor_id, not the row's own id
+    });
   });
 });
