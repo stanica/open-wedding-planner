@@ -302,7 +302,8 @@ function migrateCommunicationsConstraints(sqlite: Database.Database) {
       thread_id TEXT,
       parsed_at TEXT
     );
-    INSERT INTO communications_new SELECT * FROM communications;
+    INSERT INTO communications_new (id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id)
+      SELECT id, vendor_id, direction, channel, subject, body_original, body_translated, language, sent_at, status, thread_id FROM communications;
     DROP TABLE communications;
     ALTER TABLE communications_new RENAME TO communications;
   `);
