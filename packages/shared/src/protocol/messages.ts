@@ -37,4 +37,5 @@ export type GatewayEvent =
   | { name: "research.messageComplete"; data: { threadId: number; message?: unknown } }
   | { name: "research.toolActivity"; data: { threadId: number; sessionKey: string; toolName: string; phase: "start" | "result"; detail?: string; result?: unknown } }
   | { name: "research.permissionRequest"; data: { sessionKey: string; requestId: string; toolName: string; toolDescription: string; context?: string } }
+  | { name: "research.tokenUsage"; data: { threadId: number; sessionKey: string; inputTokens: number; contextWindow: number; modelName: string } }
   | { name: "context-compacted"; data: { threadId: number } };

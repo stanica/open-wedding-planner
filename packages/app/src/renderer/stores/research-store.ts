@@ -18,6 +18,7 @@ interface ResearchStore {
   pendingPermissions: PendingPermission[];
   completedAt: number | null;
   contextCompactedAt: number | null;
+  tokenUsage: { inputTokens: number; contextWindow: number; modelName: string } | null;
 
   setActiveThreadId: (id: number | null) => void;
   setActiveSession: (key: string | null, threadId: number) => void;
@@ -38,6 +39,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
   pendingPermissions: [],
   completedAt: null,
   contextCompactedAt: null,
+  tokenUsage: null,
 
   setActiveThreadId: (id) => set({ activeThreadId: id }),
 
@@ -74,6 +76,7 @@ export const useResearchStore = create<ResearchStore>((set) => ({
       liveToolCalls: [],
       pendingPermissions: [],
       completedAt: Date.now(),
+      tokenUsage: null,
     }),
 
   resolvePermission: (requestId, decision) =>
@@ -105,6 +108,17 @@ wsClient.onEvent((event: GatewayEvent) => {
 
   if (event.name === "context-compacted") {
     useResearchStore.setState({ contextCompactedAt: Date.now() });
+  }
+
+  if (event.name === "research.tokenUsage") {
+    const data = event.data;
+    useResearchStore.setState({
+      tokenUsage: {
+        inputTokens: data.inputTokens,
+        contextWindow: data.contextWindow,
+        modelName: data.modelName,
+      },
+    });
   }
 
   if (event.name === "research.permissionRequest") {

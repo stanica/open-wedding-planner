@@ -1,7 +1,7 @@
 import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
 import type { TaskConfig, AgentContext, AgentResult } from "./base-agent.js";
-import { getModel, getBuiltInTools, getContextWindowForModel, getSummarizationModel, getAIConfig } from "./model-provider.js";
+import { getModel, getSubagentModel, getBuiltInTools, getContextWindowForModel, getSummarizationModel, getAIConfig } from "./model-provider.js";
 import { wrapToolWithPermission } from "../tools/permission-wrapper.js";
 import { StuckError } from "./safety/guardrails.js";
 
@@ -42,6 +42,8 @@ export interface ToolFactoryContext {
   getAutoSend?: () => boolean;
   orchestrator?: unknown;
   parentSessionKey?: string;
+  threadId?: number;
+  broadcast?: (event: any) => void;
 }
 
 export class AgentRunner {
@@ -60,12 +62,12 @@ export class AgentRunner {
       const tools: Record<string, any> = {};
 
       // Call setup hook if present — BEFORE building other tools
+      // Setup-provided tools (e.g. Playwright browser actions) are internal and
+      // don't require user permission — skip the permission wrapper.
       if (config.setup) {
         const setupResult = await config.setup(toolCtx);
         cleanup = setupResult.cleanup;
-        for (const [name, t] of Object.entries(setupResult.extraTools)) {
-          tools[name] = wrapToolWithPermission(t, name, ctx.permissionManager, ctx.permissionCallbacks);
-        }
+        Object.assign(tools, setupResult.extraTools);
       }
 
       const builtInTools = await getBuiltInTools(ctx.emit);
@@ -101,14 +103,13 @@ export class AgentRunner {
         systemPrompt += "\n\nIMPORTANT: Use the provided tools (search, scrape, dispatch) for web access. Do NOT ask the user to enable WebSearch, WebFetch, or any built-in tools — they are not available. Use the tools you have.";
       }
 
-      const model = await getModel();
-      const maxSteps = config.maxSteps ?? 15;
+      const model = config.model === "subagent" ? await getSubagentModel() : await getModel();
 
       // Accumulate tool calls progressively so they survive abort
       const allToolCalls: Array<{ toolName: string; args: unknown; result: unknown }> = [];
       const vendorIds: number[] = [];
 
-      const onStepFinish = ({ toolCalls: stepToolCalls, toolResults: stepToolResults }: any) => {
+      const onStepFinish = ({ toolCalls: stepToolCalls, toolResults: stepToolResults, usage: stepUsage }: any) => {
         // Emit events for debug console
         for (const tc of stepToolCalls) {
           ctx.emit("tool-call", `${tc.toolName}: ${JSON.stringify(tc.input).slice(0, 500)}`);
@@ -141,6 +142,22 @@ export class AgentRunner {
             ctx.emit("warning", `Guardrail: ${signal.message}`);
           }
         }
+
+        // Emit token usage for live UI updates
+        if (toolCtx.broadcast && toolCtx.threadId && stepUsage) {
+          const modelName = getAIConfig().model;
+          const contextWindow = getContextWindowForModel(modelName);
+          toolCtx.broadcast({
+            name: "research.tokenUsage",
+            data: {
+              threadId: toolCtx.threadId,
+              sessionKey: toolCtx.parentSessionKey ?? "",
+              inputTokens: stepUsage.promptTokens ?? stepUsage.totalTokens ?? 0,
+              contextWindow,
+              modelName,
+            },
+          });
+        }
       };
 
       const toolsOption = Object.keys(tools).length > 0 ? tools : undefined;
@@ -154,7 +171,7 @@ export class AgentRunner {
           system: systemPrompt,
           messages,
           tools: toolsOption,
-          stopWhen: stepCountIs(maxSteps),
+          stopWhen: stepCountIs(200),
           abortSignal: ctx.signal,
           onStepFinish,
         });
@@ -201,7 +218,7 @@ export class AgentRunner {
               system: systemPrompt,
               messages: retryMessages,
               tools: toolsOption,
-              stopWhen: stepCountIs(maxSteps),
+              stopWhen: stepCountIs(200),
               abortSignal: ctx.signal,
               onStepFinish,
             });

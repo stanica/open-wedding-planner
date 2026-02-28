@@ -193,6 +193,8 @@ export class Orchestrator {
           orchestrator: this,
           parentSessionKey: sessionKey,
           ...this.extraToolCtx,
+          threadId: (input as any)?.threadId,
+          broadcast: this.broadcast,
         };
 
         const inputData = input as { messages?: ModelMessage[]; threadId?: number; [key: string]: unknown };
