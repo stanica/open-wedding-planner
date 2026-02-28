@@ -147,6 +147,13 @@ export function createToolRegistry(): ToolRegistry {
     category: "database",
     create: (ctx: unknown) => {
       const { embeddingService } = ctx as any;
+      if (!embeddingService) {
+        return tool({
+          description: "Semantic search (not configured)",
+          inputSchema: z.object({ query: z.string() }),
+          execute: async () => ({ error: "Embedding service not available" }),
+        });
+      }
       return makeSemanticSearchTool(embeddingService);
     },
   });

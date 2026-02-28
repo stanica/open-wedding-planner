@@ -235,8 +235,17 @@ export class EmbeddingService {
 
     if (pending.length === 0) return 0;
 
-    let processed = 0;
+    // Deduplicate: keep only the latest action per (source_table, source_id)
+    const deduped = new Map<string, typeof pending[0]>();
     for (const row of pending) {
+      deduped.set(`${row.source_table}:${row.source_id}`, row);
+    }
+
+    // Collect all pending IDs for bulk delete after processing
+    const allPendingIds = pending.map((r) => r.id);
+
+    let processed = 0;
+    for (const row of deduped.values()) {
       try {
         if (row.action === "delete") {
           this.remove(row.source_table, row.source_id);
@@ -246,12 +255,19 @@ export class EmbeddingService {
             await this.upsert(row.source_table, row.source_id, text);
           }
         }
-        this.sqlite.prepare("DELETE FROM pending_embeddings WHERE id = ?").run(row.id);
         processed++;
       } catch (err) {
         console.error(`Embedding flush error for ${row.source_table}/${row.source_id}:`, err);
       }
     }
+
+    // Clear all processed pending rows
+    if (allPendingIds.length > 0) {
+      this.sqlite
+        .prepare(`DELETE FROM pending_embeddings WHERE id IN (${allPendingIds.join(",")})`)
+        .run();
+    }
+
     return processed;
   }
 }
