@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import { budgetEntries } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
+import type { GatewayEvent } from "@wedding-planner/shared";
 
-export function registerBudgetHandlers(router: Router) {
+export function registerBudgetHandlers(router: Router, broadcast?: (event: GatewayEvent) => void) {
+  const notify = () => broadcast?.({ name: "data.changed", data: { entity: "budget" } });
   router.register("budget.list", async (db: Db, params: unknown) => {
     const filters = (params as { categoryId?: number } | undefined) ?? {};
     if (filters.categoryId) {
@@ -24,6 +26,7 @@ export function registerBudgetHandlers(router: Router) {
   router.register("budget.create", async (db: Db, params: unknown) => {
     const data = params as typeof budgetEntries.$inferInsert;
     const [row] = await db.insert(budgetEntries).values(data).returning();
+    notify();
     return row;
   });
 
@@ -31,12 +34,14 @@ export function registerBudgetHandlers(router: Router) {
     const { id, ...data } = params as { id: number } & Record<string, unknown>;
     await db.update(budgetEntries).set(data).where(eq(budgetEntries.id, id));
     const [updated] = await db.select().from(budgetEntries).where(eq(budgetEntries.id, id));
+    notify();
     return updated;
   });
 
   router.register("budget.delete", async (db: Db, params: unknown) => {
     const { id } = params as { id: number };
     await db.delete(budgetEntries).where(eq(budgetEntries.id, id));
+    notify();
     return { ok: true };
   });
 }

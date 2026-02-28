@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { wsClient } from "../lib/ws-client";
 
+interface UseRequestOptions {
+  /** Auto-refetch when a `data.changed` event matches this entity name */
+  refreshOn?: string;
+}
+
 interface UseRequestResult<T> {
   data: T | null;
   error: string | null;
@@ -11,6 +16,7 @@ interface UseRequestResult<T> {
 export function useRequest<T = unknown>(
   method: string | null | undefined,
   params?: unknown,
+  options?: UseRequestOptions,
 ): UseRequestResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +59,17 @@ export function useRequest<T = unknown>(
       cancelled = true;
     };
   }, [method, serializedParams, version]);
+
+  // Auto-refetch on data.changed events
+  const refreshOn = options?.refreshOn;
+  useEffect(() => {
+    if (!refreshOn) return;
+    return wsClient.onEvent((event) => {
+      if (event.name === "data.changed" && event.data.entity === refreshOn) {
+        setVersion((v) => v + 1);
+      }
+    });
+  }, [refreshOn]);
 
   return { data, error, loading, refetch };
 }

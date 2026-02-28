@@ -52,6 +52,11 @@ describe("EmbeddingService", () => {
     expect(results[0].textPreview).toContain("Villa Elegante");
   });
 
+  it("returns empty results when searching with no embeddings", async () => {
+    const results = await service.search("anything", undefined, 10);
+    expect(results).toEqual([]);
+  });
+
   it("removes an embedding", async () => {
     const emb = fakeEmbedding(42);
     service = new EmbeddingService(sqlite, async () => emb);

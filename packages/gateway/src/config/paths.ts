@@ -29,3 +29,16 @@ export function getImagesDir(): string {
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
+
+export function getWebDistDir(): string {
+  // When running inside Electron (packaged), web-dist is in resourcesPath.
+  // When running as a standalone Node process (dev), it's relative to this file.
+  if (process.env.WEB_DIST_PATH) {
+    return process.env.WEB_DIST_PATH;
+  }
+  // __dirname is packages/gateway/dist in dev/build
+  return path.join(
+    path.dirname(new URL(import.meta.url).pathname),
+    "../web-dist",
+  );
+}

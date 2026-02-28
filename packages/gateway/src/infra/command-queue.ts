@@ -105,7 +105,10 @@ export class Lane {
   }
 
   private drain(): void {
-    while (this.queue.length > 0 && this.activeTaskIds.size < this.maxConcurrent) {
+    while (
+      this.queue.length > 0 &&
+      this.activeTaskIds.size < this.maxConcurrent
+    ) {
       const next = this.queue.shift()!;
       this.activeTaskIds.add(next.id);
       const gen = this.generation;
@@ -121,7 +124,7 @@ export interface CommandQueueConfig {
 }
 
 const DEFAULT_LANES: Record<string, LaneConfig> = {
-  main: { maxConcurrent: 1 },
+  main: { maxConcurrent: 2 },
   heartbeat: { maxConcurrent: 1 },
   subagent: { maxConcurrent: 3 },
 };
@@ -178,8 +181,14 @@ export class CommandQueue {
     }
   }
 
-  getStatus(): Record<string, { active: number; queued: number; generation: number }> {
-    const result: Record<string, { active: number; queued: number; generation: number }> = {};
+  getStatus(): Record<
+    string,
+    { active: number; queued: number; generation: number }
+  > {
+    const result: Record<
+      string,
+      { active: number; queued: number; generation: number }
+    > = {};
     for (const [name, lane] of this.lanes) {
       result[name] = {
         active: lane.getActiveCount(),

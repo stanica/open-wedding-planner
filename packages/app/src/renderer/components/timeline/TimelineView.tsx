@@ -58,7 +58,7 @@ function groupByMonth(tasks: Task[]): Map<string, Task[]> {
 }
 
 export function TimelineView() {
-  const { data: tasks, loading, refetch } = useRequest<Task[]>("tasks.list");
+  const { data: tasks, loading, refetch } = useRequest<Task[]>("tasks.list", undefined, { refreshOn: "tasks" });
   const { mutate: createTask } = useMutation<Partial<Task>, Task>("tasks.create");
   const { mutate: updateTask } = useMutation<Partial<Task> & { id: number }, Task>(
     "tasks.update",

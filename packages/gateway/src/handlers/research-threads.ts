@@ -1,8 +1,11 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { researchThreads, researchMessages } from "../db/schema.js";
 import type { Router } from "../infra/router.js";
+import type { GatewayEvent } from "@wedding-planner/shared";
 
-export function registerResearchThreadHandlers(router: Router) {
+export function registerResearchThreadHandlers(router: Router, broadcast?: (event: GatewayEvent) => void) {
+  const notifyThreadsChanged = () => broadcast?.({ name: "research.threadsChanged", data: {} });
+
   router.register("research.threads.list", async (db) => {
     return db.select().from(researchThreads).orderBy(desc(researchThreads.updatedAt)).all();
   });
@@ -13,6 +16,7 @@ export function registerResearchThreadHandlers(router: Router) {
       .insert(researchThreads)
       .values({ title })
       .returning();
+    notifyThreadsChanged();
     return thread;
   });
 
@@ -30,6 +34,7 @@ export function registerResearchThreadHandlers(router: Router) {
       .select()
       .from(researchThreads)
       .where(eq(researchThreads.id, id));
+    notifyThreadsChanged();
     return thread;
   });
 
@@ -37,6 +42,7 @@ export function registerResearchThreadHandlers(router: Router) {
     const { id } = params as { id: number };
     await db.delete(researchMessages).where(eq(researchMessages.threadId, id));
     await db.delete(researchThreads).where(eq(researchThreads.id, id));
+    notifyThreadsChanged();
     return { ok: true };
   });
 

@@ -23,10 +23,9 @@ const AVAILABLE_SERVICES = [
 ];
 
 function openExternal(url: string) {
-  try {
-    window.electronAPI?.openExternal(url);
-  } catch {
-    // Fallback: open in current window if electronAPI unavailable
+  if (window.electronAPI) {
+    window.electronAPI.openExternal(url);
+  } else {
     window.open(url, "_blank");
   }
 }

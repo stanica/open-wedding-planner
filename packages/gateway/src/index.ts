@@ -10,7 +10,14 @@ import { Router } from "./infra/router.js";
 import { registerAllHandlers } from "./handlers/index.js";
 import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
-import { getDbPath, getDataDir, getDeliveryQueueDir, getImagesDir } from "./config/paths.js";
+import {
+  getDbPath,
+  getDataDir,
+  getDeliveryQueueDir,
+  getImagesDir,
+} from "./config/paths.js";
+import { TunnelManager } from "./infra/tunnel-manager.js";
+import { registerTunnelHandlers } from "./handlers/tunnel.js";
 import { GogManager } from "./infra/gog-manager.js";
 import { WhatsAppChannel } from "./channels/whatsapp.js";
 import { DeliveryQueue } from "./infra/delivery-queue.js";
@@ -30,7 +37,10 @@ import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
 } from "@wedding-planner/shared";
-import type { GatewayEvent, GatewayStateSnapshot } from "@wedding-planner/shared";
+import type {
+  GatewayEvent,
+  GatewayStateSnapshot,
+} from "@wedding-planner/shared";
 import { handleWhatsAppCommand } from "./channels/whatsapp-commands.js";
 
 export interface GatewayOptions {
@@ -69,14 +79,31 @@ export async function startGateway(options: GatewayOptions = {}) {
   const gogBinDir = path.join(getDataDir(), "bin");
   const gogManager = new GogManager(gogBinDir);
 
-  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager, imagesDir, embeddingService, sqlite);
+  // Lazy broadcast wrapper — wsServer is created after handler registration,
+  // but handlers are only called after startup completes.
+  let broadcastFn: ((event: GatewayEvent) => void) | undefined;
+  const broadcast = (event: GatewayEvent) => broadcastFn?.(event);
+
+  registerAllHandlers(
+    router,
+    proxyManager,
+    deliveryQueue,
+    gogManager,
+    imagesDir,
+    embeddingService,
+    sqlite,
+    broadcast,
+  );
+
+  // 7c. WhatsApp channel + delivery queue
+  const whatsapp = new WhatsAppChannel({ dataDir: getDataDir() }, broadcast);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
     return {
       version: "0.0.1",
       channels: {
-        whatsapp: "disconnected",
+        whatsapp: whatsapp.isConnected() ? "connected" : "disconnected",
         gmail: "disconnected",
         calendar: "disconnected",
       },
@@ -84,17 +111,31 @@ export async function startGateway(options: GatewayOptions = {}) {
   }
 
   // 7. Start WebSocket server
-  const wsServer = await createWsServer({ port, getState, router, db, imagesDir });
+  const wsServer = await createWsServer({
+    port,
+    getState,
+    router,
+    db,
+    imagesDir,
+  });
 
-  // 7b. WhatsApp channel + delivery queue
-  const whatsapp = new WhatsAppChannel(
-    { dataDir: getDataDir() },
-    (event) => wsServer.broadcast(event),
-  );
+  broadcastFn = (event) => wsServer.broadcast(event);
 
-  // 7c. Register WhatsApp send function on delivery queue
+  // 7b. Tunnel manager
+  const cloudflaredBin = process.env.CLOUDFLARED_PATH ?? "";
+  const tunnelManager = new TunnelManager(cloudflaredBin);
+  registerTunnelHandlers(router, tunnelManager, port);
+  tunnelManager.onStatus((status) => {
+    wsServer.broadcast({ name: "tunnel.status", data: status });
+  });
+
+  // 7d. Register WhatsApp send function on delivery queue
   deliveryQueue.registerChannel("whatsapp", async (entry) => {
-    const payload = entry.payload as { communicationId: number; to: string; text: string };
+    const payload = entry.payload as {
+      communicationId: number;
+      to: string;
+      text: string;
+    };
     await whatsapp.send(payload.to, payload.text);
     // Update communication status to sent
     await db
@@ -103,8 +144,16 @@ export async function startGateway(options: GatewayOptions = {}) {
       .where(eq(schema.communications.id, payload.communicationId));
   });
 
-  // 7d. Register WhatsApp auth handlers
+  // 7e. Register WhatsApp auth handlers
   registerWhatsAppAuthHandlers(router, whatsapp);
+
+  // 7f. Auto-connect WhatsApp if saved credentials exist
+  if (whatsapp.hasCredentials()) {
+    console.log("[WhatsApp] found saved credentials, auto-connecting...");
+    whatsapp.connect().catch((err) =>
+      console.error("[WhatsApp] auto-connect failed:", err),
+    );
+  }
 
   // 8. Load saved AI config and create orchestrator
   const [savedAiConfig] = await db.select().from(aiConfig).limit(1);
@@ -140,7 +189,8 @@ export async function startGateway(options: GatewayOptions = {}) {
     });
   }
 
-  let whatsappActiveThreadId: number | null = savedAiConfig?.whatsappActiveThreadId ?? null;
+  let whatsappActiveThreadId: number | null =
+    savedAiConfig?.whatsappActiveThreadId ?? null;
 
   if (savedAiConfig?.provider === "claude-max") {
     try {
@@ -154,7 +204,9 @@ export async function startGateway(options: GatewayOptions = {}) {
   const toolRegistry = createToolRegistry();
 
   const autoSendGetter = () => {
-    const rows = sqlite.prepare("SELECT whatsapp_auto_send FROM ai_config LIMIT 1").all() as any[];
+    const rows = sqlite
+      .prepare("SELECT whatsapp_auto_send FROM ai_config LIMIT 1")
+      .all() as any[];
     return rows.length > 0 && rows[0].whatsapp_auto_send === 1;
   };
 
@@ -172,17 +224,24 @@ export async function startGateway(options: GatewayOptions = {}) {
     return rows[0] ?? null;
   };
 
-  const orchestrator = new Orchestrator(db, (event) => {
-    wsServer.broadcast(event);
-  }, toolRegistry, undefined, sqlite, {
-    deliveryQueue,
-    getAutoSend: autoSendGetter,
-    gogManager,
-    getGoogleAutoSend: googleAutoSendGetter,
-    getGoogleConfig,
-    imagesDir,
-    embeddingService,
-  });
+  const orchestrator = new Orchestrator(
+    db,
+    (event) => {
+      wsServer.broadcast(event);
+    },
+    toolRegistry,
+    undefined,
+    sqlite,
+    {
+      deliveryQueue,
+      getAutoSend: autoSendGetter,
+      gogManager,
+      getGoogleAutoSend: googleAutoSendGetter,
+      getGoogleConfig,
+      imagesDir,
+      embeddingService,
+    },
+  );
 
   for (const config of TASK_CONFIGS) {
     orchestrator.registerConfig(config);
@@ -206,25 +265,25 @@ export async function startGateway(options: GatewayOptions = {}) {
       .values({ title: "WhatsApp" })
       .returning();
     whatsappActiveThreadId = thread.id;
-    await db
-      .update(schema.aiConfig)
-      .set({ whatsappActiveThreadId: thread.id });
+    await db.update(schema.aiConfig).set({ whatsappActiveThreadId: thread.id });
     return thread.id;
   }
 
   async function setWhatsAppActiveThread(id: number): Promise<void> {
     whatsappActiveThreadId = id;
-    await db
-      .update(schema.aiConfig)
-      .set({ whatsappActiveThreadId: id });
+    await db.update(schema.aiConfig).set({ whatsappActiveThreadId: id });
   }
 
   // 8c. Register incoming WhatsApp message handler
   whatsapp.onIncoming(async ({ from, body, messageId, selfChat }) => {
+    console.log("[WhatsApp] onIncoming:", { from, selfChat, bodyPreview: body.slice(0, 80) });
     if (selfChat) {
       // --- Self-chat: route to research agent ---
       const userJid = whatsapp.getUserJid();
-      if (!userJid) return;
+      if (!userJid) {
+        console.warn("[WhatsApp] self-chat received but getUserJid() returned null");
+        return;
+      }
 
       // Check commands first
       const cmdResult = await handleWhatsAppCommand(body, {
@@ -235,8 +294,14 @@ export async function startGateway(options: GatewayOptions = {}) {
         setActiveThreadId: setWhatsAppActiveThread,
         getQueueStatus: () => {
           const status = orchestrator.getQueueStatus();
-          const running = Object.values(status).reduce((sum, s) => sum + s.active, 0);
-          const pending = Object.values(status).reduce((sum, s) => sum + s.queued, 0);
+          const running = Object.values(status).reduce(
+            (sum, s) => sum + s.active,
+            0,
+          );
+          const pending = Object.values(status).reduce(
+            (sum, s) => sum + s.queued,
+            0,
+          );
           return { running, pending };
         },
       });
@@ -266,7 +331,10 @@ export async function startGateway(options: GatewayOptions = {}) {
       }));
 
       // Dispatch via router — returns { queued: true } if agent already running on this thread
-      const result = await router.handle(db, "agent.research", { threadId, messages: agentMessages }) as any;
+      const result = (await router.handle(db, "agent.research", {
+        threadId,
+        messages: agentMessages,
+      })) as any;
 
       if (result && !result.queued && result.sessionKey) {
         whatsapp.sendTyping(userJid);
@@ -330,13 +398,16 @@ export async function startGateway(options: GatewayOptions = {}) {
         const userJid = whatsapp.getUserJid();
         if (!userJid) return;
 
-        const messages = db.select()
+        const messages = db
+          .select()
           .from(schema.researchMessages)
           .where(eq(schema.researchMessages.threadId, threadId))
           .orderBy(schema.researchMessages.createdAt)
           .all();
 
-        const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+        const lastAssistant = [...messages]
+          .reverse()
+          .find((m) => m.role === "assistant");
         if (!lastAssistant) return;
 
         const text = lastAssistant.content;
@@ -344,17 +415,22 @@ export async function startGateway(options: GatewayOptions = {}) {
         for (let i = 0; i < text.length; i += 4000) {
           chunks.push(text.slice(i, i + 4000));
         }
-        chunks.reduce(
-          (p, chunk) => p.then(() => whatsapp.send(userJid, chunk)),
-          Promise.resolve(),
-        ).then(() => whatsapp.stopTyping(userJid));
+        chunks
+          .reduce(
+            (p, chunk) => p.then(() => whatsapp.send(userJid, chunk)),
+            Promise.resolve(),
+          )
+          .then(() => whatsapp.stopTyping(userJid));
       }
     }
 
     // Refresh typing indicator on tool calls (WhatsApp expires composing after ~25s)
     if (event.name === "agent-activity") {
       const data = event.data as { sessionKey: string; action: string };
-      if (data.sessionKey.startsWith("research-") && data.action === "tool-call") {
+      if (
+        data.sessionKey.startsWith("research-") &&
+        data.action === "tool-call"
+      ) {
         const userJid = whatsapp.getUserJid();
         if (userJid && whatsappActiveThreadId) {
           whatsapp.sendTyping(userJid);
@@ -368,7 +444,8 @@ export async function startGateway(options: GatewayOptions = {}) {
       if (data.action === "error" && whatsappActiveThreadId) {
         const userJid = whatsapp.getUserJid();
         if (userJid) {
-          whatsapp.send(userJid, "Something went wrong, try again.")
+          whatsapp
+            .send(userJid, "Something went wrong, try again.")
             .then(() => whatsapp.stopTyping(userJid));
         }
       }
@@ -394,6 +471,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   // Return cleanup function
   async function stop() {
     await proxyManager.stop();
+    await tunnelManager.stop();
     heartbeat.stop();
     // Drain in-flight work (max 30s)
     await orchestrator.waitForDrain(30_000);
@@ -406,6 +484,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   // Safety net: "exit" handler is synchronous-only, so use killSync
   process.on("exit", () => {
     proxyManager.killSync();
+    tunnelManager.killSync();
   });
 
   return stop;

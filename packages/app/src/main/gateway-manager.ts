@@ -1,11 +1,15 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { GATEWAY_READY_PREFIX } from "@wedding-planner/shared";
-import type { BrowserWindow } from "electron";
+import { app, type BrowserWindow } from "electron";
 
 let gatewayProcess: ChildProcess | null = null;
 
-const logBuffer: Array<{ level: "stdout" | "stderr"; line: string; timestamp: number }> = [];
+const logBuffer: Array<{
+  level: "stdout" | "stderr";
+  line: string;
+  timestamp: number;
+}> = [];
 const MAX_LOG_BUFFER = 500;
 let debugWindow: BrowserWindow | null = null;
 
@@ -28,7 +32,9 @@ function pushLog(level: "stdout" | "stderr", line: string) {
   }
 }
 
-export function spawnGateway(options?: { browserExe?: string }): Promise<number> {
+export function spawnGateway(options?: {
+  browserExe?: string;
+}): Promise<number> {
   return new Promise((resolve, reject) => {
     const gatewayPath = path.join(
       __dirname,
@@ -45,7 +51,25 @@ export function spawnGateway(options?: { browserExe?: string }): Promise<number>
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: undefined,
-        ...(options?.browserExe ? { BROWSER_EXECUTABLE_PATH: options.browserExe } : {}),
+        ...(options?.browserExe
+          ? { BROWSER_EXECUTABLE_PATH: options.browserExe }
+          : {}),
+        // In packaged app, web-dist is in resourcesPath. In dev, it sits next to gateway/dist/.
+        WEB_DIST_PATH: app.isPackaged
+          ? path.join(process.resourcesPath, "web-dist")
+          : path.join(path.dirname(gatewayPath), "../web-dist"),
+        // cloudflared binary for tunnel feature
+        CLOUDFLARED_PATH: app.isPackaged
+          ? path.join(
+              process.resourcesPath,
+              "cloudflared",
+              process.platform === "win32" ? "cloudflared.exe" : "cloudflared",
+            )
+          : path.join(
+              __dirname,
+              "../../cloudflared",
+              process.platform === "win32" ? "cloudflared.exe" : "cloudflared",
+            ),
       },
     });
 

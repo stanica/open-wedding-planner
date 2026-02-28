@@ -15,6 +15,7 @@ interface PendingRequest {
 class WsClient {
   private ws: WebSocket | null = null;
   private port: number | null = null;
+  private wsUrl: string | null = null;
 
   get gatewayPort(): number | null {
     return this.port;
@@ -23,22 +24,31 @@ class WsClient {
   private maxReconnectDelay = 30000;
   private pendingRequests = new Map<string, PendingRequest>();
   private eventListeners = new Set<EventListener>();
-  private messageListeners = new Set<(direction: "sent" | "received", msg: unknown) => void>();
+  private messageListeners = new Set<
+    (direction: "sent" | "received", msg: unknown) => void
+  >();
   private requestId = 0;
   private shouldReconnect = true;
   private sendQueue: ClientMessage[] = [];
   private connected = false;
 
   async connect() {
-    this.port = await window.electronAPI.getGatewayPort();
+    if (window.electronAPI) {
+      this.port = await window.electronAPI.getGatewayPort();
+      this.wsUrl = `ws://localhost:${this.port}`;
+    } else {
+      // Running in browser — connect back to the same host via WS/WSS
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      this.wsUrl = `${protocol}//${window.location.host}`;
+    }
     this.shouldReconnect = true;
     this.doConnect();
   }
 
   private doConnect() {
-    if (!this.port || !this.shouldReconnect) return;
+    if (!this.wsUrl || !this.shouldReconnect) return;
 
-    this.ws = new WebSocket(`ws://localhost:${this.port}`);
+    this.ws = new WebSocket(this.wsUrl);
 
     this.ws.onmessage = (event) => {
       const msg: ServerMessage = JSON.parse(event.data);
@@ -146,7 +156,9 @@ class WsClient {
     return () => this.eventListeners.delete(listener);
   }
 
-  onMessage(listener: (direction: "sent" | "received", msg: unknown) => void): () => void {
+  onMessage(
+    listener: (direction: "sent" | "received", msg: unknown) => void,
+  ): () => void {
     this.messageListeners.add(listener);
     return () => this.messageListeners.delete(listener);
   }

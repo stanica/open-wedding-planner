@@ -64,6 +64,10 @@ export function ResearchView() {
   const { mutate: deleteThread } = useMutation<{ id: number }, unknown>(
     "research.threads.delete",
   );
+  const { mutate: updateThread } = useMutation<
+    { id: number; title?: string },
+    Thread
+  >("research.threads.update");
   const { mutate: createMessage } = useMutation<
     { threadId: number; role: string; content: string },
     Message
@@ -82,6 +86,16 @@ export function ResearchView() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, liveToolCalls, pendingPermissions, activeSession]);
+
+  // Refetch threads when another client creates/updates/deletes a thread
+  useEffect(() => {
+    const unsub = wsClient.onEvent((event) => {
+      if (event.name === "research.threadsChanged") {
+        refetchThreads();
+      }
+    });
+    return unsub;
+  }, [refetchThreads]);
 
   // Refetch data when agent completes (even if we were on another tab)
   const completedAtSeen = useRef<number | null>(null);
@@ -126,6 +140,11 @@ export function ResearchView() {
   async function handleCreateThread() {
     const thread = await createThread({ title: "New research" });
     setActiveThreadId(thread.id);
+    refetchThreads();
+  }
+
+  async function handleRenameThread(threadId: number, title: string) {
+    await updateThread({ id: threadId, title });
     refetchThreads();
   }
 
@@ -259,6 +278,7 @@ export function ResearchView() {
           onSelect={(id) => setActiveThreadId(id)}
           onCreate={handleCreateThread}
           onDelete={handleDeleteThread}
+          onRename={handleRenameThread}
         />
       </div>
 

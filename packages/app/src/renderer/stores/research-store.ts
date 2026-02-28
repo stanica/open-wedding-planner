@@ -109,7 +109,10 @@ wsClient.onEvent((event: GatewayEvent) => {
   }
 
   if (event.name === "context-compacted") {
-    useResearchStore.setState({ contextCompactedAt: Date.now() });
+    const { activeThreadId } = useResearchStore.getState();
+    if (activeThreadId && event.data.threadId === activeThreadId) {
+      useResearchStore.setState({ contextCompactedAt: Date.now() });
+    }
   }
 
   if (event.name === "research.tokenUsage") {

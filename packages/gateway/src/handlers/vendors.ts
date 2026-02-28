@@ -15,8 +15,11 @@ import {
 } from "../db/schema.js";
 import { getImagesDir } from "../config/paths.js";
 import type { Router, Db } from "../infra/router.js";
+import type { GatewayEvent } from "@wedding-planner/shared";
 
-export function registerVendorHandlers(router: Router) {
+export function registerVendorHandlers(router: Router, broadcast?: (event: GatewayEvent) => void) {
+  const notify = () => broadcast?.({ name: "data.changed", data: { entity: "vendors" } });
+
   router.register("vendors.list", async (db: Db, params: unknown) => {
     const filters = (params as { categoryId?: number; status?: string } | undefined) ?? {};
     const conditions = [];
@@ -44,6 +47,7 @@ export function registerVendorHandlers(router: Router) {
   router.register("vendors.create", async (db: Db, params: unknown) => {
     const data = params as typeof vendors.$inferInsert;
     const result = await db.insert(vendors).values(data).returning();
+    notify();
     return result[0];
   });
 
@@ -53,6 +57,7 @@ export function registerVendorHandlers(router: Router) {
     data.updatedAt = sql`datetime('now')`;
     await db.update(vendors).set(data).where(eq(vendors.id, id));
     const [updated] = await db.select().from(vendors).where(eq(vendors.id, id));
+    notify();
     return updated;
   });
 
@@ -97,6 +102,7 @@ export function registerVendorHandlers(router: Router) {
       tx.delete(vendors).where(eq(vendors.id, id)).run();
     });
 
+    notify();
     return { ok: true };
   });
 }

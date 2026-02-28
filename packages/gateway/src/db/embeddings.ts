@@ -160,10 +160,18 @@ export class EmbeddingService {
     Array<{ sourceTable: string; sourceId: number; distance: number; textPreview: string | null }>
   > {
     if (!this.embedFn) return [];
+
+    // Guard: vec0 MATCH queries can crash (segfault) when the table is empty
+    // or when k exceeds the row count. Check row count first.
+    const { n: embeddingCount } = this.sqlite
+      .prepare("SELECT count(*) as n FROM embedding_map")
+      .get() as { n: number };
+    if (embeddingCount === 0) return [];
+
     const embedding = await this.embedFn(query);
     const buf = Buffer.from(new Float32Array(embedding).buffer);
 
-    const k = sourceType ? limit * 3 : limit;
+    const k = Math.min(sourceType ? limit * 3 : limit, embeddingCount);
 
     const rows = this.sqlite
       .prepare(

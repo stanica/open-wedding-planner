@@ -4,6 +4,7 @@ import type { DeliveryQueue } from "../infra/delivery-queue.js";
 import type { GogManager } from "../infra/gog-manager.js";
 import type { EmbeddingService } from "../db/embeddings.js";
 import type Database from "better-sqlite3";
+import type { GatewayEvent } from "@wedding-planner/shared";
 import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
@@ -35,15 +36,16 @@ export function registerAllHandlers(
   imagesDir?: string,
   embeddingService?: EmbeddingService,
   sqlite?: Database.Database,
+  broadcast?: (event: GatewayEvent) => void,
 ) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
-  registerVendorHandlers(router);
+  registerVendorHandlers(router, broadcast);
   registerVendorAttributeHandlers(router);
   registerVendorImageHandlers(router, imagesDir ?? getImagesDir());
   registerQuoteHandlers(router);
-  registerBudgetHandlers(router);
-  registerTaskHandlers(router);
+  registerBudgetHandlers(router, broadcast);
+  registerTaskHandlers(router, broadcast);
   registerCommunicationHandlers(router, deliveryQueue);
   registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
@@ -51,7 +53,7 @@ export function registerAllHandlers(
   registerToolPermissionHandlers(router);
   registerSearchConfigHandlers(router);
   registerHeartbeatConfigHandlers(router);
-  registerResearchThreadHandlers(router);
+  registerResearchThreadHandlers(router, broadcast);
 
   if (gogManager) {
     registerGoogleAuthHandlers(router, gogManager);

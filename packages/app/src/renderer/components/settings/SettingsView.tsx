@@ -6,6 +6,8 @@ import { HeartbeatSettings } from "./HeartbeatSettings";
 import { ToolPermissions } from "./ToolPermissions";
 import { GuardrailsSettings } from "./GuardrailsSettings";
 import { DataManagement } from "./DataManagement";
+import { LocalServerStatus } from "./LocalServerStatus";
+import { TunnelStatus } from "./TunnelStatus";
 
 export function SettingsView() {
   return (
@@ -24,6 +26,10 @@ export function SettingsView() {
       <GuardrailsSettings />
       <hr className="border-white/10" />
       <IntegrationStatus />
+      <hr className="border-white/10" />
+      <LocalServerStatus />
+      <hr className="border-white/10" />
+      <TunnelStatus />
       <hr className="border-white/10" />
       <DataManagement />
     </div>

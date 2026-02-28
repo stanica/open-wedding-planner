@@ -78,7 +78,11 @@ export function VendorHeader({
                   const url = vendor.websiteUrl!.startsWith("http")
                     ? vendor.websiteUrl!
                     : `https://${vendor.websiteUrl}`;
-                  window.electronAPI?.openExternal(url);
+                  if (window.electronAPI) {
+                    window.electronAPI.openExternal(url);
+                  } else {
+                    window.open(url, "_blank");
+                  }
                 }}
                 className="flex items-center gap-1 hover:text-blue-400 transition-colors"
               >

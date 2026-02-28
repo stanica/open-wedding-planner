@@ -24,18 +24,72 @@ export interface GatewayStateSnapshot {
   };
 }
 
-export type ChannelStatus = "disconnected" | "connecting" | "connected" | "error" | "failed";
+export type ChannelStatus =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "error"
+  | "failed";
 
 export type GatewayEvent =
   | { name: "vendor-created"; data: { vendor: Vendor } }
   | { name: "vendor-updated"; data: { vendor: Vendor } }
-  | { name: "agent-activity"; data: { sessionKey: string; action: string; detail?: string } }
-  | { name: "agent-complete"; data: { taskId: string; sessionKey: string; summary: string } }
-  | { name: "communication-received"; data: { vendorId: number; channel: string } }
-  | { name: "draft-ready"; data: { communicationId: number; vendorName: string } }
+  | {
+      name: "agent-activity";
+      data: { sessionKey: string; action: string; detail?: string };
+    }
+  | {
+      name: "agent-complete";
+      data: { taskId: string; sessionKey: string; summary: string };
+    }
+  | {
+      name: "communication-received";
+      data: { vendorId: number; channel: string };
+    }
+  | {
+      name: "draft-ready";
+      data: { communicationId: number; vendorName: string };
+    }
   | { name: "channel-status"; data: { channel: string; status: ChannelStatus } }
-  | { name: "research.messageComplete"; data: { threadId: number; message?: unknown } }
-  | { name: "research.toolActivity"; data: { threadId: number; sessionKey: string; toolName: string; phase: "start" | "result"; detail?: string; result?: unknown } }
-  | { name: "research.permissionRequest"; data: { sessionKey: string; requestId: string; toolName: string; toolDescription: string; context?: string } }
-  | { name: "research.tokenUsage"; data: { threadId: number; sessionKey: string; inputTokens: number; contextWindow: number; modelName: string } }
-  | { name: "context-compacted"; data: { threadId: number } };
+  | {
+      name: "research.messageComplete";
+      data: { threadId: number; message?: unknown };
+    }
+  | {
+      name: "research.toolActivity";
+      data: {
+        threadId: number;
+        sessionKey: string;
+        toolName: string;
+        phase: "start" | "result";
+        detail?: string;
+        result?: unknown;
+      };
+    }
+  | {
+      name: "research.permissionRequest";
+      data: {
+        sessionKey: string;
+        requestId: string;
+        toolName: string;
+        toolDescription: string;
+        context?: string;
+      };
+    }
+  | {
+      name: "research.tokenUsage";
+      data: {
+        threadId: number;
+        sessionKey: string;
+        inputTokens: number;
+        contextWindow: number;
+        modelName: string;
+      };
+    }
+  | { name: "context-compacted"; data: { threadId: number } }
+  | { name: "research.threadsChanged"; data: Record<string, never> }
+  | { name: "data.changed"; data: { entity: string } }
+  | {
+      name: "tunnel.status";
+      data: { state: string; url?: string; message?: string };
+    };

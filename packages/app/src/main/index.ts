@@ -1,6 +1,18 @@
 import path from "node:path";
-import { app, BrowserWindow, ipcMain, globalShortcut, dialog } from "electron";
-import { spawnGateway, stopGateway, getLogBuffer, setDebugWindow } from "./gateway-manager";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  dialog,
+  shell,
+} from "electron";
+import {
+  spawnGateway,
+  stopGateway,
+  getLogBuffer,
+  setDebugWindow,
+} from "./gateway-manager";
 import { createTray, destroyTray } from "./tray";
 
 let mainWindow: BrowserWindow | null = null;
@@ -47,12 +59,25 @@ app.whenReady().then(async () => {
   // In production, use the bundled headless shell; in dev, let playwright-core
   // find browsers from the system cache
   const browserExe = app.isPackaged
-    ? path.join(process.resourcesPath, "browsers", process.platform === "win32" ? "chrome-headless-shell.exe" : "chrome-headless-shell")
+    ? path.join(
+        process.resourcesPath,
+        "browsers",
+        process.platform === "win32"
+          ? "chrome-headless-shell.exe"
+          : "chrome-headless-shell",
+      )
     : undefined;
   gatewayPort = await spawnGateway({ browserExe });
 
   ipcMain.handle("get-gateway-port", () => gatewayPort);
+  ipcMain.handle(
+    "get-local-server-url",
+    () => `http://localhost:${gatewayPort}`,
+  );
   ipcMain.handle("get-gateway-log-buffer", () => getLogBuffer());
+  ipcMain.handle("shell:openExternal", (_event, url: string) =>
+    shell.openExternal(url),
+  );
   ipcMain.handle("dialog:showOpenDialog", async (_, options) => {
     return dialog.showOpenDialog(options);
   });

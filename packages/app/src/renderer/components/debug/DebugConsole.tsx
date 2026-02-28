@@ -26,8 +26,17 @@ const FILTER_OPTIONS: Array<{ value: LogSource | "all"; label: string }> = [
 ];
 
 export function DebugConsole() {
-  const { entries, filter, searchQuery, autoScroll, push, clear, setFilter, setSearchQuery, setAutoScroll } =
-    useDebugStore();
+  const {
+    entries,
+    filter,
+    searchQuery,
+    autoScroll,
+    push,
+    clear,
+    setFilter,
+    setSearchQuery,
+    setAutoScroll,
+  } = useDebugStore();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isAutoScrolling = useRef(false);
@@ -77,7 +86,7 @@ export function DebugConsole() {
   // Subscribe to gateway logs
   useEffect(() => {
     // Load buffer first
-    window.electronAPI.getGatewayLogBuffer().then((buffer) => {
+    window.electronAPI?.getGatewayLogBuffer().then((buffer) => {
       for (const log of buffer) {
         push({
           source: "gateway",
@@ -88,7 +97,7 @@ export function DebugConsole() {
     });
 
     // Then subscribe to live logs
-    return window.electronAPI.onGatewayLog((log) => {
+    return window.electronAPI?.onGatewayLog((log) => {
       push({
         source: "gateway",
         timestamp: log.timestamp,
@@ -108,7 +117,8 @@ export function DebugConsole() {
       });
     };
     const onRejection = (e: PromiseRejectionEvent) => {
-      const reason = e.reason instanceof Error ? e.reason : { message: String(e.reason) };
+      const reason =
+        e.reason instanceof Error ? e.reason : { message: String(e.reason) };
       push({
         source: "renderer",
         timestamp: Date.now(),
@@ -156,7 +166,8 @@ export function DebugConsole() {
       result = result.filter(
         (e) =>
           e.summary.toLowerCase().includes(q) ||
-          (typeof e.detail === "string" && e.detail.toLowerCase().includes(q)) ||
+          (typeof e.detail === "string" &&
+            e.detail.toLowerCase().includes(q)) ||
           (e.detail && JSON.stringify(e.detail).toLowerCase().includes(q)),
       );
     }
@@ -213,11 +224,17 @@ export function DebugConsole() {
           Clear
         </button>
 
-        <span className="text-gray-600 text-xs tabular-nums">{entries.length}</span>
+        <span className="text-gray-600 text-xs tabular-nums">
+          {entries.length}
+        </span>
       </div>
 
       {/* Log entries */}
-      <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-1">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-1"
+      >
         {filtered.map((entry) => (
           <LogLine key={entry.id} entry={entry} />
         ))}
@@ -227,7 +244,17 @@ export function DebugConsole() {
   );
 }
 
-function LogLine({ entry }: { entry: { id: number; source: LogSource; timestamp: number; summary: string; detail?: unknown } }) {
+function LogLine({
+  entry,
+}: {
+  entry: {
+    id: number;
+    source: LogSource;
+    timestamp: number;
+    summary: string;
+    detail?: unknown;
+  };
+}) {
   const time = new Date(entry.timestamp).toLocaleTimeString("en-US", {
     hour12: false,
     hour: "2-digit",
@@ -236,9 +263,12 @@ function LogLine({ entry }: { entry: { id: number; source: LogSource; timestamp:
   });
 
   const [open, setOpen] = useState(false);
-  const detailStr = entry.detail != null
-    ? typeof entry.detail === "string" ? entry.detail : JSON.stringify(entry.detail, null, 2)
-    : null;
+  const detailStr =
+    entry.detail != null
+      ? typeof entry.detail === "string"
+        ? entry.detail
+        : JSON.stringify(entry.detail, null, 2)
+      : null;
 
   return (
     <div className="px-2 py-0.5 hover:bg-white/[0.02] group">
@@ -247,7 +277,9 @@ function LogLine({ entry }: { entry: { id: number; source: LogSource; timestamp:
         <span
           className={`shrink-0 uppercase text-[10px] font-semibold px-1.5 py-0.5 rounded ${SOURCE_COLORS[entry.source]} ${SOURCE_BG[entry.source]}`}
         >
-          {entry.source === "ws" ? "WS" : entry.source.slice(0, 3).toUpperCase()}
+          {entry.source === "ws"
+            ? "WS"
+            : entry.source.slice(0, 3).toUpperCase()}
         </span>
         <span className="text-gray-300 break-all min-w-0">{entry.summary}</span>
         {detailStr && (

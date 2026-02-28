@@ -3,6 +3,7 @@ import { wsClient } from "../../lib/ws-client";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { WhatsAppSetup } from "./WhatsAppSetup";
 import { GoogleServicesSetup } from "./GoogleServicesSetup";
+import { useGatewayStore } from "../../stores/gateway-store";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
 interface ChannelStatuses {
@@ -10,9 +11,10 @@ interface ChannelStatuses {
 }
 
 export function IntegrationStatus() {
-  const [statuses, setStatuses] = useState<ChannelStatuses>({
-    whatsapp: "disconnected",
-  });
+  const gatewayState = useGatewayStore((s) => s.state);
+  const [statuses, setStatuses] = useState<ChannelStatuses>(() => ({
+    whatsapp: gatewayState?.channels?.whatsapp ?? "disconnected",
+  }));
   const [whatsappQr, setWhatsappQr] = useState<string | null>(null);
 
   const { data: aiConfigData } = useRequest<{ whatsappAutoSend?: boolean }>("ai-config.get");
@@ -48,6 +50,13 @@ export function IntegrationStatus() {
   }, []);
 
   useEffect(() => {
+    // Query live WhatsApp status on mount so we don't show stale state
+    wsClient.request<{ connected: boolean }>("whatsapp.status").then((res) => {
+      setStatuses((prev) => ({
+        ...prev,
+        whatsapp: res.connected ? "connected" : prev.whatsapp,
+      }));
+    }).catch(() => {});
     return wsClient.onEvent(handleEvent);
   }, [handleEvent]);
 

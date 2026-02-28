@@ -15,6 +15,14 @@ extraResources:
     to: gateway
     filter:
       - "**/*"
+  - from: ../gateway/web-dist
+    to: web-dist
+    filter:
+      - "**/*"
+  - from: cloudflared
+    to: cloudflared
+    filter:
+      - "**/*"
   - from: browsers
     to: browsers
     filter:

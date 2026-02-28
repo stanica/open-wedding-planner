@@ -25,11 +25,11 @@ interface Category {
 }
 
 export function useVendors(filters?: { categoryId?: number; status?: string }) {
-  return useRequest<Vendor[]>("vendors.list", filters);
+  return useRequest<Vendor[]>("vendors.list", filters, { refreshOn: "vendors" });
 }
 
 export function useVendor(id: number) {
-  return useRequest<Vendor>("vendors.get", { id });
+  return useRequest<Vendor>("vendors.get", { id }, { refreshOn: "vendors" });
 }
 
 export function useCategories() {

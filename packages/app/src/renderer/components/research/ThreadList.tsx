@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { Plus, MessageSquare, Trash2 } from "lucide-react";
 
 interface Thread {
@@ -13,9 +14,32 @@ interface ThreadListProps {
   onSelect: (threadId: number) => void;
   onCreate: () => void;
   onDelete?: (threadId: number) => void;
+  onRename?: (threadId: number, title: string) => void;
 }
 
-export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDelete }: ThreadListProps) {
+export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDelete, onRename }: ThreadListProps) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingId !== null) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editingId]);
+
+  function startEditing(thread: Thread) {
+    setEditingId(thread.id);
+    setEditValue(thread.title);
+  }
+
+  function commitEdit() {
+    if (editingId !== null && editValue.trim() && onRename) {
+      onRename(editingId, editValue.trim());
+    }
+    setEditingId(null);
+  }
   return (
     <div className="flex flex-col h-full border-r border-white/10">
       <div className="p-3 border-b border-white/10">
@@ -42,7 +66,30 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
               <div className="flex items-start gap-2">
                 <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white truncate">{thread.title}</p>
+                  {editingId === thread.id ? (
+                    <input
+                      ref={inputRef}
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={commitEdit}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitEdit();
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-medium text-white bg-white/10 rounded px-1 py-0.5 w-full outline-none ring-1 ring-purple-500/50"
+                    />
+                  ) : (
+                    <p
+                      className="text-sm font-medium text-white truncate"
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        startEditing(thread);
+                      }}
+                    >
+                      {thread.title}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-0.5">
                     {new Date(thread.updatedAt).toLocaleDateString()}
                   </p>

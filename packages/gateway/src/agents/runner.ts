@@ -148,6 +148,8 @@ export class AgentRunner {
 
         // Emit token usage for live UI updates
         if (toolCtx.broadcast && toolCtx.threadId && stepUsage) {
+          const stepInputTokens = stepUsage.inputTokens ?? stepUsage.totalTokens ?? 0;
+          lastStepInputTokens = stepInputTokens;
           const modelName = getAIConfig().model;
           const contextWindow = getContextWindowForModel(modelName);
           toolCtx.broadcast({
@@ -155,7 +157,7 @@ export class AgentRunner {
             data: {
               threadId: toolCtx.threadId,
               sessionKey: toolCtx.parentSessionKey ?? "",
-              inputTokens: stepUsage.promptTokens ?? stepUsage.totalTokens ?? 0,
+              inputTokens: stepInputTokens,
               contextWindow,
               modelName,
             },
@@ -176,6 +178,7 @@ export class AgentRunner {
 
       let text = "";
       let usage: { inputTokens?: number } | undefined;
+      let lastStepInputTokens: number | undefined;
 
       try {
         const result = await generateText({
@@ -255,15 +258,15 @@ export class AgentRunner {
 
       ctx.emit("complete", `${config.name} finished`);
 
-      // Check if context needs compaction
+      // Check if context needs compaction (use last step's input tokens = current context size)
       let compactionSummary: string | undefined;
-      if (usage?.inputTokens) {
+      if (lastStepInputTokens) {
         const modelName = getAIConfig().model;
         const contextWindow = getContextWindowForModel(modelName);
         const threshold = contextWindow * 0.8;
 
-        if (usage.inputTokens > threshold) {
-          ctx.emit("compacting", `Context at ${Math.round((usage.inputTokens / contextWindow) * 100)}% — summarizing conversation...`);
+        if (lastStepInputTokens > threshold) {
+          ctx.emit("compacting", `Context at ${Math.round((lastStepInputTokens / contextWindow) * 100)}% — summarizing conversation...`);
           try {
             const summarizationModel = await getSummarizationModel();
             const { text: summary } = await generateText({
@@ -298,8 +301,8 @@ Be thorough but concise. This summary will replace the conversation history for 
         summary: text || `${config.name} completed`,
         data: { toolCalls: allToolCalls, vendorIds },
         compactionSummary,
-        lastTokenUsage: usage?.inputTokens ? {
-          inputTokens: usage.inputTokens,
+        lastTokenUsage: lastStepInputTokens ? {
+          inputTokens: lastStepInputTokens,
           contextWindow,
           modelName,
         } : undefined,

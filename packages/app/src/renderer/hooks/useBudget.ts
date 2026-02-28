@@ -33,7 +33,7 @@ export interface CategoryBudget {
 }
 
 export function useBudgetData() {
-  const { data: entries, loading: entriesLoading, refetch } = useRequest<BudgetEntry[]>("budget.list");
+  const { data: entries, loading: entriesLoading, refetch } = useRequest<BudgetEntry[]>("budget.list", undefined, { refreshOn: "budget" });
   const { data: categories, loading: categoriesLoading } = useRequest<Category[]>("categories.list");
 
   const loading = entriesLoading || categoriesLoading;
