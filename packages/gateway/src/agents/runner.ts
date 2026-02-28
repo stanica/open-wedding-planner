@@ -44,6 +44,7 @@ export interface ToolFactoryContext {
   parentSessionKey?: string;
   threadId?: number;
   broadcast?: (event: any) => void;
+  embeddingService?: unknown;
 }
 
 export class AgentRunner {

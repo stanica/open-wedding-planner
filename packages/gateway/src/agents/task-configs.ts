@@ -124,17 +124,17 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
-    tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog"],
+    tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog", "semanticSearch"],
   },
   {
     name: "outreach",
     systemPrompt: OUTREACH_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog"],
+    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog", "semanticSearch"],
   },
   {
     name: "parse",
     systemPrompt: PARSER_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema"],
+    tools: ["cmd", "dbQuery", "dbSchema", "semanticSearch"],
   },
   {
     name: "translation",
@@ -144,13 +144,13 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "action",
     systemPrompt: ACTION_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema", "gog"],
+    tools: ["cmd", "dbQuery", "dbSchema", "gog", "semanticSearch"],
   },
   {
     name: "browser",
     model: "subagent",
     systemPrompt: BROWSER_PROMPT,
-    tools: ["parsePdf", "addVendorImages", "dbQuery", "dbSchema", "createVendor"],
+    tools: ["parsePdf", "addVendorImages", "dbQuery", "dbSchema", "createVendor", "semanticSearch"],
     setup: async (_toolCtx: unknown) => {
       const { chromium } = await import("playwright-core");
       const executablePath = process.env.BROWSER_EXECUTABLE_PATH || undefined;

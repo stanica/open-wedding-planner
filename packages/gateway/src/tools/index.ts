@@ -11,6 +11,7 @@ import { makeSendWhatsAppTool } from "./send-whatsapp.js";
 import { makeGogTool } from "./gog.js";
 import { makeDispatchTool } from "./dispatch.js";
 import { makeAwaitTasksTool } from "./await-tasks.js";
+import { makeSemanticSearchTool } from "./semantic-search.js";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -138,6 +139,15 @@ export function createToolRegistry(): ToolRegistry {
     create: (ctx: unknown) => {
       const { db } = ctx as any;
       return makeAwaitTasksTool({ db });
+    },
+  });
+
+  registry.registerFactory("semanticSearch", {
+    description: "Search all data using natural language semantic similarity",
+    category: "database",
+    create: (ctx: unknown) => {
+      const { embeddingService } = ctx as any;
+      return makeSemanticSearchTool(embeddingService);
     },
   });
 
