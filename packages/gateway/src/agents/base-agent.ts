@@ -38,7 +38,7 @@ export interface TaskConfig {
   name: string;
   systemPrompt: string;
   tools: string[];
-  maxSteps?: number;
+  model?: "default" | "subagent";
   guardrails?: Partial<GuardrailsConfig>;
   setup?: (toolCtx: unknown) => Promise<{
     extraTools: Record<string, Tool>;

@@ -40,6 +40,23 @@ export function getContextWindowForModel(modelName: string): number {
   return 200_000;
 }
 
+export async function getSubagentModel(): Promise<LanguageModel> {
+  const modelId = "claude-haiku-4-5-20251001";
+  if (currentConfig.provider === "claude-max") {
+    const { createOpenAI } = await import("@ai-sdk/openai");
+    const openai = createOpenAI({
+      baseURL: currentConfig.proxyUrl,
+      apiKey: "claude-max",
+    });
+    return openai.chat(modelId);
+  }
+
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
+  return anthropic(modelId);
+}
+
 export async function getSummarizationModel(): Promise<LanguageModel> {
   if (currentConfig.provider === "claude-max") {
     const { createOpenAI } = await import("@ai-sdk/openai");

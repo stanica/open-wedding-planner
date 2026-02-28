@@ -44,7 +44,12 @@ function toggleDebugWindow() {
 }
 
 app.whenReady().then(async () => {
-  gatewayPort = await spawnGateway();
+  // In production, use the bundled headless shell; in dev, let playwright-core
+  // find browsers from the system cache
+  const browserExe = app.isPackaged
+    ? path.join(process.resourcesPath, "browsers", process.platform === "win32" ? "chrome-headless-shell.exe" : "chrome-headless-shell")
+    : undefined;
+  gatewayPort = await spawnGateway({ browserExe });
 
   ipcMain.handle("get-gateway-port", () => gatewayPort);
   ipcMain.handle("get-gateway-log-buffer", () => getLogBuffer());

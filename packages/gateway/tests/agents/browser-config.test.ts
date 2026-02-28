@@ -16,11 +16,6 @@ describe("browser task config", () => {
     expect(config!.setup).toBeTypeOf("function");
   });
 
-  it("has maxSteps of 20", () => {
-    const config = getTaskConfig("browser");
-    expect(config!.maxSteps).toBe(20);
-  });
-
   it("system prompt mentions Playwright actions", () => {
     const config = getTaskConfig("browser");
     expect(config!.systemPrompt).toContain("navigate");

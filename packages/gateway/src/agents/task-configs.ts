@@ -125,40 +125,36 @@ export const TASK_CONFIGS: TaskConfig[] = [
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
     tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog"],
-    maxSteps: 15,
   },
   {
     name: "outreach",
     systemPrompt: OUTREACH_PROMPT,
     tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog"],
-    maxSteps: 5,
   },
   {
     name: "parse",
     systemPrompt: PARSER_PROMPT,
     tools: ["cmd", "dbQuery", "dbSchema"],
-    maxSteps: 5,
   },
   {
     name: "translation",
     systemPrompt: TRANSLATION_PROMPT,
     tools: ["cmd"],
-    maxSteps: 3,
   },
   {
     name: "action",
     systemPrompt: ACTION_PROMPT,
     tools: ["cmd", "dbQuery", "dbSchema", "gog"],
-    maxSteps: 5,
   },
   {
     name: "browser",
+    model: "subagent",
     systemPrompt: BROWSER_PROMPT,
     tools: ["parsePdf", "addVendorImages", "dbQuery", "dbSchema", "createVendor"],
-    maxSteps: 20,
     setup: async (_toolCtx: unknown) => {
-      const { chromium } = await import("playwright");
-      const browser = await chromium.launch({ headless: true });
+      const { chromium } = await import("playwright-core");
+      const executablePath = process.env.BROWSER_EXECUTABLE_PATH || undefined;
+      const browser = await chromium.launch({ headless: true, executablePath });
       const page = await browser.newPage();
       const extraTools = createPlaywrightTools(page);
       return {

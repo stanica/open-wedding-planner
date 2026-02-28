@@ -57,7 +57,6 @@ export class HeartbeatScheduler {
           name: "heartbeat-research",
           systemPrompt: config.prompt,
           tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "cmd", "dbQuery", "dbSchema", "sendWhatsApp"],
-          maxSteps: 15,
         });
 
         this.broadcast({

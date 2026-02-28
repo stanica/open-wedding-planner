@@ -15,6 +15,10 @@ extraResources:
     to: gateway
     filter:
       - "**/*"
+  - from: browsers
+    to: browsers
+    filter:
+      - "**/*"
 
 mac:
   category: public.app-category.lifestyle

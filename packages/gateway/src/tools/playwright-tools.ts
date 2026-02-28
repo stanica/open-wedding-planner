@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { Page } from "playwright";
+import type { Page } from "playwright-core";
 
 export function createPlaywrightTools(page: Page) {
   return {
@@ -79,7 +79,7 @@ export function createPlaywrightTools(page: Page) {
       execute: async () => {
         const links = await page.$$eval("a[href]", (anchors) =>
           anchors
-            .map((a) => ({ text: a.textContent?.trim() ?? "", href: a.href }))
+            .map((a) => ({ text: a.textContent?.trim() ?? "", href: (a as HTMLAnchorElement).href }))
             .filter((l) => l.text && l.href && !l.href.startsWith("javascript:")),
         );
         return { links: links.slice(0, 100), url: page.url() };
@@ -91,7 +91,7 @@ export function createPlaywrightTools(page: Page) {
       inputSchema: z.object({}),
       execute: async () => {
         const images = await page.$$eval("img[src]", (imgs) =>
-          imgs
+          (imgs as HTMLImageElement[])
             .map((img) => ({
               src: img.src,
               alt: img.alt || undefined,

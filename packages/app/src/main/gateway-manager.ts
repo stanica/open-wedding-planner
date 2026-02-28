@@ -28,7 +28,7 @@ function pushLog(level: "stdout" | "stderr", line: string) {
   }
 }
 
-export function spawnGateway(): Promise<number> {
+export function spawnGateway(options?: { browserExe?: string }): Promise<number> {
   return new Promise((resolve, reject) => {
     const gatewayPath = path.join(
       __dirname,
@@ -45,6 +45,7 @@ export function spawnGateway(): Promise<number> {
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: undefined,
+        ...(options?.browserExe ? { BROWSER_EXECUTABLE_PATH: options.browserExe } : {}),
       },
     });
 
