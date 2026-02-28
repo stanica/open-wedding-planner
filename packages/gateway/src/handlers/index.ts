@@ -2,6 +2,8 @@ import type { Router } from "../infra/router.js";
 import type { ProxyManager } from "../infra/proxy-manager.js";
 import type { DeliveryQueue } from "../infra/delivery-queue.js";
 import type { GogManager } from "../infra/gog-manager.js";
+import type { EmbeddingService } from "../db/embeddings.js";
+import type Database from "better-sqlite3";
 import { registerWeddingConfigHandlers } from "./wedding-config.js";
 import { registerCategoryHandlers } from "./categories.js";
 import { registerVendorHandlers } from "./vendors.js";
@@ -31,6 +33,8 @@ export function registerAllHandlers(
   deliveryQueue?: DeliveryQueue,
   gogManager?: GogManager,
   imagesDir?: string,
+  embeddingService?: EmbeddingService,
+  sqlite?: Database.Database,
 ) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
@@ -43,7 +47,7 @@ export function registerAllHandlers(
   registerCommunicationHandlers(router, deliveryQueue);
   registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
-  registerAIConfigHandlers(router, proxyManager);
+  registerAIConfigHandlers(router, proxyManager, embeddingService, sqlite);
   registerToolPermissionHandlers(router);
   registerSearchConfigHandlers(router);
   registerHeartbeatConfigHandlers(router);

@@ -6,10 +6,15 @@ import {
 } from "../agents/model-provider.js";
 import type { Router, Db } from "../infra/router.js";
 import type { ProxyManager } from "../infra/proxy-manager.js";
+import type { EmbeddingService } from "../db/embeddings.js";
+import type Database from "better-sqlite3";
+import { buildEmbeddingText } from "../db/text-builders.js";
 
 export function registerAIConfigHandlers(
   router: Router,
   proxyManager: ProxyManager,
+  embeddingService?: EmbeddingService,
+  sqlite?: Database.Database,
 ) {
   router.register("ai-config.get", async (db: Db) => {
     const [row] = await db.select().from(aiConfig);
@@ -21,6 +26,12 @@ export function registerAIConfigHandlers(
       ? `${effectiveKey.slice(0, 10)}...${effectiveKey.slice(-4)}`
       : null;
 
+    const openaiKey = row?.openaiApiKey ?? null;
+    const hasOpenaiApiKey = !!openaiKey;
+    const maskedOpenaiApiKey = openaiKey
+      ? `...${openaiKey.slice(-4)}`
+      : null;
+
     const config = row
       ? {
           provider: row.provider,
@@ -28,12 +39,16 @@ export function registerAIConfigHandlers(
           proxyUrl: row.proxyUrl,
           hasApiKey,
           maskedApiKey,
+          hasOpenaiApiKey,
+          maskedOpenaiApiKey,
           whatsappAutoSend: !!row.whatsappAutoSend,
         }
       : {
           ...memConfig,
           hasApiKey,
           maskedApiKey,
+          hasOpenaiApiKey: false,
+          maskedOpenaiApiKey: null,
           whatsappAutoSend: false,
         };
 
@@ -100,6 +115,9 @@ export function registerAIConfigHandlers(
       if (data.apiKey !== undefined) {
         updates.apiKey = data.apiKey;
       }
+      if ((data as any).openaiApiKey !== undefined) {
+        updates.openaiApiKey = (data as any).openaiApiKey;
+      }
       if ((data as any).whatsappAutoSend !== undefined) {
         updates.whatsappAutoSend = (data as any).whatsappAutoSend ? 1 : 0;
       }
@@ -122,6 +140,32 @@ export function registerAIConfigHandlers(
         proxyUrl: updated.proxyUrl,
         apiKey: updated.apiKey,
       });
+    }
+
+    // Update embedding function
+    if (embeddingService && updated?.openaiApiKey) {
+      const { createOpenAI } = await import("@ai-sdk/openai");
+      const { embed } = await import("ai");
+      const openai = createOpenAI({ apiKey: updated.openaiApiKey });
+      embeddingService.setEmbedFn(async (text: string) => {
+        const result = await embed({
+          model: openai.embedding("text-embedding-3-small"),
+          value: text,
+        });
+        return result.embedding;
+      });
+      // Backfill embeddings for existing data in background
+      if (sqlite) {
+        embeddingService
+          .backfill((sourceTable, sourceId) =>
+            buildEmbeddingText(sqlite, sourceTable, sourceId),
+          )
+          .catch((err: unknown) =>
+            console.error("Embedding backfill error:", err),
+          );
+      }
+    } else if (embeddingService && updated && !updated.openaiApiKey) {
+      embeddingService.setEmbedFn(null);
     }
 
     // Manage proxy lifecycle based on provider change

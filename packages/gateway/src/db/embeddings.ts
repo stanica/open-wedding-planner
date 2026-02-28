@@ -194,6 +194,38 @@ export class EmbeddingService {
     }));
   }
 
+  async backfill(textBuilder: TextBuilder): Promise<number> {
+    if (!this.embedFn) return 0;
+
+    let total = 0;
+    for (const table of EmbeddingService.EMBEDDABLE_TABLES) {
+      const exists = this.sqlite
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
+        .get(table);
+      if (!exists) continue;
+
+      const idCol = table === "vendor_attributes" ? "vendor_id" : "id";
+
+      const missingRows = this.sqlite
+        .prepare(
+          `SELECT DISTINCT ${idCol} as id FROM ${table}
+           WHERE ${idCol} NOT IN (
+             SELECT source_id FROM embedding_map WHERE source_table = ?
+           )`,
+        )
+        .all(table) as Array<{ id: number }>;
+
+      for (const row of missingRows) {
+        const text = textBuilder(table, row.id);
+        if (text) {
+          await this.upsert(table, row.id, text);
+          total++;
+        }
+      }
+    }
+    return total;
+  }
+
   async flush(textBuilder: TextBuilder): Promise<number> {
     if (!this.embedFn) return 0;
 

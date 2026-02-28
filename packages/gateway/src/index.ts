@@ -26,6 +26,7 @@ import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
 import { setAIConfig } from "./agents/model-provider.js";
 import { setSearchConfig, type SearchProviderType } from "./tools/search.js";
 import { aiConfig, searchConfig } from "./db/schema.js";
+import { buildEmbeddingText } from "./db/text-builders.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -69,7 +70,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   const gogBinDir = path.join(getDataDir(), "bin");
   const gogManager = new GogManager(gogBinDir);
 
-  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager, imagesDir);
+  registerAllHandlers(router, proxyManager, deliveryQueue, gogManager, imagesDir, embeddingService, sqlite);
 
   // 6. Build state snapshot
   function getState(): GatewayStateSnapshot {
@@ -114,6 +115,20 @@ export async function startGateway(options: GatewayOptions = {}) {
       model: savedAiConfig.model,
       proxyUrl: savedAiConfig.proxyUrl,
       apiKey: savedAiConfig.apiKey,
+    });
+  }
+
+  // 8a-ii. Wire embedding function if OpenAI key is configured
+  if (savedAiConfig?.openaiApiKey) {
+    const { createOpenAI } = await import("@ai-sdk/openai");
+    const { embed } = await import("ai");
+    const openai = createOpenAI({ apiKey: savedAiConfig.openaiApiKey });
+    embeddingService.setEmbedFn(async (text: string) => {
+      const { embedding } = await embed({
+        model: openai.embedding("text-embedding-3-small"),
+        value: text,
+      });
+      return embedding;
     });
   }
 
@@ -167,6 +182,7 @@ export async function startGateway(options: GatewayOptions = {}) {
     getGoogleAutoSend: googleAutoSendGetter,
     getGoogleConfig,
     imagesDir,
+    embeddingService,
   });
 
   for (const config of TASK_CONFIGS) {

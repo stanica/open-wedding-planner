@@ -189,6 +189,7 @@ export function pushSchema(sqlite: Database.Database) {
       model TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
       proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1',
       api_key TEXT,
+      openai_api_key TEXT,
       whatsapp_auto_send INTEGER NOT NULL DEFAULT 0
     );
 
@@ -265,6 +266,12 @@ export function pushSchema(sqlite: Database.Database) {
 
   try {
     sqlite.exec(`ALTER TABLE ai_config ADD COLUMN whatsapp_active_thread_id INTEGER;`);
+  } catch {
+    // Column already exists
+  }
+
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN openai_api_key TEXT;`);
   } catch {
     // Column already exists
   }
