@@ -30,6 +30,7 @@ export class Orchestrator {
   private sqlite: unknown;
   private extraToolCtx: Record<string, unknown>;
   private completionCallbacks = new Map<string, (threadId: number) => void>();
+  private interruptibleSessions = new Set<string>();
 
   constructor(
     db: Db,
@@ -59,6 +60,18 @@ export class Orchestrator {
 
   removeThreadCallback(threadId: number): void {
     this.completionCallbacks.delete(`thread-${threadId}`);
+  }
+
+  setInterruptible(sessionKey: string, value: boolean): void {
+    if (value) {
+      this.interruptibleSessions.add(sessionKey);
+    } else {
+      this.interruptibleSessions.delete(sessionKey);
+    }
+  }
+
+  isInterruptible(sessionKey: string): boolean {
+    return this.interruptibleSessions.has(sessionKey);
   }
 
   registerConfig(taskConfig: TaskConfig): void {
@@ -111,10 +124,15 @@ export class Orchestrator {
     return { taskId, sessionKey };
   }
 
-  async abortTask(sessionKey: string): Promise<boolean> {
+  async abortTask(sessionKey: string, reason: "user" | "interrupt" = "user"): Promise<boolean> {
     const controller = this.runningAbortControllers.get(sessionKey);
     if (controller) {
-      controller.abort();
+      controller.abort(reason);
+    }
+
+    // On interrupt, keep child tasks running — we'll collect their results in the next run
+    if (reason === "interrupt") {
+      return !!controller;
     }
 
     // Abort child tasks (sub-agents spawned by this task)
@@ -381,6 +399,7 @@ export class Orchestrator {
       }
     } finally {
       this.runningAbortControllers.delete(sessionKey);
+      this.interruptibleSessions.delete(sessionKey);
     }
   }
 
