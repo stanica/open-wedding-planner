@@ -32,6 +32,97 @@ describe("communication handlers", () => {
     });
   });
 
+  describe("compound filtering", () => {
+    beforeEach(async () => {
+      // Create a second vendor for vendorId filtering
+      await router.handle(db, "vendors.create", {
+        categoryId: 1,
+        name: "Second Vendor",
+        status: "researched",
+      });
+
+      // Seed diverse communications
+      await db.insert(schema.communications).values([
+        {
+          vendorId: 1,
+          direction: "out",
+          channel: "email",
+          bodyOriginal: "Outbound email draft",
+          status: "draft",
+        },
+        {
+          vendorId: 1,
+          direction: "out",
+          channel: "whatsapp",
+          bodyOriginal: "Outbound whatsapp sent",
+          status: "sent",
+        },
+        {
+          vendorId: 1,
+          direction: "in",
+          channel: "email",
+          bodyOriginal: "Inbound email received",
+          status: "received",
+        },
+        {
+          vendorId: 2,
+          direction: "out",
+          channel: "email",
+          bodyOriginal: "Vendor 2 outbound email draft",
+          status: "draft",
+        },
+        {
+          vendorId: 2,
+          direction: "in",
+          channel: "whatsapp",
+          bodyOriginal: "Vendor 2 inbound whatsapp",
+          status: "received",
+        },
+      ]);
+    });
+
+    it("returns all when no filters", async () => {
+      const result = (await router.handle(
+        db,
+        "communications.list",
+        {},
+      )) as unknown[];
+      expect(result).toHaveLength(5);
+    });
+
+    it("filters by direction AND status together", async () => {
+      const result = (await router.handle(db, "communications.list", {
+        direction: "out",
+        status: "draft",
+      })) as Array<Record<string, unknown>>;
+      expect(result).toHaveLength(2);
+      for (const r of result) {
+        expect(r.direction).toBe("out");
+        expect(r.status).toBe("draft");
+      }
+    });
+
+    it("filters by direction AND channel together", async () => {
+      const result = (await router.handle(db, "communications.list", {
+        direction: "out",
+        channel: "whatsapp",
+      })) as Array<Record<string, unknown>>;
+      expect(result).toHaveLength(1);
+      expect(result[0].direction).toBe("out");
+      expect(result[0].channel).toBe("whatsapp");
+    });
+
+    it("filters by vendorId AND direction", async () => {
+      const result = (await router.handle(db, "communications.list", {
+        vendorId: 2,
+        direction: "out",
+      })) as Array<Record<string, unknown>>;
+      expect(result).toHaveLength(1);
+      expect(result[0].vendorId).toBe(2);
+      expect(result[0].direction).toBe("out");
+    });
+  });
+
   it("deletes a communication", async () => {
     await db.insert(schema.communications).values({
       vendorId: 1,

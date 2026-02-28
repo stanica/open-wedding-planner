@@ -9,6 +9,7 @@ export function registerCommunicationHandlers(router: Router, deliveryQueue?: De
       direction?: string;
       status?: string;
       vendorId?: number;
+      channel?: string;
     } | undefined) ?? {};
 
     const rows = await db
@@ -31,16 +32,20 @@ export function registerCommunicationHandlers(router: Router, deliveryQueue?: De
       .leftJoin(vendors, eq(communications.vendorId, vendors.id))
       .orderBy(desc(communications.id));
 
+    let filtered = rows;
     if (filters.direction) {
-      return rows.filter((r) => r.direction === filters.direction);
+      filtered = filtered.filter((r) => r.direction === filters.direction);
     }
     if (filters.status) {
-      return rows.filter((r) => r.status === filters.status);
+      filtered = filtered.filter((r) => r.status === filters.status);
     }
     if (filters.vendorId) {
-      return rows.filter((r) => r.vendorId === filters.vendorId);
+      filtered = filtered.filter((r) => r.vendorId === filters.vendorId);
     }
-    return rows;
+    if (filters.channel) {
+      filtered = filtered.filter((r) => r.channel === filters.channel);
+    }
+    return filtered;
   });
 
   router.register("communications.get", async (db: Db, params: unknown) => {
