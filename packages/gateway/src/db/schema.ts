@@ -203,6 +203,10 @@ export const aiConfig = sqliteTable("ai_config", {
   openaiApiKey: text("openai_api_key"),
   whatsappAutoSend: integer("whatsapp_auto_send").notNull().default(0),
   whatsappActiveThreadId: integer("whatsapp_active_thread_id"),
+  vapiApiKey: text("vapi_api_key"),
+  vapiPhoneNumberId: text("vapi_phone_number_id"),
+  vapiAssistantId: text("vapi_assistant_id"),
+  vapiAutoCall: integer("vapi_auto_call").default(0),
 });
 
 export const researchThreads = sqliteTable("research_threads", {
@@ -272,4 +276,22 @@ export const googleConfig = sqliteTable("google_config", {
   services: text("services").default("gmail").notNull(),
   credentialsPath: text("credentials_path"),
   autoSend: integer("auto_send").notNull().default(0),
+});
+
+export const voiceCalls = sqliteTable("voice_calls", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  vendorId: integer("vendor_id").references(() => vendors.id),
+  vapiCallId: text("vapi_call_id"),
+  phoneNumber: text("phone_number").notNull(),
+  assistantId: text("assistant_id"),
+  status: text("status").notNull().default("draft"),
+  endedReason: text("ended_reason"),
+  duration: integer("duration"),
+  summary: text("summary"),
+  transcript: text("transcript"),
+  recordingUrl: text("recording_url"),
+  structuredData: text("structured_data"),
+  instructions: text("instructions"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  endedAt: text("ended_at"),
 });
