@@ -28,10 +28,10 @@ export function PermissionRequestCard({
   }
 
   return (
-    <div className="my-2 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5">
+    <div className="my-2 p-4 rounded-lg border border-warning/20 bg-warning-bg">
       <div className="flex items-center gap-2 mb-2">
-        <Shield className="h-4 w-4 text-amber-400" />
-        <span className="text-sm font-medium text-amber-300">Permission Required</span>
+        <Shield className="h-4 w-4 text-warning" />
+        <span className="text-sm font-medium text-warning">Permission Required</span>
       </div>
       <p className="text-sm text-on-surface font-medium">{toolName}</p>
       <p className="text-xs text-on-surface-secondary mt-0.5">{toolDescription}</p>

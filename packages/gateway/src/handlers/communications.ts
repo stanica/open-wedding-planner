@@ -111,6 +111,35 @@ export function registerCommunicationHandlers(router: Router, deliveryQueue?: De
     return updated;
   });
 
+  router.register("communications.sendWhatsApp", async (db: Db, params: unknown) => {
+    const { vendorId, message } = params as { vendorId: number; message: string };
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, vendorId));
+    if (!vendor) throw new Error(`Vendor ${vendorId} not found`);
+    if (!vendor.contactWhatsapp) throw new Error("Vendor has no WhatsApp number");
+
+    const [comm] = await db
+      .insert(communications)
+      .values({
+        vendorId,
+        direction: "out",
+        channel: "whatsapp",
+        bodyOriginal: message,
+        status: "approved",
+        sentAt: new Date().toISOString(),
+      })
+      .returning();
+
+    if (deliveryQueue) {
+      deliveryQueue.enqueue("whatsapp", vendorId, {
+        communicationId: comm.id,
+        to: vendor.contactWhatsapp,
+        text: message,
+      });
+    }
+
+    return comm;
+  });
+
   router.register("communications.markRead", async (db: Db, params: unknown) => {
     const { id } = params as { id: number };
     await db.update(communications).set({ isRead: 1 }).where(eq(communications.id, id));

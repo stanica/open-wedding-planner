@@ -29,10 +29,11 @@ export function WhatsAppView() {
 
   const { mutate: approve } = useMutation<{ id: number }>("communications.approve");
   const { mutate: reject } = useMutation<{ id: number }>("communications.reject");
+  const { mutate: markRead } = useMutation<{ id: number }>("communications.markRead");
   const { mutate: sendWhatsApp } = useMutation<
-    { vendorId: number; channel: string; customInstructions: string },
+    { vendorId: number; message: string },
     unknown
-  >("agent.outreach");
+  >("communications.sendWhatsApp");
 
   // Listen for real-time updates
   const handleEvent = useCallback(
@@ -92,6 +93,16 @@ export function WhatsAppView() {
       .sort((a, b) => new Date(a.sentAt ?? 0).getTime() - new Date(b.sentAt ?? 0).getTime());
   }, [allMessages, selectedVendorId]);
 
+  // Mark unread incoming messages as read when viewing a conversation
+  useEffect(() => {
+    const unread = vendorMessages.filter((m) => !isOutbound(m.direction) && !m.isRead);
+    if (unread.length === 0) return;
+    for (const msg of unread) {
+      markRead({ id: msg.id });
+    }
+    refetch();
+  }, [vendorMessages, markRead, refetch]);
+
   // Draft messages needing approval
   const drafts = vendorMessages.filter((m) => m.status === "draft");
 
@@ -99,8 +110,7 @@ export function WhatsAppView() {
     if (!selectedVendorId) return;
     await sendWhatsApp({
       vendorId: selectedVendorId,
-      channel: "whatsapp",
-      customInstructions: `Send this exact message: ${message}`,
+      message,
     });
     refetch();
   }
@@ -154,12 +164,17 @@ export function WhatsAppView() {
 
             {/* Draft approval bar */}
             {drafts.length > 0 && (
-              <div className="px-4 py-2 border-t border-amber-500/20 bg-amber-500/5">
+              <div className="px-4 py-2 border-t border-border bg-surface-subtle">
                 {drafts.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between py-1">
-                    <span className="text-xs text-amber-400 truncate flex-1 mr-3">
-                      Draft: {d.bodyOriginal.slice(0, 60)}...
-                    </span>
+                  <div key={d.id} className="flex items-center justify-between py-1.5">
+                    <div className="flex items-center gap-2 truncate flex-1 mr-3">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-on-surface-muted bg-surface rounded px-1.5 py-0.5 shrink-0">
+                        Draft
+                      </span>
+                      <span className="text-xs text-on-surface-subtle truncate">
+                        {d.bodyOriginal.slice(0, 60)}...
+                      </span>
+                    </div>
                     <ApprovalActions
                       onApprove={() => handleApprove(d.id)}
                       onReject={() => handleReject(d.id)}

@@ -350,10 +350,22 @@ export async function startGateway(options: GatewayOptions = {}) {
     }
 
     // --- Vendor message: existing behavior ---
-    const matchedVendors = await db
+    // Try direct match first, then resolve phone → LID for each vendor
+    let matchedVendors = await db
       .select()
       .from(schema.vendors)
       .where(eq(schema.vendors.contactWhatsapp, from));
+    if (matchedVendors.length === 0 && from.endsWith("@lid")) {
+      const withPhone = await db.select().from(schema.vendors);
+      for (const v of withPhone) {
+        if (!v.contactWhatsapp) continue;
+        const lid = await whatsapp.resolveLidForPhone(v.contactWhatsapp);
+        if (lid && lid.replace(/:\d+@/, "@") === from) {
+          matchedVendors = [v];
+          break;
+        }
+      }
+    }
     const vendor = matchedVendors[0] ?? null;
 
     wsServer.broadcast({
@@ -374,6 +386,7 @@ export async function startGateway(options: GatewayOptions = {}) {
           channel: "whatsapp",
           bodyOriginal: body,
           status: "received",
+          sentAt: new Date().toISOString(),
           threadId: messageId,
         })
         .returning();
@@ -381,13 +394,6 @@ export async function startGateway(options: GatewayOptions = {}) {
       wsServer.broadcast({
         name: "communication-received",
         data: { vendorId: vendor.id, channel: "whatsapp" },
-      });
-
-      orchestrator.dispatch("parse", {
-        communicationId: comm.id,
-        vendorId: vendor.id,
-        vendorName: vendor.name,
-        messageBody: body,
       });
     }
   });

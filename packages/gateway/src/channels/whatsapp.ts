@@ -175,7 +175,7 @@ export class WhatsAppChannel {
 
   async send(to: string, text: string): Promise<void> {
     if (!this.socket) throw new Error("WhatsApp not connected");
-    const jid = to.includes("@") ? to : `${to}@s.whatsapp.net`;
+    const jid = to.includes("@") ? to : `${to.replace(/[^0-9]/g, "")}@s.whatsapp.net`;
     const sent = await this.socket.sendMessage(jid, { text });
     if (sent?.key?.id) {
       this.sentMessageIds.add(sent.key.id);
@@ -216,6 +216,19 @@ export class WhatsAppChannel {
     const phoneJid = this.getUserJid();
     const lidJid = this.getUserLid();
     return (!!phoneJid && remoteJid === phoneJid) || (!!lidJid && remoteJid === lidJid);
+  }
+
+  /** Resolve a phone number to a LID using Baileys' internal mapping (can fetch from WhatsApp servers) */
+  async resolveLidForPhone(phone: string): Promise<string | null> {
+    if (!this.socket) return null;
+    try {
+      const digits = phone.replace(/[^0-9]/g, "");
+      const jid = `${digits}@s.whatsapp.net`;
+      const lid = await this.socket.signalRepository.lidMapping.getLIDForPN(jid);
+      return lid ?? null;
+    } catch {
+      return null;
+    }
   }
 
   isConnected(): boolean {

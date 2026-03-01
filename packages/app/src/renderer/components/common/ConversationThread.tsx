@@ -58,10 +58,10 @@ export function ConversationThread({
             sentAt={msg.sentAt}
             status={msg.status}
           />
-          {onMessageAction && (
+          {onMessageAction && !isOutbound(msg.direction) && (
             <button
               onClick={() => onMessageAction(msg)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md bg-surface-active px-2 py-1 text-xs text-on-surface-secondary hover:text-on-surface hover:bg-surface-active"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md bg-surface px-2 py-1 text-xs text-on-surface-secondary hover:text-on-surface shadow-sm border border-outline-variant"
             >
               {actionLabel}
             </button>
@@ -71,7 +71,7 @@ export function ConversationThread({
 
       {/* Draft messages needing approval */}
       {messages.some((m) => m.status === "draft") && (
-        <div className="mt-2 text-xs text-amber-400/70 text-center">
+        <div className="mt-2 text-xs text-warning/70 text-center">
           Draft messages shown above need approval before sending
         </div>
       )}
