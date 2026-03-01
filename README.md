@@ -1,4 +1,4 @@
-# Wedding Planner
+# Open Wedding Planner
 
 An AI-powered Electron desktop app for planning a wedding. It combines vendor research, budget tracking, WhatsApp messaging, and an agentic AI backend into a single application that runs entirely on your machine.
 
@@ -16,7 +16,7 @@ Slash commands in the research chat:
 
 ### Vendor Management
 
-Track vendors by category (Venue, Food/Beverage, Photography, etc.) with status progression: `researched → contacted → quoted → booked`. Each vendor has a detail page with contact info, quotes, a photo gallery, custom attributes, and a linked WhatsApp/email conversation thread. The list view supports grid and table modes, filtering by category/status/favorites, and sorting.
+Track vendors by category (Venue, Food/Beverage, Photography, etc.) with status progression: `researched → contacted → quoted → booked` (or `rejected`). Each vendor has a detail page with contact info, quotes, a photo gallery, custom attributes, and a linked WhatsApp/email conversation thread. The list view supports grid and table modes, filtering by category/status/favorites, and sorting.
 
 ### Budget
 
@@ -26,9 +26,11 @@ Category-based budget allocation with quote line items and actual spend tracking
 
 Connect your personal WhatsApp account via QR code scan (uses the Baileys library — no WhatsApp Business API required). Send and receive messages with vendors directly from the app. Outbound messages can be sent immediately or queued as drafts for approval before sending. Incoming messages are linked to vendor records.
 
+You can also interact with the research agent by sending messages to yourself on WhatsApp. Use `/new` to start a new research thread and `/status` to check the delivery queue.
+
 ### Outreach Agent
 
-Dispatch an AI agent to draft and send outreach messages to vendors. Supports WhatsApp and Gmail (via the `gog` CLI). Drafts can be reviewed and approved before sending.
+Dispatch an AI agent to draft and send outreach messages to vendors. Supports WhatsApp and Gmail (via the `gog` CLI, auto-downloaded on first use). Drafts can be reviewed and approved before sending.
 
 ### Inbox
 
@@ -46,6 +48,10 @@ Vector embeddings (OpenAI `text-embedding-3-small`) stored in SQLite via `sqlite
 
 Expose the local gateway to the internet via a temporary `trycloudflare.com` URL — no account or port forwarding required. Toggle on/off from Settings. The URL is shown and copyable in the UI.
 
+### CSV Import
+
+Import vendor and budget data from CSV files.
+
 ### Debug Console
 
 Press `Cmd+Shift+D` (or `Ctrl+Shift+D`) to open a live stream of gateway logs.
@@ -58,7 +64,7 @@ The gateway also serves the React frontend as static files, so you can open the 
 
 ## Architecture
 
-This is a pnpm/npm workspaces monorepo with three packages:
+This is an npm workspaces monorepo with three packages:
 
 ```
 packages/
@@ -83,7 +89,6 @@ All persistent data lives in `~/.wedding-planner/`:
 ## Prerequisites
 
 - **Node.js 22+**
-- **pnpm** — `npm install -g pnpm` (or use npm workspaces directly)
 - **Playwright Chromium** — required for the browser subagent tool:
   ```bash
   npx playwright install chromium
@@ -95,10 +100,10 @@ All persistent data lives in `~/.wedding-planner/`:
 
 ```bash
 # Install all dependencies (also auto-downloads the cloudflared binary via postinstall)
-pnpm install
+npm install
 
 # Build the shared package (required before running anything else)
-pnpm run build -w @wedding-planner/shared
+npm run build -w @wedding-planner/shared
 ```
 
 ---
@@ -108,15 +113,15 @@ pnpm run build -w @wedding-planner/shared
 Start all packages in watch mode:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Or individually:
 
 ```bash
-pnpm dev:shared    # tsc --watch for shared types
-pnpm dev:gateway   # tsup --watch for the gateway
-pnpm dev:app       # electron-vite dev (opens Electron window)
+npm run dev:shared    # tsc --watch for shared types
+npm run dev:gateway   # tsup --watch for the gateway
+npm run dev:app       # electron-vite dev (opens Electron window)
 ```
 
 ---
@@ -125,10 +130,10 @@ pnpm dev:app       # electron-vite dev (opens Electron window)
 
 ```bash
 # Compile all packages
-pnpm build
+npm run build
 
 # Package the Electron app into a distributable
-pnpm --filter @wedding-planner/app run package
+npm run package -w @wedding-planner/app
 ```
 
 The `package` script:
@@ -178,13 +183,13 @@ Standard `sk-ant-api03-...` keys work. You can also use a setup token generated 
 ## Tests
 
 ```bash
-pnpm test
+npm test
 ```
 
-Tests live in `packages/gateway/` and use Vitest.
+292 tests across 54 files in `packages/gateway/`, using Vitest.
 
 ## Type Checking
 
 ```bash
-pnpm typecheck
+npm run typecheck
 ```
