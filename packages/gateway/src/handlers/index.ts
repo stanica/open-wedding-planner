@@ -24,6 +24,7 @@ import { registerResearchThreadHandlers } from "./research-threads.js";
 import { registerGoogleAuthHandlers } from "./google-auth.js";
 import { registerDataManagementHandlers } from "./data-management.js";
 import { registerGuardrailsConfigHandlers } from "./guardrails-config.js";
+import { registerDbHandlers } from "./db.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 import { getImagesDir } from "../config/paths.js";
@@ -61,6 +62,10 @@ export function registerAllHandlers(
 
   registerGuardrailsConfigHandlers(router);
   registerDataManagementHandlers(router);
+
+  if (sqlite) {
+    registerDbHandlers(router, sqlite);
+  }
 
   router.register("import.budget-csv", async (db, params) => {
     const { content } = params as { content: string };
