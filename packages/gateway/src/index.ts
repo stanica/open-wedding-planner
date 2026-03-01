@@ -85,6 +85,12 @@ export async function startGateway(options: GatewayOptions = {}) {
   let broadcastFn: ((event: GatewayEvent) => void) | undefined;
   const broadcast = (event: GatewayEvent) => broadcastFn?.(event);
 
+  // Lazy VAPI refs — vapiChannel and config are created after handler registration,
+  // but handlers are only called after startup completes.
+  let lazyVapiChannel: VapiChannel | null = null;
+  let lazyGetVapiConfig: (() => { phoneNumberId: string; assistantId: string } | null) | null =
+    null;
+
   registerAllHandlers(
     router,
     proxyManager,
@@ -94,6 +100,16 @@ export async function startGateway(options: GatewayOptions = {}) {
     embeddingService,
     sqlite,
     broadcast,
+    {
+      vapiChannel: {
+        createCall: (params) => {
+          if (!lazyVapiChannel) throw new Error("VAPI channel not initialized");
+          return lazyVapiChannel.createCall(params);
+        },
+      } as VapiChannel,
+      getVapiConfig: () => lazyGetVapiConfig?.() ?? null,
+      broadcast,
+    },
   );
 
   // 7c. WhatsApp channel + delivery queue
@@ -313,6 +329,14 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   const vapiConfig = getVapiConfig();
   const vapiChannel = vapiConfig ? new VapiChannel({ apiKey: vapiConfig.apiKey }) : null;
+
+  // Wire up lazy VAPI refs for handler deps
+  lazyVapiChannel = vapiChannel;
+  lazyGetVapiConfig = () => {
+    const cfg = getVapiConfig();
+    if (!cfg) return null;
+    return { phoneNumberId: cfg.phoneNumberId, assistantId: cfg.assistantId };
+  };
 
   // 8c-ii. Auto-start VAPI tunnel if VAPI is configured
   if (vapiChannel && vapiConfig) {

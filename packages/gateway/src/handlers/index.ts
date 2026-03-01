@@ -25,7 +25,7 @@ import { registerGoogleAuthHandlers } from "./google-auth.js";
 import { registerDataManagementHandlers } from "./data-management.js";
 import { registerGuardrailsConfigHandlers } from "./guardrails-config.js";
 import { registerDbHandlers } from "./db.js";
-import { registerVapiHandlers } from "./vapi.js";
+import { registerVapiHandlers, type VapiHandlerDeps } from "./vapi.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 import { getImagesDir } from "../config/paths.js";
@@ -39,6 +39,7 @@ export function registerAllHandlers(
   embeddingService?: EmbeddingService,
   sqlite?: Database.Database,
   broadcast?: (event: GatewayEvent) => void,
+  vapiDeps?: VapiHandlerDeps,
 ) {
   registerWeddingConfigHandlers(router);
   registerCategoryHandlers(router);
@@ -63,7 +64,7 @@ export function registerAllHandlers(
 
   registerGuardrailsConfigHandlers(router);
   registerDataManagementHandlers(router);
-  registerVapiHandlers(router);
+  registerVapiHandlers(router, vapiDeps);
 
   if (sqlite) {
     registerDbHandlers(router, sqlite);
