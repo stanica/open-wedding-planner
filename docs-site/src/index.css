@@ -5,3 +5,11 @@
 @theme {
   --font-sans: "Inter", system-ui, sans-serif;
 }
+
+html {
+  background-color: #faf6f1;
+}
+
+html.dark {
+  background-color: #030712;
+}
