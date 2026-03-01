@@ -172,7 +172,7 @@ If you have a Claude Max subscription, you can use it instead of an API key:
 2. Authenticate: `claude auth login`
 3. Select "Claude Max Proxy" in Settings → AI Provider
 
-Note: Claude Max proxy mode runs in text-only mode (no tool support for the main agent).
+Note: All local agent tools work in proxy mode, but Anthropic's built-in server-side tools (`webSearch`, `webFetch`) are not available.
 
 ### AI Provider: Anthropic API Key
 

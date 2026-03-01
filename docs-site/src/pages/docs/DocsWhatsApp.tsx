@@ -66,6 +66,21 @@ export function DocsWhatsApp() {
         vendor record.
       </p>
 
+      <h2>Self-chat (talk to the AI via WhatsApp)</h2>
+      <p>
+        You can interact with the research agent by sending messages to yourself
+        on WhatsApp. Messages to your own number are routed to the AI instead of
+        being treated as vendor communications.
+      </p>
+      <ul>
+        <li>
+          <code>/new</code> — start a new research thread
+        </li>
+        <li>
+          <code>/status</code> — check the delivery queue status
+        </li>
+      </ul>
+
       <h2>Delivery queue</h2>
       <p>
         Outbound messages are written to a delivery queue at{" "}

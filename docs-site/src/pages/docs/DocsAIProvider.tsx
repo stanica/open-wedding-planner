@@ -61,8 +61,10 @@ export function DocsAIProvider() {
       <h2>Claude Max proxy</h2>
       <p>
         If you have a Claude Max subscription, you can use it instead of an API
-        key via the <code>claude-max-api-proxy</code> package. This mode runs in{" "}
-        <strong>text-only mode</strong> — agent tools are not available.
+        key via the <code>claude-max-api-proxy</code> package. All local agent
+        tools work normally, but Anthropic's built-in server-side tools (
+        <code>webSearch</code>, <code>webFetch</code>) are not available in this
+        mode.
       </p>
 
       <h3>Setup</h3>
