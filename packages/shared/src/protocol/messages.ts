@@ -93,4 +93,6 @@ export type GatewayEvent =
   | {
       name: "tunnel.status";
       data: { state: string; url?: string; message?: string };
-    };
+    }
+  | { name: "voice-call-status"; data: { callId: number; status: string } }
+  | { name: "voice-call-ended"; data: { callId: number; vendorId: number | null } };

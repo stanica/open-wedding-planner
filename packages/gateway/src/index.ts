@@ -20,6 +20,7 @@ import { TunnelManager } from "./infra/tunnel-manager.js";
 import { registerTunnelHandlers } from "./handlers/tunnel.js";
 import { GogManager } from "./infra/gog-manager.js";
 import { WhatsAppChannel } from "./channels/whatsapp.js";
+import { VapiChannel } from "./channels/vapi.js";
 import { DeliveryQueue } from "./infra/delivery-queue.js";
 import { registerWhatsAppAuthHandlers } from "./handlers/whatsapp-auth.js";
 import { eq } from "drizzle-orm";
@@ -32,7 +33,7 @@ import { createToolRegistry } from "./tools/index.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
 import { setAIConfig } from "./agents/model-provider.js";
 import { setSearchConfig, type SearchProviderType } from "./tools/search.js";
-import { aiConfig, searchConfig } from "./db/schema.js";
+import { aiConfig, searchConfig, voiceCalls } from "./db/schema.js";
 import {
   DEFAULT_GATEWAY_PORT,
   GATEWAY_READY_PREFIX,
@@ -111,20 +112,85 @@ export async function startGateway(options: GatewayOptions = {}) {
   }
 
   // 7. Start WebSocket server
+  let handleVapiWebhook: ((payload: unknown) => void) | null = null;
+
   const wsServer = await createWsServer({
     port,
     getState,
     router,
     db,
     imagesDir,
+    onVapiWebhook: (payload: unknown) => handleVapiWebhook?.(payload),
   });
 
   broadcastFn = (event) => wsServer.broadcast(event);
+
+  // 7a. VAPI webhook handler
+  handleVapiWebhook = async (payload: any) => {
+    const message = payload?.message ?? payload;
+    const type = message?.type;
+
+    if (type === "status-update") {
+      const callStatus = message.status;
+      const vapiCallId = message.call?.id;
+      if (vapiCallId && callStatus) {
+        const [existing] = await db
+          .select()
+          .from(voiceCalls)
+          .where(eq(voiceCalls.vapiCallId, vapiCallId));
+        if (existing) {
+          await db
+            .update(voiceCalls)
+            .set({ status: callStatus === "in-progress" ? "in-progress" : callStatus })
+            .where(eq(voiceCalls.id, existing.id));
+          wsServer.broadcast({
+            name: "voice-call-status",
+            data: { callId: existing.id, status: callStatus },
+          });
+        }
+      }
+    }
+
+    if (type === "end-of-call-report") {
+      const call = message.call;
+      const vapiCallId = call?.id;
+      if (vapiCallId) {
+        const [existing] = await db
+          .select()
+          .from(voiceCalls)
+          .where(eq(voiceCalls.vapiCallId, vapiCallId));
+        if (existing) {
+          await db
+            .update(voiceCalls)
+            .set({
+              status: "ended",
+              endedReason: call.endedReason,
+              duration: call.duration ?? message.durationSeconds,
+              summary: message.analysis?.summary ?? message.artifact?.transcript?.slice(0, 500),
+              transcript: message.artifact?.transcript,
+              recordingUrl: message.artifact?.recordingUrl,
+              structuredData: message.analysis?.structuredData
+                ? JSON.stringify(message.analysis.structuredData)
+                : null,
+              endedAt: call.endedAt ?? new Date().toISOString(),
+            })
+            .where(eq(voiceCalls.id, existing.id));
+          wsServer.broadcast({
+            name: "voice-call-ended",
+            data: { callId: existing.id, vendorId: existing.vendorId },
+          });
+        }
+      }
+    }
+  };
 
   // 7b. Tunnel manager
   const cloudflaredBin = process.env.CLOUDFLARED_PATH ?? "";
   const tunnelManager = new TunnelManager(cloudflaredBin);
   registerTunnelHandlers(router, tunnelManager, port);
+
+  // VAPI dedicated tunnel (auto-start)
+  const vapiTunnelManager = new TunnelManager(cloudflaredBin);
   tunnelManager.onStatus((status) => {
     wsServer.broadcast({ name: "tunnel.status", data: status });
   });
@@ -224,6 +290,50 @@ export async function startGateway(options: GatewayOptions = {}) {
     return rows[0] ?? null;
   };
 
+  const getVapiConfig = () => {
+    const rows = sqlite
+      .prepare("SELECT vapi_api_key, vapi_phone_number_id, vapi_assistant_id FROM ai_config LIMIT 1")
+      .all() as any[];
+    if (!rows.length) return null;
+    const r = rows[0];
+    if (!r.vapi_api_key || !r.vapi_phone_number_id || !r.vapi_assistant_id) return null;
+    return {
+      apiKey: r.vapi_api_key,
+      phoneNumberId: r.vapi_phone_number_id,
+      assistantId: r.vapi_assistant_id,
+    };
+  };
+
+  const getVapiAutoCall = () => {
+    const rows = sqlite
+      .prepare("SELECT vapi_auto_call FROM ai_config LIMIT 1")
+      .all() as any[];
+    return rows.length > 0 && rows[0].vapi_auto_call === 1;
+  };
+
+  const vapiConfig = getVapiConfig();
+  const vapiChannel = vapiConfig ? new VapiChannel({ apiKey: vapiConfig.apiKey }) : null;
+
+  // 8c-ii. Auto-start VAPI tunnel if VAPI is configured
+  if (vapiChannel && vapiConfig) {
+    vapiTunnelManager.onStatus(async (status) => {
+      if (status.state === "running" && status.url) {
+        try {
+          await vapiChannel.updatePhoneNumberServerUrl(
+            vapiConfig.phoneNumberId,
+            `${status.url}/vapi/webhook`,
+          );
+          console.log(`VAPI webhook URL set to: ${status.url}/vapi/webhook`);
+        } catch (err) {
+          console.error("Failed to update VAPI phone number server URL:", err);
+        }
+      }
+    });
+    vapiTunnelManager.start(port).catch((err) => {
+      console.error("Failed to start VAPI tunnel:", err);
+    });
+  }
+
   const orchestrator = new Orchestrator(
     db,
     (event) => {
@@ -240,6 +350,13 @@ export async function startGateway(options: GatewayOptions = {}) {
       getGoogleConfig,
       imagesDir,
       embeddingService,
+      vapiChannel,
+      getVapiAutoCall,
+      getVapiConfig: () => {
+        const cfg = getVapiConfig();
+        if (!cfg) return null;
+        return { phoneNumberId: cfg.phoneNumberId, assistantId: cfg.assistantId };
+      },
     },
   );
 
@@ -484,6 +601,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   async function stop() {
     await proxyManager.stop();
     await tunnelManager.stop();
+    await vapiTunnelManager.stop();
     heartbeat.stop();
     // Drain in-flight work (max 30s)
     await orchestrator.waitForDrain(30_000);
@@ -497,6 +615,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   process.on("exit", () => {
     proxyManager.killSync();
     tunnelManager.killSync();
+    vapiTunnelManager.killSync();
   });
 
   return stop;
