@@ -38,7 +38,7 @@ export function ConversationThread({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
+      <div className="flex-1 flex items-center justify-center text-on-surface-tertiary">
         <p className="text-sm">No messages yet</p>
       </div>
     );
@@ -61,7 +61,7 @@ export function ConversationThread({
           {onMessageAction && (
             <button
               onClick={() => onMessageAction(msg)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md bg-white/10 px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-white/20"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md bg-surface-active px-2 py-1 text-xs text-on-surface-secondary hover:text-on-surface hover:bg-surface-active"
             >
               {actionLabel}
             </button>

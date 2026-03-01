@@ -35,19 +35,19 @@ export function MessageBubble({
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
           isOut
             ? "bg-blue-600/20 border border-blue-500/20"
-            : "bg-white/[0.07] border border-white/10"
+            : "bg-surface-hover border border-border"
         }`}
       >
         {/* Header: sender + channel icon + time */}
         <div className="flex items-center gap-2 mb-1">
-          <ChannelIcon className="h-3 w-3 text-gray-500" />
+          <ChannelIcon className="h-3 w-3 text-on-surface-tertiary" />
           {senderName && (
-            <span className="text-xs font-medium text-gray-400">
+            <span className="text-xs font-medium text-on-surface-secondary">
               {senderName}
             </span>
           )}
           {sentAt && (
-            <span className="text-xs text-gray-600 ml-auto">
+            <span className="text-xs text-on-surface-faint ml-auto">
               {new Date(sentAt).toLocaleString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -60,21 +60,21 @@ export function MessageBubble({
 
         {/* Subject (email) */}
         {subject && (
-          <p className="text-sm font-medium text-gray-200 mb-1">{subject}</p>
+          <p className="text-sm font-medium text-on-surface mb-1">{subject}</p>
         )}
 
         {/* Body */}
-        <div className="whitespace-pre-wrap text-sm text-gray-300 leading-relaxed">
+        <div className="whitespace-pre-wrap text-sm text-on-surface-secondary leading-relaxed">
           {displayBody}
         </div>
 
         {/* Original text toggle if translated */}
         {translatedBody && (
           <details className="mt-2">
-            <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
+            <summary className="text-xs text-on-surface-tertiary cursor-pointer hover:text-on-surface-secondary">
               Show original
             </summary>
-            <div className="mt-1 whitespace-pre-wrap text-xs text-gray-500 leading-relaxed">
+            <div className="mt-1 whitespace-pre-wrap text-xs text-on-surface-tertiary leading-relaxed">
               {body}
             </div>
           </details>

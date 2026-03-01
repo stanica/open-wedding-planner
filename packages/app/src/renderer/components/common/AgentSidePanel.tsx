@@ -94,17 +94,17 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
           animate={{ width: 400, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="h-full border-l border-white/10 flex flex-col bg-gray-950 overflow-hidden"
+          className="h-full border-l border-border flex flex-col bg-surface overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-white/10">
+          <div className="flex items-center justify-between p-3 border-b border-border">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-400" />
-              <span className="text-sm font-medium text-white">AI Assistant</span>
+              <span className="text-sm font-medium text-on-surface">AI Assistant</span>
             </div>
             <button
               onClick={onClose}
-              className="rounded-md p-1 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="rounded-md p-1 text-on-surface-secondary hover:text-on-surface hover:bg-surface-active transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -112,11 +112,11 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
 
           {/* Context preview */}
           {communication && (
-            <div className="px-3 py-2 border-b border-white/10 bg-white/[0.03]">
-              <p className="text-xs text-gray-500">
+            <div className="px-3 py-2 border-b border-border bg-surface-subtle">
+              <p className="text-xs text-on-surface-tertiary">
                 {communication.channel} from {communication.vendorName ?? "unknown"}
               </p>
-              <p className="text-xs text-gray-400 truncate mt-0.5">
+              <p className="text-xs text-on-surface-secondary truncate mt-0.5">
                 {communication.subject ?? communication.bodyOriginal.slice(0, 80)}
               </p>
             </div>
@@ -125,9 +125,9 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
             {messages.length === 0 && (
-              <div className="text-center text-gray-500 text-xs mt-8">
+              <div className="text-center text-on-surface-tertiary text-xs mt-8">
                 <p>Ask the AI to analyze this conversation.</p>
-                <p className="mt-1 text-gray-600">
+                <p className="mt-1 text-on-surface-faint">
                   e.g. "Pull out pricing info" or "Draft a reply"
                 </p>
               </div>
@@ -135,9 +135,9 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`text-sm ${msg.role === "user" ? "text-gray-300" : "text-gray-400"}`}
+                className={`text-sm ${msg.role === "user" ? "text-on-surface-secondary" : "text-on-surface-secondary"}`}
               >
-                <span className="text-xs font-medium text-gray-500 block mb-0.5">
+                <span className="text-xs font-medium text-on-surface-tertiary block mb-0.5">
                   {msg.role === "user" ? "You" : "AI"}
                 </span>
                 {msg.role === "assistant" ? (
@@ -149,7 +149,7 @@ export function AgentSidePanel({ open, communication, onClose }: AgentSidePanelP
             ))}
 
             {loading && (
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs text-on-surface-tertiary">
                 <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
                 Working...
               </div>

@@ -17,40 +17,40 @@ interface ContactListProps {
 
 export function ContactList({ contacts, selectedVendorId, onSelect }: ContactListProps) {
   return (
-    <div className="flex flex-col h-full border-r border-white/10">
-      <div className="p-3 border-b border-white/10">
-        <h2 className="text-sm font-semibold text-white">Conversations</h2>
+    <div className="flex flex-col h-full border-r border-border">
+      <div className="p-3 border-b border-border">
+        <h2 className="text-sm font-semibold text-on-surface">Conversations</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {contacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-4 text-center">
-            <MessageCircle className="h-8 w-8 text-gray-600 mb-2" />
-            <p className="text-sm text-gray-500">No conversations yet</p>
+            <MessageCircle className="h-8 w-8 text-on-surface-faint mb-2" />
+            <p className="text-sm text-on-surface-tertiary">No conversations yet</p>
           </div>
         ) : (
           contacts.map((contact) => (
             <button
               key={contact.vendorId}
               onClick={() => onSelect(contact.vendorId)}
-              className={`w-full text-left px-3 py-3 border-b border-white/5 transition-colors ${
+              className={`w-full text-left px-3 py-3 border-b border-border-subtle transition-colors ${
                 selectedVendorId === contact.vendorId
-                  ? "bg-white/10"
-                  : "hover:bg-white/5"
+                  ? "bg-surface-active"
+                  : "hover:bg-surface-hover"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-white truncate">
+                <span className="text-sm font-medium text-on-surface truncate">
                   {contact.vendorName}
                 </span>
                 {contact.lastMessageAt && (
-                  <span className="text-xs text-gray-500 shrink-0 ml-2">
+                  <span className="text-xs text-on-surface-tertiary shrink-0 ml-2">
                     {formatRelativeTime(contact.lastMessageAt)}
                   </span>
                 )}
               </div>
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs text-on-surface-secondary truncate">
                   {contact.lastMessage}
                 </p>
                 {contact.unreadCount > 0 && (
