@@ -111,22 +111,27 @@ wsClient.onEvent((event: GatewayEvent) => {
   if (event.name === "context-compacted") {
     const { activeThreadId } = useResearchStore.getState();
     if (activeThreadId && event.data.threadId === activeThreadId) {
-      useResearchStore.setState({ contextCompactedAt: Date.now() });
+      useResearchStore.setState({ contextCompactedAt: Date.now(), tokenUsage: null });
     }
   }
 
   if (event.name === "research.tokenUsage") {
     const data = event.data;
-    const { activeSession } = useResearchStore.getState();
+    const { activeSession, tokenUsage } = useResearchStore.getState();
     if (data.sessionKey === activeSession) {
-      // Main agent — update primary token usage
-      useResearchStore.setState({
-        tokenUsage: {
-          inputTokens: data.inputTokens,
-          contextWindow: data.contextWindow,
-          modelName: data.modelName,
-        },
-      });
+      // Main agent — only update if context grew (prevents jarring "reset"
+      // when a new generateText call starts with fewer input tokens than the
+      // previous run's accumulated tool-call context)
+      const current = tokenUsage?.inputTokens ?? 0;
+      if (data.inputTokens >= current) {
+        useResearchStore.setState({
+          tokenUsage: {
+            inputTokens: data.inputTokens,
+            contextWindow: data.contextWindow,
+            modelName: data.modelName,
+          },
+        });
+      }
     } else {
       // Sub-agent — track separately
       useResearchStore.setState((state) => ({

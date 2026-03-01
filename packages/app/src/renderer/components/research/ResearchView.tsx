@@ -261,6 +261,7 @@ export function ResearchView() {
       case "compact":
         await wsClient.request("research.compact", { threadId: activeThreadId });
         refetchMessages();
+        useResearchStore.setState({ tokenUsage: null });
         break;
       case "clear":
         await wsClient.request("research.clear", { threadId: activeThreadId });

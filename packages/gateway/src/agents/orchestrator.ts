@@ -328,10 +328,12 @@ export class Orchestrator {
           data: { threadId: researchInput.threadId },
         });
 
-        // Persist last token usage to thread for UI on reload
+        // Persist last token usage to thread for UI on reload.
+        // If context was compacted, clear the persisted value so the UI
+        // doesn't restore a stale pre-compaction number on thread switch.
         if (result.lastTokenUsage) {
           await this.db.update(researchThreads).set({
-            lastInputTokens: result.lastTokenUsage.inputTokens,
+            lastInputTokens: result.compactionSummary ? null : result.lastTokenUsage.inputTokens,
             lastContextWindow: result.lastTokenUsage.contextWindow,
             lastModelName: result.lastTokenUsage.modelName,
           }).where(eq(researchThreads.id, researchInput.threadId));
