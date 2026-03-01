@@ -26,7 +26,7 @@ export function DataTable<T>({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/10 text-left text-gray-400">
+          <tr className="border-b border-border text-left text-on-surface-secondary">
             {columns.map((col) => (
               <th key={col.key} className={`px-4 py-2 font-medium ${col.className ?? ""}`}>
                 {col.header}
@@ -37,7 +37,7 @@ export function DataTable<T>({
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-gray-500">
+              <td colSpan={columns.length} className="px-4 py-8 text-center text-on-surface-tertiary">
                 {emptyMessage}
               </td>
             </tr>
@@ -46,8 +46,8 @@ export function DataTable<T>({
               <tr
                 key={keyFn(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={`border-b border-white/5 ${
-                  onRowClick ? "cursor-pointer hover:bg-white/5" : ""
+                className={`border-b border-border-subtle ${
+                  onRowClick ? "cursor-pointer hover:bg-surface-hover" : ""
                 }`}
               >
                 {columns.map((col) => (

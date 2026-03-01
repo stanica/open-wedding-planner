@@ -19,6 +19,6 @@ function getFormatter(currency: string): Intl.NumberFormat {
 }
 
 export function CurrencyDisplay({ amount, currency = "EUR", className = "" }: CurrencyDisplayProps) {
-  if (amount == null) return <span className={`text-gray-500 ${className}`}>—</span>;
+  if (amount == null) return <span className={`text-on-surface-tertiary ${className}`}>—</span>;
   return <span className={className}>{getFormatter(currency).format(amount)}</span>;
 }

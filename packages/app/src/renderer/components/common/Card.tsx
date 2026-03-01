@@ -11,8 +11,8 @@ export function Card({ children, className = "", onClick }: CardProps) {
   return (
     <div
       onClick={onClick}
-      className={`rounded-xl border border-white/10 bg-white/5 ${
-        interactive ? "cursor-pointer hover:border-white/20 hover:bg-white/[0.07] transition-colors" : ""
+      className={`rounded-xl border border-border bg-surface-elevated ${
+        interactive ? "cursor-pointer hover:border-border-hover hover:bg-surface-hover transition-colors" : ""
       } ${className}`}
     >
       {children}
@@ -21,7 +21,7 @@ export function Card({ children, className = "", onClick }: CardProps) {
 }
 
 export function CardHeader({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`px-4 py-3 border-b border-white/10 ${className}`}>{children}</div>;
+  return <div className={`px-4 py-3 border-b border-border ${className}`}>{children}</div>;
 }
 
 export function CardContent({ children, className = "" }: { children: ReactNode; className?: string }) {
