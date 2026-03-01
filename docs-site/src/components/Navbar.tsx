@@ -47,7 +47,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             end
             className={({ isActive }) =>
               isActive
-                ? "text-indigo-600 dark:text-indigo-400 font-medium"
+                ? "text-stone-900 dark:text-white font-medium"
                 : "text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
             }
           >
@@ -57,7 +57,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             to="/docs"
             className={({ isActive }) =>
               isActive
-                ? "text-indigo-600 dark:text-indigo-400 font-medium"
+                ? "text-stone-900 dark:text-white font-medium"
                 : "text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
             }
           >

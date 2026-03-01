@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -6,7 +7,15 @@ import {
   Globe,
   Bot,
   Shield,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const SCREENSHOTS = [
+  { src: "dashboard.png", alt: "Dashboard overview", label: "Dashboard" },
+  { src: "research.png", alt: "AI research agent", label: "Research" },
+  { src: "vendor.png", alt: "Vendor details", label: "Vendors" },
+];
 
 const FEATURES = [
   {
@@ -61,18 +70,68 @@ const STEPS = [
   { step: "3", title: "Run in dev mode", code: "npm run dev" },
 ];
 
+function ScreenshotCarousel() {
+  const [index, setIndex] = useState(0);
+  const prev = () =>
+    setIndex((i) => (i - 1 + SCREENSHOTS.length) % SCREENSHOTS.length);
+  const next = () => setIndex((i) => (i + 1) % SCREENSHOTS.length);
+  const { src, alt } = SCREENSHOTS[index];
+
+  return (
+    <section className="mx-auto max-w-5xl px-4 mb-24">
+      <div className="relative">
+        <img
+          src={`${import.meta.env.BASE_URL}${src}`}
+          alt={alt}
+          className="w-full rounded-xl border border-stone-200 dark:border-white/10 shadow-sm"
+        />
+        <button
+          onClick={prev}
+          className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 dark:bg-black/50 p-2 shadow-md backdrop-blur-sm hover:bg-white dark:hover:bg-black/70 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5 text-stone-700 dark:text-gray-300" />
+        </button>
+        <button
+          onClick={next}
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 dark:bg-black/50 p-2 shadow-md backdrop-blur-sm hover:bg-white dark:hover:bg-black/70 transition-colors"
+        >
+          <ChevronRight className="h-5 w-5 text-stone-700 dark:text-gray-300" />
+        </button>
+      </div>
+      <div className="flex justify-center gap-3 mt-4">
+        {SCREENSHOTS.map((s, i) => (
+          <button
+            key={s.src}
+            onClick={() => setIndex(i)}
+            className={`text-xs px-3 py-1 rounded-full transition-colors ${
+              i === index
+                ? "bg-stone-800 text-white dark:bg-white dark:text-stone-900"
+                : "bg-stone-100 text-stone-500 dark:bg-white/10 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-white/20"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Home() {
   return (
     <main>
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 pt-24 pb-20 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-6">
+        <div className="inline-flex items-center gap-2 rounded-full border border-stone-300 dark:border-white/20 bg-stone-100 dark:bg-white/10 px-3 py-1 text-xs font-medium text-stone-600 dark:text-gray-300 mb-6">
           Open source · Runs locally · MIT license
         </div>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 dark:text-white mb-6">
-          A desktop app for{" "}
-          <span className="text-indigo-600 dark:text-indigo-400">
-            planning your wedding
+          AI for planning your {" "}
+          <span
+            className="text-7xl sm:text-8xl lg:text-8xl text-stone-900 dark:text-white"
+            style={{ fontFamily: "'Lavishly Yours', cursive" }}
+          >
+            wedding
           </span>
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-stone-600 dark:text-gray-400 mb-10">
@@ -84,7 +143,7 @@ export function Home() {
             href="https://github.com/stanica/open-wedding-planner"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto rounded-lg bg-indigo-600 hover:bg-indigo-500 px-6 py-3 text-sm font-semibold text-white transition-colors"
+            className="w-full sm:w-auto rounded-lg bg-stone-800 hover:bg-stone-700 dark:bg-white dark:hover:bg-gray-200 px-6 py-3 text-sm font-semibold text-white dark:text-stone-900 transition-colors"
           >
             View on GitHub
           </a>
@@ -97,14 +156,8 @@ export function Home() {
         </div>
       </section>
 
-      {/* Screenshot placeholder */}
-      <section className="mx-auto max-w-5xl px-4 mb-24">
-        <div className="rounded-2xl border border-stone-200 dark:border-white/10 bg-stone-100 dark:bg-white/5 aspect-video flex items-center justify-center">
-          <p className="text-sm text-stone-400 dark:text-gray-600">
-            Screenshots coming soon
-          </p>
-        </div>
-      </section>
+      {/* Screenshots */}
+      <ScreenshotCarousel />
 
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
@@ -117,8 +170,8 @@ export function Home() {
               key={title}
               className="rounded-xl border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-6"
             >
-              <div className="mb-3 inline-flex rounded-lg bg-indigo-100 dark:bg-indigo-500/20 p-2">
-                <Icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="mb-3 inline-flex rounded-lg bg-stone-200 dark:bg-white/10 p-2">
+                <Icon className="h-5 w-5 text-stone-600 dark:text-gray-400" />
               </div>
               <h3 className="font-semibold text-stone-900 dark:text-white mb-2">
                 {title}
@@ -142,7 +195,7 @@ export function Home() {
               key={step}
               className="rounded-xl border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-6"
             >
-              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+              <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-stone-800 dark:bg-white text-sm font-bold text-white dark:text-stone-900">
                 {step}
               </div>
               <h3 className="font-semibold text-stone-900 dark:text-white mb-3">
@@ -158,7 +211,7 @@ export function Home() {
           Requires Node.js 22+.{" "}
           <Link
             to="/docs"
-            className="text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="text-stone-900 dark:text-white hover:underline"
           >
             Full setup guide →
           </Link>
@@ -167,11 +220,11 @@ export function Home() {
 
       {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
-        <div className="rounded-2xl bg-indigo-600 dark:bg-indigo-500/20 border border-indigo-500/30 px-8 py-14 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-white mb-4">
+        <div className="rounded-2xl bg-stone-800 dark:bg-white/10 border border-stone-700 dark:border-white/20 px-8 py-14 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             Like what you see?
           </h2>
-          <p className="text-indigo-200 dark:text-indigo-300 mb-8 max-w-xl mx-auto">
+          <p className="text-stone-300 dark:text-gray-400 mb-8 max-w-xl mx-auto">
             The whole thing is open source and MIT licensed. Contributions
             welcome.
           </p>
@@ -179,7 +232,7 @@ export function Home() {
             href="https://github.com/stanica/open-wedding-planner"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block rounded-lg bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 text-sm font-semibold transition-colors"
+            className="inline-block rounded-lg bg-white text-stone-800 hover:bg-gray-100 px-6 py-3 text-sm font-semibold transition-colors"
           >
             Check it out on GitHub
           </a>
