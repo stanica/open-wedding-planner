@@ -86,6 +86,7 @@ export type GatewayEvent =
         modelName: string;
       };
     }
+  | { name: "research.messagesChanged"; data: { threadId: number } }
   | { name: "context-compacted"; data: { threadId: number } }
   | { name: "research.threadsChanged"; data: Record<string, never> }
   | { name: "data.changed"; data: { entity: string } }

@@ -88,14 +88,21 @@ export function ResearchView() {
   }, [messages, liveToolCalls, pendingPermissions, activeSession]);
 
   // Refetch threads when another client creates/updates/deletes a thread
+  // and refetch messages when a new message arrives (e.g. via WhatsApp self-chat)
   useEffect(() => {
     const unsub = wsClient.onEvent((event) => {
       if (event.name === "research.threadsChanged") {
         refetchThreads();
       }
+      if (
+        event.name === "research.messagesChanged" &&
+        (event.data as { threadId: number }).threadId === activeThreadId
+      ) {
+        refetchMessages();
+      }
     });
     return unsub;
-  }, [refetchThreads]);
+  }, [refetchThreads, refetchMessages, activeThreadId]);
 
   // Refetch data when agent completes (even if we were on another tab)
   const completedAtSeen = useRef<number | null>(null);

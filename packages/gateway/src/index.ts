@@ -317,6 +317,12 @@ export async function startGateway(options: GatewayOptions = {}) {
         content: body,
       });
 
+      // Notify frontend so it can display the message immediately
+      wsServer.broadcast({
+        name: "research.messagesChanged",
+        data: { threadId },
+      });
+
       // Load full message history
       const history = await db
         .select()
