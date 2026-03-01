@@ -27,6 +27,7 @@ export interface WsServerOptions {
   router?: Router;
   db?: Db;
   imagesDir?: string;
+  onVapiWebhook?: (payload: unknown) => void;
 }
 
 const MIME_TYPES: Record<string, string> = {
@@ -72,7 +73,7 @@ function serveStaticFile(filePath: string, res: ServerResponse, cache = false) {
 }
 
 export async function createWsServer(options: WsServerOptions) {
-  const { port, getState, router, db, imagesDir } = options;
+  const { port, getState, router, db, imagesDir, onVapiWebhook } = options;
   const clients = new Set<AuthenticatedClient>();
   let eventSeq = 0;
 
@@ -80,6 +81,26 @@ export async function createWsServer(options: WsServerOptions) {
 
   const httpServer = createServer(
     (req: IncomingMessage, res: ServerResponse) => {
+      // Handle VAPI webhook POST
+      if (req.method === "POST" && req.url === "/vapi/webhook") {
+        let body = "";
+        req.on("data", (chunk: Buffer) => {
+          body += chunk.toString();
+        });
+        req.on("end", () => {
+          try {
+            const payload = JSON.parse(body);
+            if (onVapiWebhook) onVapiWebhook(payload);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.writeHead(400);
+            res.end("Invalid JSON");
+          }
+        });
+        return;
+      }
+
       if (req.method !== "GET" || !req.url) {
         res.writeHead(404);
         res.end();
