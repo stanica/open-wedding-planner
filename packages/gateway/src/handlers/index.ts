@@ -25,6 +25,7 @@ import { registerGoogleAuthHandlers } from "./google-auth.js";
 import { registerDataManagementHandlers } from "./data-management.js";
 import { registerGuardrailsConfigHandlers } from "./guardrails-config.js";
 import { registerDbHandlers } from "./db.js";
+import { registerVapiHandlers } from "./vapi.js";
 import { importBudgetCsv } from "../importers/csv-budget.js";
 import { importVendorsCsv } from "../importers/csv-vendors.js";
 import { getImagesDir } from "../config/paths.js";
@@ -62,6 +63,7 @@ export function registerAllHandlers(
 
   registerGuardrailsConfigHandlers(router);
   registerDataManagementHandlers(router);
+  registerVapiHandlers(router);
 
   if (sqlite) {
     registerDbHandlers(router, sqlite);
