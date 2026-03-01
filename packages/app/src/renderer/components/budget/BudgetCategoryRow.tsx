@@ -20,17 +20,17 @@ export function BudgetCategoryRow({
     <>
       <tr
         onClick={() => setExpanded(!expanded)}
-        className="border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
+        className="border-b border-border cursor-pointer hover:bg-surface-hover transition-colors"
       >
         <td className="py-3 px-4">
-          <div className="flex items-center gap-2 font-medium text-white">
+          <div className="flex items-center gap-2 font-medium text-on-surface">
             {expanded ? (
-              <ChevronDown className="h-4 w-4 text-gray-400" />
+              <ChevronDown className="h-4 w-4 text-on-surface-secondary" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-on-surface-secondary" />
             )}
             {data.category.name}
-            <span className="text-xs text-gray-500 font-normal">
+            <span className="text-xs text-on-surface-tertiary font-normal">
               ({data.entries.length})
             </span>
           </div>

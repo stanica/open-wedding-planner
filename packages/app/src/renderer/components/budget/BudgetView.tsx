@@ -63,10 +63,10 @@ export function BudgetView() {
         currency={currency}
       />
 
-      <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface-elevated overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-gray-400">
+            <tr className="border-b border-border text-on-surface-secondary">
               <th className="px-4 py-3 text-left font-medium">Category</th>
               <th className="px-4 py-3 text-right font-medium">High</th>
               <th className="px-4 py-3 text-right font-medium">Low</th>
@@ -81,7 +81,7 @@ export function BudgetView() {
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t border-white/10 font-semibold">
+            <tr className="border-t border-border font-semibold">
               <td className="px-4 py-3">Total</td>
               <td className="px-4 py-3 text-right">
                 <CurrencyDisplay amount={data.grandTotals.high || null} currency={currency} />
