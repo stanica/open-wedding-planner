@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { wsClient } from "../../lib/ws-client";
 import { useDebugStore, type LogSource } from "../../stores/debug-store";
 import type { GatewayEvent } from "@wedding-planner/shared";
+import { DatabaseBrowser } from "./DatabaseBrowser";
 
 const SOURCE_COLORS: Record<LogSource, string> = {
   agent: "text-blue-400",
@@ -40,6 +41,7 @@ export function DebugConsole() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isAutoScrolling = useRef(false);
+  const [activeTab, setActiveTab] = useState<"logs" | "database">("logs");
 
   // Subscribe to agent events
   useEffect(() => {
@@ -176,70 +178,93 @@ export function DebugConsole() {
 
   return (
     <div className="flex flex-col h-screen bg-surface text-on-surface font-mono text-xs">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-surface-dropdown shrink-0">
-        <div className="flex gap-1">
-          {FILTER_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setFilter(opt.value)}
-              className={`px-2 py-1 rounded text-xs transition-colors ${
-                filter === opt.value
-                  ? "bg-surface-active text-on-surface"
-                  : "text-on-surface-tertiary hover:text-on-surface-secondary hover:bg-surface-hover"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex-1" />
-
-        <input
-          type="text"
-          placeholder="Filter..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-gray-800 border border-border rounded px-2 py-1 text-xs text-on-surface placeholder:text-placeholder w-48 focus:outline-none focus:border-border-hover"
-        />
-
-        <button
-          onClick={() => {
-            setAutoScroll(true);
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-          }}
-          className={`px-2 py-1 rounded text-xs transition-colors ${
-            autoScroll ? "text-success" : "text-on-surface-tertiary hover:text-on-surface-secondary"
-          }`}
-          title="Auto-scroll"
-        >
-          ↓ Auto
-        </button>
-
-        <button
-          onClick={clear}
-          className="px-2 py-1 rounded text-xs text-on-surface-tertiary hover:text-error hover:bg-surface-hover transition-colors"
-        >
-          Clear
-        </button>
-
-        <span className="text-on-surface-faint text-xs tabular-nums">
-          {entries.length}
-        </span>
-      </div>
-
-      {/* Log entries */}
-      <div
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-1"
-      >
-        {filtered.map((entry) => (
-          <LogLine key={entry.id} entry={entry} />
+      {/* Tab bar */}
+      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border bg-surface-dropdown shrink-0">
+        {(["logs", "database"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-3 py-1 rounded text-xs transition-colors capitalize ${
+              activeTab === tab
+                ? "bg-surface-active text-on-surface"
+                : "text-on-surface-tertiary hover:text-on-surface-secondary hover:bg-surface-hover"
+            }`}
+          >
+            {tab}
+          </button>
         ))}
-        <div ref={bottomRef} />
       </div>
+
+      {activeTab === "logs" ? (
+        <>
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-surface-dropdown shrink-0">
+            <div className="flex gap-1">
+              {FILTER_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFilter(opt.value)}
+                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                    filter === opt.value
+                      ? "bg-surface-active text-on-surface"
+                      : "text-on-surface-tertiary hover:text-on-surface-secondary hover:bg-surface-hover"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1" />
+
+            <input
+              type="text"
+              placeholder="Filter..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-gray-800 border border-border rounded px-2 py-1 text-xs text-on-surface placeholder:text-placeholder w-48 focus:outline-none focus:border-border-hover"
+            />
+
+            <button
+              onClick={() => {
+                setAutoScroll(true);
+                bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className={`px-2 py-1 rounded text-xs transition-colors ${
+                autoScroll ? "text-success" : "text-on-surface-tertiary hover:text-on-surface-secondary"
+              }`}
+              title="Auto-scroll"
+            >
+              ↓ Auto
+            </button>
+
+            <button
+              onClick={clear}
+              className="px-2 py-1 rounded text-xs text-on-surface-tertiary hover:text-error hover:bg-surface-hover transition-colors"
+            >
+              Clear
+            </button>
+
+            <span className="text-on-surface-faint text-xs tabular-nums">
+              {entries.length}
+            </span>
+          </div>
+
+          {/* Log entries */}
+          <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-1"
+          >
+            {filtered.map((entry) => (
+              <LogLine key={entry.id} entry={entry} />
+            ))}
+            <div ref={bottomRef} />
+          </div>
+        </>
+      ) : (
+        <DatabaseBrowser />
+      )}
     </div>
   );
 }
