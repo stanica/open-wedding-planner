@@ -6,6 +6,8 @@ import * as schema from "../../src/db/schema.js";
 import { pushSchema } from "../../src/db/migrate.js";
 import { seedCategories } from "../../src/db/seed.js";
 import { makeVapiCallTool, type VapiCallContext } from "../../src/tools/vapi-call.js";
+import type { CreateCallParams } from "../../src/channels/vapi.js";
+import type { Db } from "../../src/infra/router.js";
 
 const toolContext = {
   toolCallId: "test",
@@ -32,9 +34,9 @@ async function setup() {
 }
 
 describe("makeVapiCallTool", () => {
-  let db: ReturnType<typeof drizzle>;
+  let db: Db;
   let ctx: VapiCallContext;
-  let mockCreateCall: ReturnType<typeof vi.fn>;
+  let mockCreateCall: ReturnType<typeof vi.fn<(params: CreateCallParams) => Promise<{ id: string; status: string }>>>;
 
   beforeEach(async () => {
     const s = await setup();
