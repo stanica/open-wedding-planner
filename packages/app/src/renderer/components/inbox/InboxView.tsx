@@ -137,7 +137,7 @@ export function InboxView() {
   if (loading && !messages) {
     return (
       <div className="flex h-full">
-        <div className="w-[400px] border-r border-white/10 animate-pulse bg-white/[0.02]" />
+        <div className="w-[400px] border-r border-border animate-pulse bg-surface-subtle" />
         <div className="flex-1" />
       </div>
     );
@@ -147,11 +147,11 @@ export function InboxView() {
     <div className="flex h-full">
       {/* Vendor list — shrinks when sidebar is open */}
       <div
-        className={`${sidebarOpen ? "w-[260px]" : "w-[400px]"} shrink-0 flex flex-col border-r border-white/10 transition-all duration-200`}
+        className={`${sidebarOpen ? "w-[260px]" : "w-[400px]"} shrink-0 flex flex-col border-r border-border transition-all duration-200`}
       >
-        <div className="p-3 border-b border-white/10">
-          <h2 className="text-sm font-semibold text-white">Inbox</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+        <div className="p-3 border-b border-border">
+          <h2 className="text-sm font-semibold text-on-surface">Inbox</h2>
+          <p className="text-xs text-on-surface-tertiary mt-0.5">
             {vendorGroups.length}{" "}
             {vendorGroups.length === 1 ? "conversation" : "conversations"}
           </p>
@@ -169,27 +169,27 @@ export function InboxView() {
               <button
                 key={group.vendorId}
                 onClick={() => handleSelectVendor(group.vendorId)}
-                className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors ${
+                className={`w-full text-left px-4 py-3 border-b border-border-subtle transition-colors ${
                   selectedVendorId === group.vendorId
-                    ? "bg-white/10"
-                    : "hover:bg-white/5"
+                    ? "bg-surface-active"
+                    : "hover:bg-surface-hover"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span
-                    className={`text-sm truncate ${group.hasUnread ? "font-semibold text-white" : "font-medium text-gray-300"}`}
+                    className={`text-sm truncate ${group.hasUnread ? "font-semibold text-on-surface" : "font-medium text-on-surface-secondary"}`}
                   >
                     {group.vendorName ?? "Unknown"}
                   </span>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     {group.hasUnread && <Badge variant="info">New</Badge>}
                     {group.messages.length > 1 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-on-surface-tertiary">
                         {group.messages.length}
                       </span>
                     )}
                     {group.latestDate && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-on-surface-tertiary">
                         {new Date(group.latestDate).toLocaleDateString(
                           undefined,
                           { month: "short", day: "numeric" },
@@ -199,11 +199,11 @@ export function InboxView() {
                   </div>
                 </div>
                 {group.latestMessage.subject && (
-                  <p className="text-sm text-gray-300 truncate">
+                  <p className="text-sm text-on-surface-secondary truncate">
                     {group.latestMessage.subject}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 truncate mt-0.5">
+                <p className="text-xs text-on-surface-tertiary truncate mt-0.5">
                   {group.latestMessage.bodyOriginal.slice(0, 100)}
                 </p>
               </button>
@@ -217,9 +217,9 @@ export function InboxView() {
         {selectedGroup ? (
           <div className="flex-1 overflow-y-auto">
             {/* Vendor header */}
-            <div className="sticky top-0 bg-gray-950 z-10 px-6 py-4 border-b border-white/10">
+            <div className="sticky top-0 bg-surface z-10 px-6 py-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-white truncate mr-3">
+                <h1 className="text-lg font-semibold text-on-surface truncate mr-3">
                   {selectedGroup.vendorName ?? "Unknown"}
                 </h1>
                 <div className="flex items-center gap-2 shrink-0">
@@ -248,7 +248,7 @@ export function InboxView() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
+              <div className="flex items-center gap-3 text-sm text-on-surface-secondary mt-1">
                 <span>
                   {selectedGroup.messages.length}{" "}
                   {selectedGroup.messages.length === 1
@@ -256,7 +256,7 @@ export function InboxView() {
                     : "messages"}
                 </span>
                 {selectedGroup.threads.length > 1 && (
-                  <span className="text-gray-600">
+                  <span className="text-on-surface-faint">
                     {selectedGroup.threads.length} threads
                   </span>
                 )}
@@ -270,11 +270,11 @@ export function InboxView() {
                   {/* Thread subject header (when multiple threads) */}
                   {selectedGroup.threads.length > 1 && (
                     <div className="flex items-center gap-2 mb-3 mt-2">
-                      <div className="h-px flex-1 bg-white/10" />
-                      <span className="text-xs text-gray-500 shrink-0">
+                      <div className="h-px flex-1 bg-border" />
+                      <span className="text-xs text-on-surface-tertiary shrink-0">
                         {thread.subject ?? "No subject"}
                       </span>
-                      <div className="h-px flex-1 bg-white/10" />
+                      <div className="h-px flex-1 bg-border" />
                     </div>
                   )}
 
@@ -283,13 +283,13 @@ export function InboxView() {
                       <div key={msg.id} className="group">
                         {/* Message header */}
                         <div className="flex items-center gap-3 mb-2">
-                          <span className="text-sm font-medium text-gray-300">
+                          <span className="text-sm font-medium text-on-surface-secondary">
                             {isOutbound(msg.direction)
                               ? "You"
                               : (msg.vendorName ?? "Unknown")}
                           </span>
                           {msg.sentAt && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-on-surface-tertiary">
                               {new Date(msg.sentAt).toLocaleString(undefined, {
                                 month: "short",
                                 day: "numeric",
@@ -306,7 +306,7 @@ export function InboxView() {
                         {/* Subject (show per-message if single thread) */}
                         {selectedGroup.threads.length === 1 &&
                           msg.subject && (
-                            <p className="text-sm font-medium text-gray-200 mb-2">
+                            <p className="text-sm font-medium text-on-surface mb-2">
                               {msg.subject}
                             </p>
                           )}
@@ -314,14 +314,14 @@ export function InboxView() {
                         {/* Translated body */}
                         {msg.bodyTranslated && (
                           <div className="mb-2">
-                            <div className="whitespace-pre-wrap text-sm text-gray-300 leading-relaxed">
+                            <div className="whitespace-pre-wrap text-sm text-on-surface-secondary leading-relaxed">
                               {msg.bodyTranslated}
                             </div>
                             <details className="mt-2">
-                              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
+                              <summary className="text-xs text-on-surface-tertiary cursor-pointer hover:text-on-surface-secondary">
                                 Show original ({msg.language ?? "unknown"})
                               </summary>
-                              <div className="mt-1 whitespace-pre-wrap text-xs text-gray-500 leading-relaxed">
+                              <div className="mt-1 whitespace-pre-wrap text-xs text-on-surface-tertiary leading-relaxed">
                                 {msg.bodyOriginal}
                               </div>
                             </details>
@@ -330,13 +330,13 @@ export function InboxView() {
 
                         {/* Original body (when no translation) */}
                         {!msg.bodyTranslated && (
-                          <div className="whitespace-pre-wrap text-sm text-gray-400 leading-relaxed">
+                          <div className="whitespace-pre-wrap text-sm text-on-surface-secondary leading-relaxed">
                             {msg.bodyOriginal}
                           </div>
                         )}
 
                         {/* Separator between messages */}
-                        <div className="mt-4 border-b border-white/5" />
+                        <div className="mt-4 border-b border-border-subtle" />
                       </div>
                     ))}
                   </div>
