@@ -41,11 +41,11 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
     setEditingId(null);
   }
   return (
-    <div className="flex flex-col h-full border-r border-white/10">
-      <div className="p-3 border-b border-white/10">
+    <div className="flex flex-col h-full border-r border-border">
+      <div className="p-3 border-b border-border">
         <button
           onClick={onCreate}
-          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-white/5 transition-colors"
+          className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm text-on-surface-secondary hover:bg-surface-hover transition-colors"
         >
           <Plus className="h-4 w-4" />
           New thread
@@ -59,12 +59,12 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
             <button
               key={thread.id}
               onClick={() => onSelect(thread.id)}
-              className={`w-full text-left px-3 py-3 border-b border-white/5 transition-colors group ${
-                isActive ? "bg-white/10" : "hover:bg-white/5"
+              className={`w-full text-left px-3 py-3 border-b border-border-subtle transition-colors group ${
+                isActive ? "bg-surface-active" : "hover:bg-surface-hover"
               }`}
             >
               <div className="flex items-start gap-2">
-                <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                <MessageSquare className="h-4 w-4 text-on-surface-tertiary mt-0.5 shrink-0" />
                 <div className="min-w-0 flex-1">
                   {editingId === thread.id ? (
                     <input
@@ -77,11 +77,11 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                         if (e.key === "Escape") setEditingId(null);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-sm font-medium text-white bg-white/10 rounded px-1 py-0.5 w-full outline-none ring-1 ring-purple-500/50"
+                      className="text-sm font-medium text-on-surface bg-surface-active rounded px-1 py-0.5 w-full outline-none ring-1 ring-purple-500/50"
                     />
                   ) : (
                     <p
-                      className="text-sm font-medium text-white truncate"
+                      className="text-sm font-medium text-on-surface truncate"
                       onDoubleClick={(e) => {
                         e.stopPropagation();
                         startEditing(thread);
@@ -90,7 +90,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                       {thread.title}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-on-surface-tertiary mt-0.5">
                     {new Date(thread.updatedAt).toLocaleDateString()}
                   </p>
                   {tags.length > 0 && (
@@ -98,7 +98,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                       {tags.map((tag) => (
                         <span
                           key={tag}
-                          className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 text-gray-400"
+                          className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-elevated text-on-surface-secondary"
                         >
                           {tag}
                         </span>
@@ -112,7 +112,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                       e.stopPropagation();
                       onDelete(thread.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-gray-500 hover:text-red-400 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-surface-active text-on-surface-tertiary hover:text-red-400 transition-all"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -122,7 +122,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
           );
         })}
         {threads.length === 0 && (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-on-surface-tertiary">
             No threads yet. Start a new one!
           </div>
         )}

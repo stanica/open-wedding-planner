@@ -23,19 +23,19 @@ export function TokenUsageBar() {
   const pct = Math.min(100, Math.round((inputTokens / contextWindow) * 100));
 
   return (
-    <div className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-6 py-2">
+    <div className="flex items-center gap-3 border-b border-border bg-surface-subtle px-6 py-2">
       <div className="flex-1 flex items-center gap-3">
-        <div className="h-1.5 flex-1 max-w-48 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-1.5 flex-1 max-w-48 rounded-full bg-surface-active overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${getBarColor(pct)}`}
             style={{ width: `${pct}%` }}
           />
         </div>
-        <span className="text-xs text-gray-500 tabular-nums">
+        <span className="text-xs text-on-surface-tertiary tabular-nums">
           {formatTokenCount(inputTokens)} / {formatTokenCount(contextWindow)} ({pct}%){subTotal > 0 ? ` · ${formatTokenCount(subTotal)} sub` : ""}
         </span>
       </div>
-      <span className="text-xs text-gray-600">{modelName}</span>
+      <span className="text-xs text-on-surface-faint">{modelName}</span>
     </div>
   );
 }

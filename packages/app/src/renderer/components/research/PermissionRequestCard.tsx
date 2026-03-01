@@ -19,9 +19,9 @@ export function PermissionRequestCard({
     const label = resolved === "deny" ? "Denied" : "Allowed";
     const color = resolved === "deny" ? "text-red-400" : "text-emerald-400";
     return (
-      <div className="flex items-center gap-2 my-2 px-3 py-2 rounded-lg border border-white/10 bg-white/[0.02] text-xs">
-        <Shield className="h-3.5 w-3.5 text-gray-500" />
-        <span className="text-gray-400">{toolName}</span>
+      <div className="flex items-center gap-2 my-2 px-3 py-2 rounded-lg border border-border bg-surface-subtle text-xs">
+        <Shield className="h-3.5 w-3.5 text-on-surface-tertiary" />
+        <span className="text-on-surface-secondary">{toolName}</span>
         <span className={color}>{label}</span>
       </div>
     );
@@ -33,17 +33,17 @@ export function PermissionRequestCard({
         <Shield className="h-4 w-4 text-amber-400" />
         <span className="text-sm font-medium text-amber-300">Permission Required</span>
       </div>
-      <p className="text-sm text-white font-medium">{toolName}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{toolDescription}</p>
+      <p className="text-sm text-on-surface font-medium">{toolName}</p>
+      <p className="text-xs text-on-surface-secondary mt-0.5">{toolDescription}</p>
       {context && (
-        <pre className="mt-2 px-3 py-2 text-xs text-gray-300 bg-black/30 rounded-md overflow-x-auto whitespace-pre-wrap break-all">
+        <pre className="mt-2 px-3 py-2 text-xs text-on-surface-secondary bg-black/30 rounded-md overflow-x-auto whitespace-pre-wrap break-all">
           {context}
         </pre>
       )}
       <div className="flex gap-2 mt-3">
         <button
           onClick={() => onDecision("allow")}
-          className="px-3 py-1.5 text-xs rounded-md bg-white/10 text-white hover:bg-white/15 transition-colors"
+          className="px-3 py-1.5 text-xs rounded-md bg-surface-active text-on-surface hover:bg-surface-active transition-colors"
         >
           Allow once
         </button>
@@ -55,7 +55,7 @@ export function PermissionRequestCard({
         </button>
         <button
           onClick={() => onDecision("deny")}
-          className="px-3 py-1.5 text-xs rounded-md bg-white/5 text-gray-400 hover:bg-white/10 transition-colors"
+          className="px-3 py-1.5 text-xs rounded-md bg-surface-elevated text-on-surface-secondary hover:bg-surface-active transition-colors"
         >
           Deny
         </button>

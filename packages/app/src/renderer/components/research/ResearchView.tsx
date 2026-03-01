@@ -299,7 +299,7 @@ export function ResearchView() {
                       <p className="text-xs font-medium text-amber-400">
                         Conversation compacted
                       </p>
-                      <p className="mt-0.5 text-xs text-gray-500">
+                      <p className="mt-0.5 text-xs text-on-surface-tertiary">
                         Earlier messages were summarized to stay within the context window. Scroll up to see the full history.
                       </p>
                     </div>
@@ -323,7 +323,7 @@ export function ResearchView() {
                     {activeSession && (
                       <button
                         onClick={handleStop}
-                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                        className="flex items-center gap-1 rounded-md border border-border bg-surface-elevated px-2 py-1 text-xs text-on-surface-secondary hover:bg-surface-active hover:text-on-surface transition-colors"
                       >
                         <Square className="h-3 w-3" />
                         Stop
@@ -334,18 +334,18 @@ export function ResearchView() {
                     {liveToolCalls.length > 0 ? (
                       <>
                         {liveToolCalls.length > 1 && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                          <div className="flex items-center gap-1.5 text-xs text-on-surface-faint">
                             <Wrench className="h-3 w-3" />
                             <span>{liveToolCalls.length} tool calls</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-on-surface-tertiary">
                           <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
                           <span>{liveToolCalls[liveToolCalls.length - 1].detail}</span>
                         </div>
                       </>
                     ) : (
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-on-surface-tertiary">
                         <span className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
                         <span>Thinking...</span>
                       </div>
@@ -369,7 +369,7 @@ export function ResearchView() {
               <div ref={messagesEndRef} />
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-on-surface-tertiary">
               <p className="text-sm">
                 Start a new research thread or select one from the sidebar.
               </p>

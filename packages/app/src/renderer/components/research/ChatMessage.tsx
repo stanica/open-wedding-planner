@@ -59,7 +59,7 @@ export function ChatMessage({ role, content, toolCalls, vendors }: MessageProps)
         <div className="mb-2">
           <button
             onClick={() => setToolsExpanded(!toolsExpanded)}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-400 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-on-surface-tertiary hover:text-on-surface-secondary transition-colors"
           >
             {toolsExpanded ? (
               <ChevronDown className="h-3 w-3" />
@@ -68,10 +68,10 @@ export function ChatMessage({ role, content, toolCalls, vendors }: MessageProps)
             )}
             <Wrench className="h-3 w-3" />
             <span>Used {visibleToolCalls.length} tools</span>
-            <span className="text-gray-600">({summarizeToolCalls(visibleToolCalls)})</span>
+            <span className="text-on-surface-faint">({summarizeToolCalls(visibleToolCalls)})</span>
           </button>
           {toolsExpanded && (
-            <div className="mt-1 ml-1 border-l border-white/5 pl-2">
+            <div className="mt-1 ml-1 border-l border-border-subtle pl-2">
               {visibleToolCalls.map((tc, i) => (
                 <ToolActivityCard key={i} toolName={tc.toolName} args={tc.args} result={tc.result} />
               ))}

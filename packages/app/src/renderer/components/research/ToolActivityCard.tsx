@@ -30,7 +30,7 @@ export function ToolActivityCard({ toolName, args, result }: ToolActivityCardPro
     <div className="my-1">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-400 transition-colors"
+        className="flex items-center gap-2 text-xs text-on-surface-tertiary hover:text-on-surface-secondary transition-colors"
       >
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <Icon className="h-3 w-3" />
@@ -38,7 +38,7 @@ export function ToolActivityCard({ toolName, args, result }: ToolActivityCardPro
         <span className="truncate max-w-[300px]">{String(detail)}</span>
       </button>
       {expanded && result != null && (
-        <pre className="mt-1 ml-6 p-2 rounded bg-white/5 text-[11px] text-gray-400 overflow-x-auto max-h-40">
+        <pre className="mt-1 ml-6 p-2 rounded bg-surface-elevated text-[11px] text-on-surface-secondary overflow-x-auto max-h-40">
           {typeof result === "string" ? result : JSON.stringify(result, null, 2) ?? ""}
         </pre>
       )}
