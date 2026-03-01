@@ -13,37 +13,37 @@ const FEATURES = [
     icon: Bot,
     title: "AI Research Agent",
     description:
-      "Chat with an AI that searches the web, scrapes vendor sites, parses PDFs, and builds out vendor profiles automatically. Spawns headless browser subagents for JavaScript-heavy sites.",
+      "Ask it to find vendors and it'll search the web, scrape sites, read PDFs, and put together vendor profiles for you. It can even spin up a headless browser for JavaScript-heavy pages.",
   },
   {
     icon: Search,
     title: "Vendor Management",
     description:
-      "Track vendors by category with status progression, quotes, photo galleries, contact info, and custom attributes. Grid and table views with filtering and sorting.",
+      "Keep track of every vendor in one place — contact info, quotes, photos, notes, and where you're at with each one. Filter and sort however you like.",
   },
   {
     icon: DollarSign,
     title: "Budget Tracking",
     description:
-      "Category-based budget allocation with quote line items and actual spend tracking. A summary bar shows total budget, committed spend, and remaining balance at a glance.",
+      "Break your budget down by category, track quotes and what you've actually spent. A summary bar keeps the big picture visible.",
   },
   {
     icon: MessageCircle,
     title: "WhatsApp Integration",
     description:
-      "Connect your personal WhatsApp via QR code — no Business API required. Send and receive messages with vendors directly from the app, with draft approval before sending.",
+      "Link your personal WhatsApp by scanning a QR code — no Business API needed. Message vendors right from the app, with optional draft approval so nothing gets sent by accident.",
   },
   {
     icon: Globe,
     title: "Cloudflare Tunnel",
     description:
-      "Expose the app to the internet via a temporary Cloudflare URL with one click. No account or port forwarding needed — useful for remote access or webhooks.",
+      "Need to access the app from your phone or another computer? One click opens a temporary Cloudflare tunnel. No account or port forwarding required.",
   },
   {
     icon: Shield,
-    title: "Fully Local",
+    title: "Runs on Your Machine",
     description:
-      "Everything runs on your machine. Your data stays in a local SQLite database at ~/.wedding-planner. No cloud sync, no subscriptions, no vendor lock-in.",
+      "Your data stays in a local SQLite database. Nothing gets sent anywhere unless you tell it to. No accounts, no subscriptions.",
   },
 ];
 
@@ -70,13 +70,14 @@ export function Home() {
           Open source · Runs locally · MIT license
         </div>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 dark:text-white mb-6">
-          Plan your wedding{" "}
-          <span className="text-indigo-600 dark:text-indigo-400">with AI</span>
+          A desktop app for{" "}
+          <span className="text-indigo-600 dark:text-indigo-400">
+            planning your wedding
+          </span>
         </h1>
         <p className="mx-auto max-w-2xl text-lg text-stone-600 dark:text-gray-400 mb-10">
-          An open-source desktop app that combines AI-powered vendor research,
-          budget tracking, and WhatsApp messaging — all running on your own
-          machine.
+          Research vendors with AI, track your budget, message vendors on
+          WhatsApp — all from one app that runs locally on your computer.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
@@ -108,7 +109,7 @@ export function Home() {
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900 dark:text-white mb-12">
-          Everything you need to plan a wedding
+          What it does
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map(({ icon: Icon, title, description }) => (
@@ -133,7 +134,7 @@ export function Home() {
       {/* Getting started */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900 dark:text-white mb-12">
-          Get started in minutes
+          Getting started
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {STEPS.map(({ step, title, code }) => (
@@ -168,10 +169,11 @@ export function Home() {
       <section className="mx-auto max-w-6xl px-4 mb-24">
         <div className="rounded-2xl bg-indigo-600 dark:bg-indigo-500/20 border border-indigo-500/30 px-8 py-14 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-white mb-4">
-            Ready to start planning?
+            Like what you see?
           </h2>
           <p className="text-indigo-200 dark:text-indigo-300 mb-8 max-w-xl mx-auto">
-            Open source, MIT licensed. Your data never leaves your machine.
+            The whole thing is open source and MIT licensed. Contributions
+            welcome.
           </p>
           <a
             href="https://github.com/stanica/open-wedding-planner"
@@ -179,7 +181,7 @@ export function Home() {
             rel="noopener noreferrer"
             className="inline-block rounded-lg bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 text-sm font-semibold transition-colors"
           >
-            Star on GitHub
+            Check it out on GitHub
           </a>
         </div>
       </section>
