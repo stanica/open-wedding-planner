@@ -12,6 +12,7 @@ import { makeGogTool } from "./gog.js";
 import { makeDispatchTool } from "./dispatch.js";
 import { makeAwaitTasksTool } from "./await-tasks.js";
 import { makeSemanticSearchTool } from "./semantic-search.js";
+import { makeVapiCallTool } from "./vapi-call.js";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -155,6 +156,28 @@ export function createToolRegistry(): ToolRegistry {
         });
       }
       return makeSemanticSearchTool(embeddingService);
+    },
+  });
+
+  registry.registerFactory("makeVapiCall", {
+    description: "Initiate a voice call to a vendor via VAPI",
+    category: "messaging",
+    create: (ctx: unknown) => {
+      const { db, emit, vapiChannel, getVapiAutoCall, getVapiConfig } = ctx as any;
+      if (!vapiChannel) {
+        return tool({
+          description: "Voice calling is not configured. Ask the user to set up VAPI in Settings.",
+          inputSchema: z.object({}),
+          execute: async () => ({ error: "VAPI is not configured. The user needs to add VAPI credentials in Settings." }),
+        });
+      }
+      return makeVapiCallTool({
+        db,
+        emit,
+        getAutoCall: getVapiAutoCall ?? (() => false),
+        createCall: (params) => vapiChannel.createCall(params),
+        getVapiConfig: getVapiConfig ?? (() => null),
+      });
     },
   });
 

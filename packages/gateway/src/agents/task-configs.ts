@@ -127,12 +127,12 @@ export const TASK_CONFIGS: TaskConfig[] = [
   {
     name: "research",
     systemPrompt: RESEARCH_PROMPT,
-    tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog", "semanticSearch", "sendWhatsApp"],
+    tools: ["search", "scrape", "dispatch", "awaitTasks", "parsePdf", "createVendor", "addVendorImages", "cmd", "dbQuery", "dbSchema", "gog", "semanticSearch", "sendWhatsApp", "makeVapiCall"],
   },
   {
     name: "outreach",
     systemPrompt: OUTREACH_PROMPT,
-    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog", "semanticSearch"],
+    tools: ["cmd", "dbQuery", "dbSchema", "sendWhatsApp", "gog", "semanticSearch", "makeVapiCall"],
   },
   {
     name: "parse",
