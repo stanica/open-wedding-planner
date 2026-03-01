@@ -306,6 +306,49 @@ export function pushSchema(sqlite: Database.Database) {
     // Column already exists
   }
 
+  // VAPI columns on ai_config
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN vapi_api_key TEXT;`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN vapi_phone_number_id TEXT;`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN vapi_assistant_id TEXT;`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN vapi_auto_call INTEGER DEFAULT 0;`);
+  } catch {
+    // Column already exists
+  }
+
+  // Voice calls table
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS voice_calls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vendor_id INTEGER REFERENCES vendors(id),
+      vapi_call_id TEXT,
+      phone_number TEXT NOT NULL,
+      assistant_id TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      ended_reason TEXT,
+      duration INTEGER,
+      summary TEXT,
+      transcript TEXT,
+      recording_url TEXT,
+      structured_data TEXT,
+      instructions TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      ended_at TEXT
+    );
+  `);
+
   // Normalize direction values and add CHECK constraints to communications table
   migrateCommunicationsConstraints(sqlite);
 }

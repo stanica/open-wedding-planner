@@ -1,0 +1,111 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import * as sqliteVec from "sqlite-vec";
+import * as schema from "../../src/db/schema.js";
+import { pushSchema } from "../../src/db/migrate.js";
+import { seedCategories } from "../../src/db/seed.js";
+import { makeVapiCallTool, type VapiCallContext } from "../../src/tools/vapi-call.js";
+
+const toolContext = {
+  toolCallId: "test",
+  messages: [],
+  abortSignal: undefined as unknown as AbortSignal,
+};
+
+async function setup() {
+  const sqlite = new Database(":memory:");
+  sqliteVec.load(sqlite);
+  pushSchema(sqlite);
+  const db = drizzle(sqlite, { schema });
+  await seedCategories(db);
+
+  // Seed a vendor
+  db.insert(schema.vendors).values({
+    name: "Mary's Flowers",
+    contactPhone: "+15551234567",
+    categoryId: 1,
+    status: "researched",
+  }).run();
+
+  return { db, sqlite };
+}
+
+describe("makeVapiCallTool", () => {
+  let db: ReturnType<typeof drizzle>;
+  let ctx: VapiCallContext;
+  let mockCreateCall: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    const s = await setup();
+    db = s.db;
+    mockCreateCall = vi.fn().mockResolvedValue({ id: "call-123", status: "queued" });
+
+    ctx = {
+      db,
+      emit: vi.fn(),
+      getAutoCall: () => false,
+      createCall: mockCreateCall,
+      getVapiConfig: () => ({
+        phoneNumberId: "pn-1",
+        assistantId: "asst-1",
+      }),
+    };
+  });
+
+  it("creates a draft voice call when auto-call is off", async () => {
+    const tool = makeVapiCallTool(ctx);
+    const result = await tool.execute!(
+      { vendorId: 1, phoneNumber: "+15551234567", instructions: "Ask about flower pricing" },
+      toolContext,
+    ) as any;
+
+    expect(result.status).toBe("draft");
+    expect(result.callId).toBeDefined();
+    expect(mockCreateCall).not.toHaveBeenCalled();
+  });
+
+  it("creates and initiates call when auto-call is on", async () => {
+    ctx.getAutoCall = () => true;
+    const tool = makeVapiCallTool(ctx);
+    const result = await tool.execute!(
+      { vendorId: 1, phoneNumber: "+15551234567", instructions: "Ask about flower pricing" },
+      toolContext,
+    ) as any;
+
+    expect(result.status).toBe("queued");
+    expect(result.vapiCallId).toBe("call-123");
+    expect(mockCreateCall).toHaveBeenCalled();
+  });
+
+  it("looks up vendor phone number when not provided", async () => {
+    ctx.getAutoCall = () => true;
+    const tool = makeVapiCallTool(ctx);
+    const result = await tool.execute!(
+      { vendorId: 1, instructions: "Ask about flower pricing" },
+      toolContext,
+    ) as any;
+
+    expect(result.status).toBe("queued");
+    expect(mockCreateCall).toHaveBeenCalledWith(
+      expect.objectContaining({ customerNumber: "+15551234567" }),
+    );
+  });
+
+  it("returns error when vendor has no phone number", async () => {
+    // Insert vendor without phone
+    db.insert(schema.vendors).values({
+      name: "No Phone Vendor",
+      categoryId: 1,
+      status: "researched",
+    }).run();
+
+    const tool = makeVapiCallTool(ctx);
+    const result = await tool.execute!(
+      { vendorId: 2, instructions: "Call them" },
+      toolContext,
+    ) as any;
+
+    expect(result.error).toContain("no phone number");
+  });
+});
