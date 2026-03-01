@@ -9,6 +9,7 @@ import { VendorDetailView } from "./components/vendors/VendorDetailView";
 import { BudgetView } from "./components/budget/BudgetView";
 import { ResearchView } from "./components/research/ResearchView";
 import { WhatsAppView } from "./components/whatsapp/WhatsAppView";
+import { CallsView } from "./components/calls/CallsView";
 import { InboxView } from "./components/inbox/InboxView";
 import { TimelineView } from "./components/timeline/TimelineView";
 import { DebugConsole } from "./components/debug/DebugConsole";
@@ -29,6 +30,7 @@ export function App() {
           <Route path="vendors" element={<VendorListView />} />
           <Route path="vendors/:id" element={<VendorDetailView />} />
           <Route path="whatsapp" element={<WhatsAppView />} />
+          <Route path="calls" element={<CallsView />} />
           <Route path="inbox" element={<InboxView />} />
           <Route path="timeline" element={<TimelineView />} />
           <Route path="budget" element={<BudgetView />} />
