@@ -8,11 +8,14 @@ import { ComposeBox } from "../common/ComposeBox";
 import { AgentSidePanel } from "../common/AgentSidePanel";
 import { ApprovalActions } from "../outreach/ApprovalActions";
 import { EmptyState } from "../common/EmptyState";
+import { VendorPickerModal } from "./VendorPickerModal";
 import { MessageCircle } from "lucide-react";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
 export function WhatsAppView() {
   const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+  const [selectedVendorName, setSelectedVendorName] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
   const [sidePanelComm, setSidePanelComm] = useState<Communication | null>(null);
 
   // Fetch all WhatsApp communications
@@ -129,6 +132,7 @@ export function WhatsAppView() {
           contacts={contacts}
           selectedVendorId={selectedVendorId}
           onSelect={setSelectedVendorId}
+          onNew={() => setShowPicker(true)}
         />
       </div>
 
@@ -139,7 +143,7 @@ export function WhatsAppView() {
             {/* Vendor name header */}
             <div className="px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold text-on-surface">
-                {contacts.find((c) => c.vendorId === selectedVendorId)?.vendorName ?? "Conversation"}
+                {contacts.find((c) => c.vendorId === selectedVendorId)?.vendorName ?? selectedVendorName ?? "Conversation"}
               </h2>
             </div>
 
@@ -185,6 +189,18 @@ export function WhatsAppView() {
         communication={sidePanelComm}
         onClose={() => setSidePanelComm(null)}
       />
+
+      {showPicker && (
+        <VendorPickerModal
+          excludeVendorIds={contacts.map((c) => c.vendorId)}
+          onSelect={(id, name) => {
+            setSelectedVendorId(id);
+            setSelectedVendorName(name);
+            setShowPicker(false);
+          }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
     </div>
   );
 }

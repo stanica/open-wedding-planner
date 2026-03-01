@@ -1,4 +1,4 @@
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, SquarePen } from "lucide-react";
 
 export interface ContactSummary {
   vendorId: number;
@@ -13,13 +13,23 @@ interface ContactListProps {
   contacts: ContactSummary[];
   selectedVendorId: number | null;
   onSelect: (vendorId: number) => void;
+  onNew?: () => void;
 }
 
-export function ContactList({ contacts, selectedVendorId, onSelect }: ContactListProps) {
+export function ContactList({ contacts, selectedVendorId, onSelect, onNew }: ContactListProps) {
   return (
     <div className="flex flex-col h-full border-r border-border">
-      <div className="p-3 border-b border-border">
+      <div className="p-3 border-b border-border flex items-center justify-between">
         <h2 className="text-sm font-semibold text-on-surface">Conversations</h2>
+        {onNew && (
+          <button
+            onClick={onNew}
+            className="rounded-lg p-1 hover:bg-surface-active transition-colors"
+            title="New conversation"
+          >
+            <SquarePen className="h-4 w-4 text-on-surface-secondary" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
