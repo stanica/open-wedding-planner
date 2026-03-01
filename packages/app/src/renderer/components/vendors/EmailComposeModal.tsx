@@ -45,26 +45,26 @@ export function EmailComposeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-white/10 bg-gray-900 p-6 space-y-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-border bg-surface-dropdown p-6 space-y-4 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-on-surface">
             Email {vendor.name}
           </h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 hover:bg-white/10 transition-colors"
+            className="rounded-lg p-1 hover:bg-surface-active transition-colors"
           >
-            <X className="h-4 w-4 text-gray-400" />
+            <X className="h-4 w-4 text-on-surface-secondary" />
           </button>
         </div>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-on-surface-secondary">
           To: {vendor.contactEmail}
         </p>
 
         <div className="space-y-2">
-          <p className="text-xs text-gray-400">What would you like to say?</p>
+          <p className="text-xs text-on-surface-secondary">What would you like to say?</p>
           <div className="flex flex-wrap gap-1.5">
             {INTENT_SUGGESTIONS.map((suggestion) => (
               <button
@@ -73,7 +73,7 @@ export function EmailComposeModal({
                 className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
                   intent === suggestion
                     ? "bg-blue-600 text-white"
-                    : "bg-white/5 text-gray-300 hover:bg-white/10"
+                    : "bg-surface-elevated text-on-surface-secondary hover:bg-surface-active"
                 }`}
               >
                 {suggestion}
@@ -85,7 +85,7 @@ export function EmailComposeModal({
             onChange={(e) => setIntent(e.target.value)}
             placeholder="Or type your own message intent..."
             rows={3}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+            className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder:text-placeholder focus:border-blue-500 focus:outline-none resize-none"
           />
         </div>
 
@@ -107,7 +107,7 @@ export function EmailComposeModal({
           )}
         </button>
 
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-on-surface-tertiary text-center">
           The AI will draft a personalized email using vendor and wedding details.
           You'll review it before sending.
         </p>

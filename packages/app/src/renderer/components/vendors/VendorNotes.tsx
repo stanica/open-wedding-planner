@@ -15,13 +15,13 @@ export function VendorNotes({ vendorId }: { vendorId: number }) {
   });
 
   if (!vendor?.notes) {
-    return <p className="text-sm text-gray-500 py-4">No notes yet</p>;
+    return <p className="text-sm text-on-surface-tertiary py-4">No notes yet</p>;
   }
 
   return (
     <Card>
       <CardContent>
-        <p className="text-sm text-gray-300 whitespace-pre-wrap">{vendor.notes}</p>
+        <p className="text-sm text-on-surface-secondary whitespace-pre-wrap">{vendor.notes}</p>
       </CardContent>
     </Card>
   );

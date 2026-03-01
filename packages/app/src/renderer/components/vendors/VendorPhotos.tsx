@@ -184,7 +184,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-square animate-pulse rounded-lg bg-white/5"
+            className="aspect-square animate-pulse rounded-lg bg-surface-elevated"
           />
         ))}
       </div>
@@ -209,12 +209,12 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-400">
+        <h3 className="text-sm font-medium text-on-surface-secondary">
           {imageList.length} {imageList.length === 1 ? "photo" : "photos"}
         </h3>
         <button
           onClick={handleAddPhotos}
-          className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-sm text-on-surface-secondary transition-colors hover:bg-surface-active hover:text-on-surface"
         >
           <Plus className="h-4 w-4" />
           Add Photos
@@ -223,10 +223,10 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
 
       {/* Empty state */}
       {imageList.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-16">
-          <ImageIcon className="mb-3 h-10 w-10 text-gray-600" />
-          <p className="text-sm font-medium text-gray-400">No photos yet</p>
-          <p className="mt-1 text-xs text-gray-500">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16">
+          <ImageIcon className="mb-3 h-10 w-10 text-on-surface-faint" />
+          <p className="text-sm font-medium text-on-surface-secondary">No photos yet</p>
+          <p className="mt-1 text-xs text-on-surface-tertiary">
             Ask the research agent to find some, or drag and drop your own
           </p>
         </div>
@@ -239,7 +239,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
             <button
               key={image.id}
               onClick={() => setLightboxIndex(index)}
-              className="group relative aspect-square overflow-hidden rounded-lg bg-white/5"
+              className="group relative aspect-square overflow-hidden rounded-lg bg-surface-elevated"
             >
               <img
                 src={getImageUrl(vendorId, image.filename)}
@@ -248,7 +248,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
               />
               {image.caption && (
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6 opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="truncate text-xs text-white">{image.caption}</p>
+                  <p className="truncate text-xs text-on-surface">{image.caption}</p>
                 </div>
               )}
             </button>
@@ -273,7 +273,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
             {/* Close button */}
             <button
               onClick={lightboxClose}
-              className="absolute -top-10 right-0 text-gray-400 transition-colors hover:text-white"
+              className="absolute -top-10 right-0 text-on-surface-secondary transition-colors hover:text-on-surface"
             >
               <X className="h-6 w-6" />
             </button>
@@ -288,9 +288,9 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
             {/* Caption and counter */}
             <div className="mt-3 text-center">
               {lightboxImage.caption && (
-                <p className="text-sm text-gray-300">{lightboxImage.caption}</p>
+                <p className="text-sm text-on-surface-secondary">{lightboxImage.caption}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-on-surface-tertiary">
                 {lightboxIndex! + 1} / {imageList.length}
               </p>
             </div>
@@ -317,7 +317,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
                 e.stopPropagation();
                 lightboxPrev();
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-surface-active p-2 text-on-surface transition-colors hover:bg-surface-active"
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
@@ -328,7 +328,7 @@ export function VendorPhotos({ vendorId }: VendorPhotosProps) {
                 e.stopPropagation();
                 lightboxNext();
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-surface-active p-2 text-on-surface transition-colors hover:bg-surface-active"
             >
               <ChevronRight className="h-6 w-6" />
             </button>

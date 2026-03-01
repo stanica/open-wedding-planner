@@ -46,7 +46,7 @@ export function VendorDetailView() {
 
   if (!vendor) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-500">
+      <div className="flex h-full items-center justify-center text-on-surface-tertiary">
         Vendor not found
       </div>
     );
@@ -60,7 +60,7 @@ export function VendorDetailView() {
         onDelete={() => setShowDeleteConfirm(true)}
       />
 
-      <div className="border-b border-white/10">
+      <div className="border-b border-border">
         <div className="flex gap-6">
           {TABS.map((tab) => (
             <button
@@ -68,8 +68,8 @@ export function VendorDetailView() {
               onClick={() => setActiveTab(tab)}
               className={`pb-2 text-sm font-medium transition-colors ${
                 activeTab === tab
-                  ? "text-white border-b-2 border-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "text-on-surface border-b-2 border-white"
+                  : "text-on-surface-secondary hover:text-on-surface"
               }`}
             >
               {tab}

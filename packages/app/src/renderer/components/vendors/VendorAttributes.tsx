@@ -26,8 +26,8 @@ export function VendorAttributes({ vendorId }: { vendorId: number }) {
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           {attributes.map((attr) => (
             <div key={attr.id}>
-              <dt className="text-gray-500">{attr.key}</dt>
-              <dd className="text-white">{attr.value}</dd>
+              <dt className="text-on-surface-tertiary">{attr.key}</dt>
+              <dd className="text-on-surface">{attr.value}</dd>
             </div>
           ))}
         </dl>

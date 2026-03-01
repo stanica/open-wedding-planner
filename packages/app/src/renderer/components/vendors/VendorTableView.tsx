@@ -15,10 +15,10 @@ interface VendorTableViewProps {
 
 export function VendorTableView({ vendors, onVendorClick, onToggleFavorite }: VendorTableViewProps) {
   return (
-    <div className="rounded-xl border border-white/10 overflow-hidden">
+    <div className="rounded-xl border border-border overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/10 text-left text-xs text-gray-500">
+          <tr className="border-b border-border text-left text-xs text-on-surface-tertiary">
             <th className="px-4 py-2.5 font-medium">Name</th>
             <th className="px-4 py-2.5 font-medium">Status</th>
             <th className="px-4 py-2.5 font-medium">Location</th>
@@ -30,13 +30,13 @@ export function VendorTableView({ vendors, onVendorClick, onToggleFavorite }: Ve
             <tr
               key={vendor.id}
               onClick={() => onVendorClick(vendor.id)}
-              className="border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors"
+              className="border-b border-border-subtle cursor-pointer hover:bg-surface-hover transition-colors"
             >
-              <td className="px-4 py-2.5 font-medium text-white">{vendor.name}</td>
+              <td className="px-4 py-2.5 font-medium text-on-surface">{vendor.name}</td>
               <td className="px-4 py-2.5">
                 <VendorStatusBadge status={vendor.status} />
               </td>
-              <td className="px-4 py-2.5 text-gray-400">
+              <td className="px-4 py-2.5 text-on-surface-secondary">
                 {vendor.location && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
@@ -50,7 +50,7 @@ export function VendorTableView({ vendors, onVendorClick, onToggleFavorite }: Ve
                     e.stopPropagation();
                     onToggleFavorite(vendor.id, !vendor.favorite);
                   }}
-                  className="text-gray-500 hover:text-rose-400 transition-colors"
+                  className="text-on-surface-tertiary hover:text-rose-400 transition-colors"
                 >
                   <Heart className={`h-3.5 w-3.5 ${vendor.favorite ? "fill-rose-400 text-rose-400" : ""}`} />
                 </button>

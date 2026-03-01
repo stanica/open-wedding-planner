@@ -74,20 +74,20 @@ function QuoteCard({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <span className="text-sm font-semibold text-white">
+            <span className="text-sm font-semibold text-on-surface">
               <CurrencyDisplay amount={displayTotal} currency={currency} />
             </span>
             {quote.source && (
-              <span className="ml-2 text-xs text-gray-500">via {quote.source}</span>
+              <span className="ml-2 text-xs text-on-surface-tertiary">via {quote.source}</span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-on-surface-tertiary">
               {new Date(quote.receivedAt).toLocaleDateString()}
             </span>
             <button
               onClick={() => setShowConfirm(true)}
-              className="rounded p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="rounded p-1 text-on-surface-tertiary hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -127,7 +127,7 @@ export function VendorQuotes({ vendorId }: { vendorId: number }) {
 
   if (!quotesList || quotesList.length === 0) {
     return (
-      <p className="text-sm text-gray-500 py-4">No quotes yet</p>
+      <p className="text-sm text-on-surface-tertiary py-4">No quotes yet</p>
     );
   }
 

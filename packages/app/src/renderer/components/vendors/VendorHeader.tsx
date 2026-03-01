@@ -42,7 +42,7 @@ export function VendorHeader({
     <div className="space-y-4">
       <button
         onClick={() => navigate("/vendors")}
-        className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+        className="flex items-center gap-1 text-sm text-on-surface-secondary hover:text-on-surface transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to vendors
@@ -64,7 +64,7 @@ export function VendorHeader({
               <VendorStatusBadge status={vendor.status} />
             </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-on-surface-secondary">
             {vendor.location && (
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" />
@@ -105,7 +105,7 @@ export function VendorHeader({
           </div>
 
           {vendor.description && (
-            <p className="text-sm text-gray-400 max-w-2xl">{vendor.description}</p>
+            <p className="text-sm text-on-surface-secondary max-w-2xl">{vendor.description}</p>
           )}
           </div>
         </div>

@@ -30,7 +30,7 @@ export function QuoteLineItems({
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="border-b border-white/10 text-left text-gray-400">
+        <tr className="border-b border-border text-left text-on-surface-secondary">
           <th className="pb-2 font-medium">Item</th>
           <th className="pb-2 font-medium">Type</th>
           <th className="pb-2 font-medium text-right">Amount</th>
@@ -38,11 +38,11 @@ export function QuoteLineItems({
       </thead>
       <tbody>
         {lineItems.map((li) => (
-          <tr key={li.id} className="border-b border-white/5">
+          <tr key={li.id} className="border-b border-border-subtle">
             <td className="py-2">
-              <span className="text-white">{li.description}</span>
+              <span className="text-on-surface">{li.description}</span>
               {li.unitPrice != null && li.quantity != null && (
-                <span className="ml-2 text-xs text-gray-500">
+                <span className="ml-2 text-xs text-on-surface-tertiary">
                   ({li.quantity} x <CurrencyDisplay amount={li.unitPrice} currency={currency} />)
                 </span>
               )}

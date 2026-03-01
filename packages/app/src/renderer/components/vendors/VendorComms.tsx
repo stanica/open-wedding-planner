@@ -48,7 +48,7 @@ export function VendorComms({ vendorId }: { vendorId: number }) {
     return (
       <div className="animate-pulse space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 rounded-xl bg-white/5" />
+          <div key={i} className="h-16 rounded-xl bg-surface-elevated" />
         ))}
       </div>
     );

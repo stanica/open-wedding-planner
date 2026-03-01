@@ -82,8 +82,8 @@ export function VendorFilters({
           onClick={() => onCategoryChange(null)}
           className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
             categoryFilter === null
-              ? "bg-white/15 text-white"
-              : "bg-white/5 text-gray-400 hover:bg-white/10"
+              ? "bg-surface-active text-on-surface"
+              : "bg-surface-elevated text-on-surface-secondary hover:bg-surface-active"
           }`}
         >
           All
@@ -96,12 +96,12 @@ export function VendorFilters({
               onClick={() => onCategoryChange(cat.id === categoryFilter ? null : cat.id)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 categoryFilter === cat.id
-                  ? "bg-white/15 text-white"
-                  : "bg-white/5 text-gray-400 hover:bg-white/10"
+                  ? "bg-surface-active text-on-surface"
+                  : "bg-surface-elevated text-on-surface-secondary hover:bg-surface-active"
               }`}
             >
               {cat.name}
-              <span className="ml-1.5 text-xs text-gray-500">{count}</span>
+              <span className="ml-1.5 text-xs text-on-surface-tertiary">{count}</span>
             </button>
           );
         })}
@@ -110,18 +110,18 @@ export function VendorFilters({
       {/* Filter controls row */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-tertiary" />
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search vendors..."
-            className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-3 text-sm text-white outline-none focus:border-white/30"
+            className="w-full rounded-lg border border-border bg-surface-elevated py-2 pl-9 pr-3 text-sm text-on-surface outline-none focus:border-border-hover"
           />
         </div>
         <button
           onClick={() => onFavoritesChange(!favoritesOnly)}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${favoritesOnly ? "border-rose-400/30 bg-rose-400/10 text-rose-400" : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20"}`}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm outline-none transition-colors ${favoritesOnly ? "border-rose-400/30 bg-rose-400/10 text-rose-400" : "border-border bg-surface-elevated text-on-surface-secondary hover:border-border-hover"}`}
         >
           <Heart className={`h-3.5 w-3.5 ${favoritesOnly ? "fill-rose-400" : ""}`} />
           Favorites
@@ -131,19 +131,19 @@ export function VendorFilters({
         <div className="relative" ref={statusRef}>
           <button
             onClick={() => setStatusOpen(!statusOpen)}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none hover:border-white/20"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface outline-none hover:border-border-hover"
           >
             {selected.color && <span className={`inline-block h-2 w-2 rounded-full ${selected.color}`} />}
             {selected.label}
-            <ChevronDown className="h-3 w-3 text-gray-400" />
+            <ChevronDown className="h-3 w-3 text-on-surface-secondary" />
           </button>
           {statusOpen && (
-            <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-white/10 bg-gray-900 py-1 shadow-lg">
+            <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-border bg-surface-dropdown py-1 shadow-lg">
               {STATUSES.map((s) => (
                 <button
                   key={s.value}
                   onClick={() => { onStatusChange(s.value); setStatusOpen(false); }}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-white/10 ${s.value === statusFilter ? "text-white" : "text-gray-400"}`}
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-surface-active ${s.value === statusFilter ? "text-on-surface" : "text-on-surface-secondary"}`}
                 >
                   {s.color ? (
                     <span className={`inline-block h-2 w-2 rounded-full ${s.color}`} />
@@ -161,19 +161,19 @@ export function VendorFilters({
         <div className="relative" ref={sortRef}>
           <button
             onClick={() => setSortOpen(!sortOpen)}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none hover:border-white/20"
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface outline-none hover:border-border-hover"
           >
-            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
+            <ArrowUpDown className="h-3.5 w-3.5 text-on-surface-secondary" />
             {selectedSort.label}
-            <ChevronDown className="h-3 w-3 text-gray-400" />
+            <ChevronDown className="h-3 w-3 text-on-surface-secondary" />
           </button>
           {sortOpen && (
-            <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-white/10 bg-gray-900 py-1 shadow-lg">
+            <div className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-border bg-surface-dropdown py-1 shadow-lg">
               {SORT_OPTIONS.map((s) => (
                 <button
                   key={s.value}
                   onClick={() => { onSortChange(s.value); setSortOpen(false); }}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-white/10 ${s.value === sortBy ? "text-white" : "text-gray-400"}`}
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-surface-active ${s.value === sortBy ? "text-on-surface" : "text-on-surface-secondary"}`}
                 >
                   {s.label}
                 </button>
@@ -185,7 +185,7 @@ export function VendorFilters({
         {/* View mode toggle */}
         <button
           onClick={() => onViewModeChange(viewMode === "grid" ? "table" : "grid")}
-          className="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 hover:border-white/20 hover:text-white transition-colors"
+          className="rounded-lg border border-border bg-surface-elevated p-2 text-on-surface-secondary hover:border-border-hover hover:text-on-surface transition-colors"
           title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
         >
           {viewMode === "grid" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}

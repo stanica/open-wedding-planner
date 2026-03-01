@@ -35,14 +35,14 @@ export function VendorCard({ vendor, onClick, onToggleFavorite }: VendorCardProp
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-medium text-white">{vendor.name}</h3>
+              <h3 className="font-medium text-on-surface">{vendor.name}</h3>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleFavorite(vendor.id, !vendor.favorite);
                   }}
-                  className="text-gray-500 hover:text-rose-400 transition-colors"
+                  className="text-on-surface-tertiary hover:text-rose-400 transition-colors"
                 >
                   <Heart
                     className={`h-3.5 w-3.5 ${vendor.favorite ? "fill-rose-400 text-rose-400" : ""}`}
@@ -52,13 +52,13 @@ export function VendorCard({ vendor, onClick, onToggleFavorite }: VendorCardProp
               </div>
             </div>
             {vendor.location && (
-              <div className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+              <div className="mt-1 flex items-center gap-1 text-xs text-on-surface-secondary">
                 <MapPin className="h-3 w-3" />
                 <span>{vendor.location}</span>
               </div>
             )}
             {vendor.description && (
-              <p className="mt-2 text-xs text-gray-500 line-clamp-2">
+              <p className="mt-2 text-xs text-on-surface-tertiary line-clamp-2">
                 {vendor.description}
               </p>
             )}
