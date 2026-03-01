@@ -105,7 +105,7 @@ export function TimelineView() {
         <h1 className="text-2xl font-bold mb-6">Timeline</h1>
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-xl bg-white/5" />
+            <div key={i} className="h-20 rounded-xl bg-surface-elevated" />
           ))}
         </div>
       </div>
@@ -136,7 +136,7 @@ export function TimelineView() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Task title"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-blue-500 focus:outline-none"
                 autoFocus
               />
               <div className="flex gap-3">
@@ -144,21 +144,21 @@ export function TimelineView() {
                   type="date"
                   value={newDeadline}
                   onChange={(e) => setNewDeadline(e.target.value)}
-                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 focus:border-blue-500 focus:outline-none"
+                  className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-blue-500 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={newOwner}
                   onChange={(e) => setNewOwner(e.target.value)}
                   placeholder="Owner"
-                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+                  className="flex-1 rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex gap-2 justify-end">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                  className="rounded-lg border border-border px-3 py-1.5 text-sm text-on-surface-secondary hover:text-on-surface transition-colors"
                 >
                   Cancel
                 </button>
@@ -203,20 +203,20 @@ export function TimelineView() {
                   className="flex items-center gap-2 mb-2 w-full text-left group"
                 >
                   {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-gray-500" />
+                    <ChevronRight className="h-4 w-4 text-on-surface-tertiary" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                    <ChevronDown className="h-4 w-4 text-on-surface-tertiary" />
                   )}
-                  <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
+                  <span className="text-sm font-semibold text-on-surface-secondary group-hover:text-on-surface transition-colors">
                     {month}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-on-surface-tertiary">
                     {completed}/{monthTasks.length}
                   </span>
                 </button>
 
                 {!isCollapsed && (
-                  <div className="ml-6 border-l border-white/10 pl-4 space-y-1">
+                  <div className="ml-6 border-l border-border pl-4 space-y-1">
                     {monthTasks.map((task) => (
                       <TimelineTask
                         key={task.id}
@@ -252,15 +252,15 @@ function TimelineTask({
     <div className="flex items-center gap-3 py-2 group">
       <button onClick={onToggle} className="flex-shrink-0">
         {isDone ? (
-          <CheckCircle2 className="h-4 w-4 text-green-400" />
+          <CheckCircle2 className="h-4 w-4 text-success" />
         ) : (
-          <Circle className="h-4 w-4 text-gray-500 group-hover:text-gray-300 transition-colors" />
+          <Circle className="h-4 w-4 text-on-surface-tertiary group-hover:text-on-surface-secondary transition-colors" />
         )}
       </button>
       <div className="flex-1 min-w-0">
         <span
           className={`text-sm ${
-            isDone ? "text-gray-500 line-through" : "text-gray-200"
+            isDone ? "text-on-surface-tertiary line-through" : "text-on-surface"
           }`}
         >
           {task.title}
@@ -273,7 +273,7 @@ function TimelineTask({
         {task.deadline && (
           <span
             className={`flex items-center gap-1 text-xs ${
-              isOverdue ? "text-red-400" : "text-gray-500"
+              isOverdue ? "text-error" : "text-on-surface-tertiary"
             }`}
           >
             <Clock className="h-3 w-3" />

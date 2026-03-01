@@ -63,7 +63,7 @@ export function DataManagement() {
   return (
     <div>
       <h2 className="text-lg font-semibold mb-1">Data Management</h2>
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-on-surface-secondary mb-4">
         Clear accumulated data while keeping your settings intact.
       </p>
 
@@ -71,14 +71,14 @@ export function DataManagement() {
         {CLEAR_GROUPS.map((group) => (
           <div
             key={group.key}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 flex items-center justify-between"
+            className="rounded-lg border border-border bg-surface-elevated px-4 py-3 flex items-center justify-between"
           >
             <div>
-              <p className="text-sm font-medium text-white">{group.label}</p>
-              <p className="text-xs text-gray-400">{group.description}</p>
+              <p className="text-sm font-medium text-on-surface">{group.label}</p>
+              <p className="text-xs text-on-surface-secondary">{group.description}</p>
             </div>
             {success === group.key ? (
-              <span className="text-xs text-green-400">Cleared</span>
+              <span className="text-xs text-success">Cleared</span>
             ) : (
               <button
                 onClick={() => setClearing(group.key)}

@@ -42,7 +42,7 @@ export function DraftCard({
     <Card>
       <CardHeader className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ChannelIcon className="h-4 w-4 text-gray-400" />
+          <ChannelIcon className="h-4 w-4 text-on-surface-secondary" />
           <span className="font-medium">{draft.vendorName ?? "Unknown Vendor"}</span>
           <Badge variant={draft.channel === "email" ? "info" : "success"}>
             {draft.channel}
@@ -52,7 +52,7 @@ export function DraftCard({
           )}
         </div>
         {draft.subject && (
-          <span className="text-sm text-gray-400">{draft.subject}</span>
+          <span className="text-sm text-on-surface-secondary">{draft.subject}</span>
         )}
       </CardHeader>
 
@@ -61,7 +61,7 @@ export function DraftCard({
           {/* Original message */}
           <div>
             {draft.bodyTranslated && (
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+              <p className="text-xs text-on-surface-tertiary mb-2 uppercase tracking-wide">
                 {draft.language ?? "Original"}
               </p>
             )}
@@ -69,10 +69,10 @@ export function DraftCard({
               <textarea
                 value={editBody}
                 onChange={(e) => setEditBody(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 focus:border-blue-500 focus:outline-none min-h-[200px] resize-y"
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-blue-500 focus:outline-none min-h-[200px] resize-y"
               />
             ) : (
-              <div className="whitespace-pre-wrap text-sm text-gray-300 leading-relaxed">
+              <div className="whitespace-pre-wrap text-sm text-on-surface-secondary leading-relaxed">
                 {draft.bodyOriginal}
               </div>
             )}
@@ -81,17 +81,17 @@ export function DraftCard({
           {/* English translation (side-by-side) */}
           {draft.bodyTranslated && (
             <div>
-              <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+              <p className="text-xs text-on-surface-tertiary mb-2 uppercase tracking-wide">
                 English
               </p>
-              <div className="whitespace-pre-wrap text-sm text-gray-400 leading-relaxed">
+              <div className="whitespace-pre-wrap text-sm text-on-surface-secondary leading-relaxed">
                 {draft.bodyTranslated}
               </div>
             </div>
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
           {editing ? (
             <div className="flex gap-2">
               <button
@@ -102,7 +102,7 @@ export function DraftCard({
               </button>
               <button
                 onClick={onCancelEdit}
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-on-surface-secondary hover:text-on-surface transition-colors"
               >
                 Cancel
               </button>
@@ -111,7 +111,7 @@ export function DraftCard({
             <div className="flex items-center gap-2">
               <button
                 onClick={onStartEdit}
-                className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-on-surface-secondary hover:text-on-surface transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit

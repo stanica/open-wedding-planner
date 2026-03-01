@@ -35,10 +35,10 @@ export function ToolPermissions() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="h-5 w-5 text-gray-400" />
+        <Shield className="h-5 w-5 text-on-surface-secondary" />
         <h2 className="text-lg font-semibold">Tool Permissions</h2>
       </div>
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-on-surface-secondary mb-4">
         Control which tools the research agent can use. "Ask each time" will prompt you during research.
       </p>
       <div className="space-y-2">
@@ -47,16 +47,16 @@ export function ToolPermissions() {
           return (
             <div
               key={tool.name}
-              className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/[0.02]"
+              className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-subtle"
             >
               <div>
-                <p className="text-sm font-medium text-white">{tool.name}</p>
-                <p className="text-xs text-gray-500">{tool.description}</p>
+                <p className="text-sm font-medium text-on-surface">{tool.name}</p>
+                <p className="text-xs text-on-surface-tertiary">{tool.description}</p>
               </div>
               <select
                 value={current}
                 onChange={(e) => handleChange(tool.name, e.target.value)}
-                className="text-xs rounded-md border border-white/10 bg-white/5 px-2 py-1 text-gray-300"
+                className="text-xs rounded-md border border-border bg-surface-elevated px-2 py-1 text-on-surface-secondary"
               >
                 <option value="prompt">Ask each time</option>
                 <option value="allow">Always allow</option>
@@ -66,7 +66,7 @@ export function ToolPermissions() {
           );
         })}
         {tools.length === 0 && (
-          <p className="text-sm text-gray-500">No tools registered.</p>
+          <p className="text-sm text-on-surface-tertiary">No tools registered.</p>
         )}
       </div>
     </div>

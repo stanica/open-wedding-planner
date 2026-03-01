@@ -157,7 +157,7 @@ export function AIProviderSetup() {
       <div className="space-y-4">
         {/* Provider selection */}
         <div className="space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <input
               type="radio"
               name="ai-provider"
@@ -166,16 +166,16 @@ export function AIProviderSetup() {
               className="accent-indigo-500"
             />
             <div>
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-on-surface">
                 Anthropic API Key or Setup Token
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 Direct API access with full tool support
               </p>
             </div>
           </label>
 
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <input
               type="radio"
               name="ai-provider"
@@ -184,10 +184,10 @@ export function AIProviderSetup() {
               className="accent-indigo-500"
             />
             <div>
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-on-surface">
                 Claude Max Proxy
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 Text-only mode via CLI proxy (no tool support)
               </p>
             </div>
@@ -196,7 +196,7 @@ export function AIProviderSetup() {
 
         {/* API key input — shown when api-key provider is selected */}
         {provider === "api-key" && (
-          <div className="space-y-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="space-y-3 rounded-lg border border-border bg-surface-elevated px-4 py-3">
             {/* Current key status */}
             <div className="flex items-center gap-2">
               <div
@@ -204,7 +204,7 @@ export function AIProviderSetup() {
                   config.hasApiKey ? "bg-green-400" : "bg-gray-500"
                 }`}
               />
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 {config.hasApiKey
                   ? `Key set (${config.maskedApiKey})`
                   : "No API key configured"}
@@ -213,7 +213,7 @@ export function AIProviderSetup() {
 
             {/* Key input */}
             <div className="space-y-2">
-              <label className="block text-sm text-gray-400">
+              <label className="block text-sm text-on-surface-secondary">
                 {config.hasApiKey ? "Update Key" : "API Key or Setup Token"}
               </label>
               <div className="flex gap-2">
@@ -225,12 +225,12 @@ export function AIProviderSetup() {
                     setValidationResult(null);
                   }}
                   placeholder="sk-ant-..."
-                  className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
                 />
                 <button
                   onClick={handleValidate}
                   disabled={!apiKey || validating}
-                  className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                  className="rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface-secondary hover:bg-surface-active disabled:opacity-50"
                 >
                   {validating ? "Testing..." : "Validate"}
                 </button>
@@ -240,7 +240,7 @@ export function AIProviderSetup() {
             {/* Validation result */}
             {validationResult && (
               <p
-                className={`text-xs ${validationResult.valid ? "text-green-400" : "text-red-400"}`}
+                className={`text-xs ${validationResult.valid ? "text-success" : "text-error"}`}
               >
                 {validationResult.valid
                   ? "Key is valid"
@@ -250,11 +250,11 @@ export function AIProviderSetup() {
 
             {/* Instructions */}
             {!config.hasApiKey && (
-              <div className="border-t border-white/5 pt-2 mt-2">
-                <p className="text-xs text-gray-500">
-                  Use an API key (<code className="rounded bg-white/10 px-1">sk-ant-api03-...</code>)
+              <div className="border-t border-border-subtle pt-2 mt-2">
+                <p className="text-xs text-on-surface-tertiary">
+                  Use an API key (<code className="rounded bg-surface-active px-1">sk-ant-api03-...</code>)
                   or run{" "}
-                  <code className="rounded bg-white/10 px-1">claude setup-token</code>{" "}
+                  <code className="rounded bg-surface-active px-1">claude setup-token</code>{" "}
                   to generate a token from your Max/Pro subscription.
                 </p>
               </div>
@@ -264,7 +264,7 @@ export function AIProviderSetup() {
 
         {/* Claude Max status and instructions */}
         {provider === "claude-max" && (
-          <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="space-y-2 rounded-lg border border-border bg-surface-elevated px-4 py-3">
             {/* Proxy status */}
             <div className="flex items-center gap-2">
               <div
@@ -278,7 +278,7 @@ export function AIProviderSetup() {
                         : "bg-gray-500"
                 }`}
               />
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 {proxyStatus.running
                   ? "Proxy running"
                   : startingProxy
@@ -289,26 +289,26 @@ export function AIProviderSetup() {
 
             {/* Error message */}
             {(proxyError || proxyStatus.error) && (
-              <p className="text-xs text-red-400">
+              <p className="text-xs text-error">
                 {proxyError ?? proxyStatus.error}
               </p>
             )}
 
             {/* Prerequisites */}
-            <div className="border-t border-white/5 pt-2 mt-2">
-              <p className="text-xs font-medium text-gray-300 mb-1">
+            <div className="border-t border-border-subtle pt-2 mt-2">
+              <p className="text-xs font-medium text-on-surface-secondary mb-1">
                 Requires Claude Code CLI
               </p>
-              <ol className="text-xs text-gray-500 space-y-1 list-decimal list-inside">
+              <ol className="text-xs text-on-surface-tertiary space-y-1 list-decimal list-inside">
                 <li>
                   Install:{" "}
-                  <code className="rounded bg-white/10 px-1">
+                  <code className="rounded bg-surface-active px-1">
                     npm install -g @anthropic-ai/claude-code
                   </code>
                 </li>
                 <li>
                   Authenticate:{" "}
-                  <code className="rounded bg-white/10 px-1">
+                  <code className="rounded bg-surface-active px-1">
                     claude auth login
                   </code>
                 </li>
@@ -319,12 +319,12 @@ export function AIProviderSetup() {
 
         {/* Model selector */}
         <div className="space-y-2">
-          <label className="block text-sm text-gray-400">Model</label>
+          <label className="block text-sm text-on-surface-secondary">Model</label>
           {models.length > 0 ? (
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
             >
               {models.map((m) => (
                 <option key={m} value={m}>
@@ -341,19 +341,19 @@ export function AIProviderSetup() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               placeholder="e.g. claude-sonnet-4-20250514"
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
             />
           )}
         </div>
 
         {/* OpenAI API Key — for semantic search embeddings */}
-        <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+        <div className="space-y-2 rounded-lg border border-border bg-surface-elevated px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-on-surface">
                 OpenAI API Key
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 Required for semantic search across your data
               </p>
             </div>
@@ -363,7 +363,7 @@ export function AIProviderSetup() {
                   config.hasOpenaiApiKey ? "bg-green-400" : "bg-gray-500"
                 }`}
               />
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 {config.hasOpenaiApiKey
                   ? `Set (${config.maskedOpenaiApiKey})`
                   : "Not configured"}
@@ -376,14 +376,14 @@ export function AIProviderSetup() {
               value={openaiApiKey}
               onChange={(e) => setOpenaiApiKey(e.target.value)}
               placeholder="sk-..."
-              className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+              className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
             />
           </div>
           {!config.hasOpenaiApiKey && (
-            <p className="text-xs text-gray-500">
-              Uses <code className="rounded bg-white/10 px-1">text-embedding-3-small</code> for vector embeddings.
+            <p className="text-xs text-on-surface-tertiary">
+              Uses <code className="rounded bg-surface-active px-1">text-embedding-3-small</code> for vector embeddings.
               Get a key at{" "}
-              <code className="rounded bg-white/10 px-1">platform.openai.com/api-keys</code>
+              <code className="rounded bg-surface-active px-1">platform.openai.com/api-keys</code>
             </p>
           )}
         </div>
@@ -393,7 +393,7 @@ export function AIProviderSetup() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

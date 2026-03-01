@@ -122,13 +122,13 @@ export function GoogleServicesSetup() {
   const isConnected = status?.connected ?? false;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-4 space-y-3">
+    <div className="rounded-lg border border-border bg-surface-elevated px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Mail className="h-5 w-5 text-blue-400" />
           <div>
-            <p className="text-sm font-medium text-white">Google Services</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm font-medium text-on-surface">Google Services</p>
+            <p className="text-xs text-on-surface-secondary">
               {isConnected
                 ? `Connected as ${status?.email}`
                 : "Connect Gmail, Calendar, Drive, and more"}
@@ -141,7 +141,7 @@ export function GoogleServicesSetup() {
       {/* Step 1: Upload or paste credentials */}
       {step === "credentials" && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-on-surface-secondary">
             First, provide your Google Cloud OAuth credentials (client_secret.json).
             You can create one at{" "}
             <button
@@ -153,7 +153,7 @@ export function GoogleServicesSetup() {
             .
           </p>
           {credError && (
-            <p className="text-xs text-red-400 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+            <p className="text-xs text-error rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
               {credError}
             </p>
           )}
@@ -164,19 +164,19 @@ export function GoogleServicesSetup() {
                 onChange={(e) => setPastedJson(e.target.value)}
                 placeholder='Paste your client_secret JSON here...'
                 rows={6}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none resize-none"
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs font-mono text-on-surface placeholder:text-placeholder focus:border-blue-500 focus:outline-none resize-none"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handlePasteCredentials}
                   disabled={settingCreds || !pastedJson.trim()}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {settingCreds ? "Saving..." : "Save Credentials"}
                 </button>
                 <button
                   onClick={() => setPasteMode(false)}
-                  className="rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-400 hover:bg-white/5 transition-colors"
+                  className="rounded-lg border border-border px-3 py-2 text-sm text-on-surface-secondary hover:bg-surface-hover transition-colors"
                 >
                   Cancel
                 </button>
@@ -187,14 +187,14 @@ export function GoogleServicesSetup() {
               <button
                 onClick={handleCredentialsFile}
                 disabled={settingCreds}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 <Upload className="h-4 w-4" />
                 {settingCreds ? "Saving..." : "Upload File"}
               </button>
               <button
                 onClick={() => setPasteMode(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-on-surface-secondary hover:bg-surface-hover transition-colors"
               >
                 <ClipboardPaste className="h-4 w-4" />
                 Paste JSON
@@ -212,14 +212,14 @@ export function GoogleServicesSetup() {
             placeholder="your@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder:text-placeholder focus:border-blue-500 focus:outline-none"
           />
           <div className="space-y-2">
-            <p className="text-xs text-gray-400">Select services to authorize:</p>
+            <p className="text-xs text-on-surface-secondary">Select services to authorize:</p>
             {AVAILABLE_SERVICES.map((svc) => (
               <label
                 key={svc.id}
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 cursor-pointer hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface-elevated px-3 py-2 cursor-pointer hover:bg-surface-active transition-colors"
               >
                 <input
                   type="checkbox"
@@ -228,21 +228,21 @@ export function GoogleServicesSetup() {
                   className="rounded"
                 />
                 <div>
-                  <p className="text-sm text-white">{svc.label}</p>
-                  <p className="text-xs text-gray-400">{svc.description}</p>
+                  <p className="text-sm text-on-surface">{svc.label}</p>
+                  <p className="text-xs text-on-surface-secondary">{svc.description}</p>
                 </div>
               </label>
             ))}
           </div>
           {connectError && (
-            <p className="text-xs text-red-400 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 break-all">
+            <p className="text-xs text-error rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 break-all">
               {connectError}
             </p>
           )}
           <button
             onClick={handleConnect}
             disabled={connecting || !email || selectedServices.length === 0}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
             {connecting ? "Opening browser..." : "Connect Google Account"}
           </button>
@@ -263,10 +263,10 @@ export function GoogleServicesSetup() {
             ))}
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-white">Auto-send messages</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-on-surface">Auto-send messages</p>
+              <p className="text-xs text-on-surface-secondary">
                 When off, outgoing emails are saved as drafts for your review
               </p>
             </div>

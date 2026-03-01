@@ -67,10 +67,10 @@ export function HeartbeatSettings() {
             className="h-4 w-4 rounded accent-indigo-500"
           />
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-on-surface">
               Enable scheduled research
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-on-surface-secondary">
               An AI agent will automatically run on a timer to research vendors
             </p>
           </div>
@@ -78,23 +78,23 @@ export function HeartbeatSettings() {
 
         {/* Prompt */}
         <div className="space-y-2">
-          <label className="block text-sm text-gray-400">Research prompt</label>
+          <label className="block text-sm text-on-surface-secondary">Research prompt</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g. Find florists in Tuscany under €3,000. Check for availability on our wedding date."
             rows={4}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none resize-y"
+            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none resize-y"
           />
         </div>
 
         {/* Interval */}
         <div className="space-y-2">
-          <label className="block text-sm text-gray-400">Run frequency</label>
+          <label className="block text-sm text-on-surface-secondary">Run frequency</label>
           <select
             value={intervalMinutes}
             onChange={(e) => setIntervalMinutes(Number(e.target.value))}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
           >
             {INTERVAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -106,7 +106,7 @@ export function HeartbeatSettings() {
 
         {/* Last run info */}
         {config.lastRunAt && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-on-surface-tertiary">
             Last run: {new Date(config.lastRunAt).toLocaleString()}
           </p>
         )}
@@ -116,7 +116,7 @@ export function HeartbeatSettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

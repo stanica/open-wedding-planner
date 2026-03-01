@@ -115,7 +115,7 @@ export function WhatsAppView() {
   if (loading) {
     return (
       <div className="flex h-full">
-        <div className="w-72 border-r border-white/10 animate-pulse bg-white/[0.02]" />
+        <div className="w-72 border-r border-border animate-pulse bg-surface-subtle" />
         <div className="flex-1" />
       </div>
     );
@@ -137,8 +137,8 @@ export function WhatsAppView() {
         {selectedVendorId ? (
           <>
             {/* Vendor name header */}
-            <div className="px-4 py-3 border-b border-white/10">
-              <h2 className="text-sm font-semibold text-white">
+            <div className="px-4 py-3 border-b border-border">
+              <h2 className="text-sm font-semibold text-on-surface">
                 {contacts.find((c) => c.vendorId === selectedVendorId)?.vendorName ?? "Conversation"}
               </h2>
             </div>

@@ -73,7 +73,7 @@ export function SearchConfig() {
       <div className="space-y-4">
         {/* Provider selection */}
         <div className="space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <input
               type="radio"
               name="search-provider"
@@ -85,14 +85,14 @@ export function SearchConfig() {
               className="accent-indigo-500"
             />
             <div>
-              <p className="text-sm font-medium text-white">DuckDuckGo</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-on-surface">DuckDuckGo</p>
+              <p className="text-xs text-on-surface-secondary">
                 Free, no API key required (HTML scraping)
               </p>
             </div>
           </label>
 
-          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <input
               type="radio"
               name="search-provider"
@@ -104,8 +104,8 @@ export function SearchConfig() {
               className="accent-indigo-500"
             />
             <div>
-              <p className="text-sm font-medium text-white">Brave Search</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-on-surface">Brave Search</p>
+              <p className="text-xs text-on-surface-secondary">
                 Structured API results (requires API key)
               </p>
             </div>
@@ -114,7 +114,7 @@ export function SearchConfig() {
 
         {/* API key input — shown when Brave is selected */}
         {provider === "brave" && (
-          <div className="space-y-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="space-y-3 rounded-lg border border-border bg-surface-elevated px-4 py-3">
             {/* Current key status */}
             <div className="flex items-center gap-2">
               <div
@@ -122,7 +122,7 @@ export function SearchConfig() {
                   config.hasApiKey ? "bg-green-400" : "bg-gray-500"
                 }`}
               />
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-on-surface-secondary">
                 {config.hasApiKey
                   ? `API key set (${config.maskedApiKey})`
                   : "No API key configured"}
@@ -131,7 +131,7 @@ export function SearchConfig() {
 
             {/* Key input */}
             <div className="space-y-2">
-              <label className="block text-sm text-gray-400">
+              <label className="block text-sm text-on-surface-secondary">
                 {config.hasApiKey ? "Update API Key" : "API Key"}
               </label>
               <div className="flex gap-2">
@@ -143,12 +143,12 @@ export function SearchConfig() {
                     setValidationResult(null);
                   }}
                   placeholder="BSA..."
-                  className="flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
                 />
                 <button
                   onClick={handleValidate}
                   disabled={!apiKey || validating}
-                  className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 disabled:opacity-50"
+                  className="rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface-secondary hover:bg-surface-active disabled:opacity-50"
                 >
                   {validating ? "Testing..." : "Validate"}
                 </button>
@@ -158,7 +158,7 @@ export function SearchConfig() {
             {/* Validation result */}
             {validationResult && (
               <p
-                className={`text-xs ${validationResult.valid ? "text-green-400" : "text-red-400"}`}
+                className={`text-xs ${validationResult.valid ? "text-success" : "text-error"}`}
               >
                 {validationResult.valid
                   ? "API key is valid"
@@ -173,7 +173,7 @@ export function SearchConfig() {
           <button
             onClick={handleSave}
             disabled={saving || (provider === "brave" && !config.hasApiKey && !apiKey)}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

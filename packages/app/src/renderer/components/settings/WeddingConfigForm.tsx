@@ -51,7 +51,7 @@ export function WeddingConfigForm() {
   }
 
   if (loading) {
-    return <div className="animate-pulse text-gray-500">Loading settings...</div>;
+    return <div className="animate-pulse text-on-surface-tertiary">Loading settings...</div>;
   }
 
   return (
@@ -170,7 +170,7 @@ export function WeddingConfigForm() {
           {saving ? "Saving..." : "Save Settings"}
         </button>
         {saved && (
-          <span className="text-sm text-green-400">Settings saved</span>
+          <span className="text-sm text-success">Settings saved</span>
         )}
       </div>
     </form>
@@ -180,8 +180,8 @@ export function WeddingConfigForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm text-gray-400">{label}</span>
-      <div className="[&>input]:w-full [&>input]:rounded-lg [&>input]:border [&>input]:border-white/10 [&>input]:bg-white/5 [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm [&>input]:text-white [&>input]:outline-none [&>input]:focus:border-white/30 [&>select]:w-full [&>select]:rounded-lg [&>select]:border [&>select]:border-white/10 [&>select]:bg-white/5 [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm [&>select]:text-white [&>select]:outline-none [&>textarea]:w-full [&>textarea]:rounded-lg [&>textarea]:border [&>textarea]:border-white/10 [&>textarea]:bg-white/5 [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm [&>textarea]:text-white [&>textarea]:outline-none [&>textarea]:resize-none">
+      <span className="mb-1 block text-sm text-on-surface-secondary">{label}</span>
+      <div className="[&>input]:w-full [&>input]:rounded-lg [&>input]:border [&>input]:border-border [&>input]:bg-surface-elevated [&>input]:px-3 [&>input]:py-2 [&>input]:text-sm [&>input]:text-on-surface [&>input]:outline-none [&>input]:focus:border-border-hover [&>select]:w-full [&>select]:rounded-lg [&>select]:border [&>select]:border-border [&>select]:bg-surface-elevated [&>select]:px-3 [&>select]:py-2 [&>select]:text-sm [&>select]:text-on-surface [&>select]:outline-none [&>textarea]:w-full [&>textarea]:rounded-lg [&>textarea]:border [&>textarea]:border-border [&>textarea]:bg-surface-elevated [&>textarea]:px-3 [&>textarea]:py-2 [&>textarea]:text-sm [&>textarea]:text-on-surface [&>textarea]:outline-none [&>textarea]:resize-none">
         {children}
       </div>
     </label>

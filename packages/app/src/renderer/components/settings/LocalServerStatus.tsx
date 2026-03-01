@@ -28,20 +28,20 @@ export function LocalServerStatus() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Monitor className="w-4 h-4 text-white/60" />
-        <h2 className="text-sm font-semibold text-white/80">
+        <Monitor className="w-4 h-4 text-on-surface-secondary" />
+        <h2 className="text-sm font-semibold text-on-surface">
           Local Web Server
         </h2>
       </div>
 
-      <p className="text-xs text-white/50">
+      <p className="text-xs text-on-surface-tertiary">
         Access the app from any browser on this machine.
       </p>
 
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+        <div className="flex items-center gap-2 flex-1 bg-surface-elevated border border-border rounded-lg px-3 py-2">
           <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
-          <span className="text-sm text-white/80 font-mono truncate">
+          <span className="text-sm text-on-surface font-mono truncate">
             {url ?? "Starting…"}
           </span>
         </div>
@@ -50,12 +50,12 @@ export function LocalServerStatus() {
           onClick={handleCopy}
           disabled={!url}
           title="Copy URL"
-          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-40"
+          className="p-2 rounded-lg bg-surface-elevated border border-border hover:bg-surface-active transition-colors disabled:opacity-40"
         >
           {copied ? (
-            <Check className="w-4 h-4 text-green-400" />
+            <Check className="w-4 h-4 text-success" />
           ) : (
-            <Copy className="w-4 h-4 text-white/60" />
+            <Copy className="w-4 h-4 text-on-surface-secondary" />
           )}
         </button>
 
@@ -63,9 +63,9 @@ export function LocalServerStatus() {
           onClick={handleOpen}
           disabled={!url}
           title="Open in browser"
-          className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-40"
+          className="p-2 rounded-lg bg-surface-elevated border border-border hover:bg-surface-active transition-colors disabled:opacity-40"
         >
-          <ExternalLink className="w-4 h-4 text-white/60" />
+          <ExternalLink className="w-4 h-4 text-on-surface-secondary" />
         </button>
       </div>
     </div>

@@ -30,15 +30,15 @@ function NumberField({
 }) {
   return (
     <div className="space-y-1">
-      <label className="block text-xs text-gray-400">{label}</label>
+      <label className="block text-xs text-on-surface-secondary">{label}</label>
       <input
         type="number"
         value={value}
         min={min}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-indigo-500 focus:outline-none"
+        className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
       />
-      {hint && <p className="text-xs text-gray-600">{hint}</p>}
+      {hint && <p className="text-xs text-on-surface-faint">{hint}</p>}
     </div>
   );
 }
@@ -60,7 +60,7 @@ function DetectorToggle({
         onChange={(e) => onChange(e.target.checked)}
         className="h-3.5 w-3.5 rounded accent-indigo-500"
       />
-      <span className="text-sm font-medium text-white">{label}</span>
+      <span className="text-sm font-medium text-on-surface">{label}</span>
     </label>
   );
 }
@@ -79,9 +79,9 @@ function DetectorSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-surface-subtle p-4 space-y-3">
       <DetectorToggle label={title} enabled={enabled} onChange={onToggle} />
-      <p className="text-xs text-gray-500">{description}</p>
+      <p className="text-xs text-on-surface-tertiary">{description}</p>
       {enabled && <div className="grid grid-cols-2 gap-3">{children}</div>}
     </div>
   );
@@ -125,21 +125,21 @@ export function GuardrailsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg max-h-[85vh] rounded-xl border border-white/10 bg-gray-900 shadow-2xl flex flex-col"
+        className="w-full max-w-lg max-h-[85vh] rounded-xl border border-border bg-surface-dropdown shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 pb-0">
-          <h3 className="text-lg font-semibold text-white">Guardrails Configuration</h3>
+          <h3 className="text-lg font-semibold text-on-surface">Guardrails Configuration</h3>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 hover:bg-white/10 transition-colors"
+            className="rounded-lg p-1 hover:bg-surface-active transition-colors"
           >
-            <X className="h-4 w-4 text-gray-400" />
+            <X className="h-4 w-4 text-on-surface-secondary" />
           </button>
         </div>
 
@@ -181,7 +181,7 @@ export function GuardrailsModal({
             onToggle={(v) => updateDetector("polling", "enabled", v)}
           >
             <div className="col-span-2 space-y-1">
-              <label className="block text-xs text-gray-400">Poll tools</label>
+              <label className="block text-xs text-on-surface-secondary">Poll tools</label>
               <input
                 type="text"
                 value={draft.polling.pollTools.join(", ")}
@@ -192,10 +192,10 @@ export function GuardrailsModal({
                     e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                   )
                 }
-                className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
                 placeholder="dbQuery, dbSchema"
               />
-              <p className="text-xs text-gray-600">Comma-separated tool names</p>
+              <p className="text-xs text-on-surface-faint">Comma-separated tool names</p>
             </div>
             <NumberField
               label="Warn threshold"
@@ -250,14 +250,14 @@ export function GuardrailsModal({
         <div className="flex items-center justify-end gap-3 p-5 pt-0">
           <button
             onClick={onClose}
-            className="rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+            className="rounded-md px-4 py-2 text-sm text-on-surface-secondary hover:text-on-surface transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50 transition-colors"
           >
             {saving ? "Saving..." : "Save"}
           </button>

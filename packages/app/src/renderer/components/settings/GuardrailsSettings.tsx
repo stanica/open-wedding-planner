@@ -46,7 +46,7 @@ export function GuardrailsSettings() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <ShieldCheck className="h-5 w-5 text-gray-400" />
+        <ShieldCheck className="h-5 w-5 text-on-surface-secondary" />
         <h2 className="text-lg font-semibold">Agent Guardrails</h2>
       </div>
       <div className="flex items-center justify-between">
@@ -58,8 +58,8 @@ export function GuardrailsSettings() {
             className="h-4 w-4 rounded accent-indigo-500"
           />
           <div>
-            <p className="text-sm font-medium text-white">Enable guardrails</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm font-medium text-on-surface">Enable guardrails</p>
+            <p className="text-xs text-on-surface-secondary">
               {config.enabled
                 ? `Active: ${activeDetectors.join(", ")}`
                 : "Detect and prevent agent loops and stuck patterns"}
@@ -68,7 +68,7 @@ export function GuardrailsSettings() {
         </label>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10 transition-colors"
+          className="flex items-center gap-1.5 rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-xs text-on-surface-secondary hover:bg-surface-active transition-colors"
         >
           <Settings2 className="h-3.5 w-3.5" />
           Configure

@@ -175,9 +175,9 @@ export function DebugConsole() {
   }, [entries, filter, searchQuery]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 text-gray-200 font-mono text-xs">
+    <div className="flex flex-col h-screen bg-surface text-on-surface font-mono text-xs">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-gray-900 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-surface-dropdown shrink-0">
         <div className="flex gap-1">
           {FILTER_OPTIONS.map((opt) => (
             <button
@@ -185,8 +185,8 @@ export function DebugConsole() {
               onClick={() => setFilter(opt.value)}
               className={`px-2 py-1 rounded text-xs transition-colors ${
                 filter === opt.value
-                  ? "bg-white/15 text-white"
-                  : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                  ? "bg-surface-active text-on-surface"
+                  : "text-on-surface-tertiary hover:text-on-surface-secondary hover:bg-surface-hover"
               }`}
             >
               {opt.label}
@@ -201,7 +201,7 @@ export function DebugConsole() {
           placeholder="Filter..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-gray-800 border border-white/10 rounded px-2 py-1 text-xs text-gray-200 placeholder:text-gray-600 w-48 focus:outline-none focus:border-white/20"
+          className="bg-gray-800 border border-border rounded px-2 py-1 text-xs text-on-surface placeholder:text-placeholder w-48 focus:outline-none focus:border-border-hover"
         />
 
         <button
@@ -210,7 +210,7 @@ export function DebugConsole() {
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
           }}
           className={`px-2 py-1 rounded text-xs transition-colors ${
-            autoScroll ? "text-green-400" : "text-gray-500 hover:text-gray-300"
+            autoScroll ? "text-success" : "text-on-surface-tertiary hover:text-on-surface-secondary"
           }`}
           title="Auto-scroll"
         >
@@ -219,12 +219,12 @@ export function DebugConsole() {
 
         <button
           onClick={clear}
-          className="px-2 py-1 rounded text-xs text-gray-500 hover:text-red-400 hover:bg-white/5 transition-colors"
+          className="px-2 py-1 rounded text-xs text-on-surface-tertiary hover:text-error hover:bg-surface-hover transition-colors"
         >
           Clear
         </button>
 
-        <span className="text-gray-600 text-xs tabular-nums">
+        <span className="text-on-surface-faint text-xs tabular-nums">
           {entries.length}
         </span>
       </div>
@@ -271,9 +271,9 @@ function LogLine({
       : null;
 
   return (
-    <div className="px-2 py-0.5 hover:bg-white/[0.02] group">
+    <div className="px-2 py-0.5 hover:bg-surface-subtle group">
       <div className="flex items-start gap-2">
-        <span className="text-gray-600 shrink-0 tabular-nums">{time}</span>
+        <span className="text-on-surface-faint shrink-0 tabular-nums">{time}</span>
         <span
           className={`shrink-0 uppercase text-[10px] font-semibold px-1.5 py-0.5 rounded ${SOURCE_COLORS[entry.source]} ${SOURCE_BG[entry.source]}`}
         >
@@ -281,18 +281,18 @@ function LogLine({
             ? "WS"
             : entry.source.slice(0, 3).toUpperCase()}
         </span>
-        <span className="text-gray-300 break-all min-w-0">{entry.summary}</span>
+        <span className="text-on-surface-secondary break-all min-w-0">{entry.summary}</span>
         {detailStr && (
           <button
             onClick={() => setOpen(!open)}
-            className="ml-auto shrink-0 text-[10px] text-gray-600 group-hover:text-gray-500 cursor-pointer"
+            className="ml-auto shrink-0 text-[10px] text-on-surface-faint group-hover:text-on-surface-tertiary cursor-pointer"
           >
             {open ? "hide" : "detail"}
           </button>
         )}
       </div>
       {open && detailStr && (
-        <pre className="text-[10px] text-gray-500 mt-1 ml-[4.5rem] max-w-full overflow-x-auto whitespace-pre-wrap">
+        <pre className="text-[10px] text-on-surface-tertiary mt-1 ml-[4.5rem] max-w-full overflow-x-auto whitespace-pre-wrap">
           {detailStr}
         </pre>
       )}

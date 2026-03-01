@@ -96,7 +96,7 @@ export function StatusIndicator({
   };
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-800 px-2.5 py-1 text-xs text-gray-400">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-800 px-2.5 py-1 text-xs text-on-surface-secondary">
       <span className={`h-1.5 w-1.5 rounded-full ${colors[status]}`} />
       {label ?? labels[status]}
     </span>

@@ -25,13 +25,13 @@ export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: Wh
   }
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-4 space-y-3">
+    <div className="rounded-lg border border-border bg-surface-elevated px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-5 w-5 text-green-400" />
           <div>
-            <p className="text-sm font-medium text-white">WhatsApp</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm font-medium text-on-surface">WhatsApp</p>
+            <p className="text-xs text-on-surface-secondary">
               Send and receive messages via WhatsApp
             </p>
           </div>
@@ -51,30 +51,30 @@ export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: Wh
 
       {qrCode && status === "connecting" && (
         <div className="flex flex-col items-center gap-3 py-4">
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-on-surface-secondary">
             Scan this QR code with WhatsApp on your phone
           </p>
           <div className="rounded-xl bg-white p-4">
             <QRCodeSVG value={qrCode} size={256} />
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-on-surface-tertiary">
             Open WhatsApp &gt; Settings &gt; Linked Devices &gt; Link a Device
           </p>
         </div>
       )}
 
       {status === "connecting" && !qrCode && (
-        <p className="text-sm text-yellow-400 animate-pulse">
+        <p className="text-sm text-warning animate-pulse">
           Waiting for QR code...
         </p>
       )}
 
       {status === "connected" && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-surface-elevated px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-white">Auto-send messages</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-on-surface">Auto-send messages</p>
+              <p className="text-xs text-on-surface-secondary">
                 When off, outgoing messages are saved as drafts for your review
               </p>
             </div>

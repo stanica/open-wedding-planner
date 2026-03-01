@@ -60,24 +60,24 @@ export function TunnelStatus() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Globe className="w-4 h-4 text-white/60" />
-        <h2 className="text-sm font-semibold text-white/80">Internet Tunnel</h2>
+        <Globe className="w-4 h-4 text-on-surface-secondary" />
+        <h2 className="text-sm font-semibold text-on-surface">Internet Tunnel</h2>
       </div>
 
-      <p className="text-xs text-white/50">
+      <p className="text-xs text-on-surface-tertiary">
         Expose the app to the internet via a temporary Cloudflare URL. No
         account required.
       </p>
 
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 min-w-0">
+        <div className="flex items-center gap-2 flex-1 bg-surface-elevated border border-border rounded-lg px-3 py-2 min-w-0">
           <StatusDot state={status.state} />
-          <span className="text-sm text-white/80 font-mono truncate">
+          <span className="text-sm text-on-surface font-mono truncate">
             {status.state === "running" && status.url}
             {status.state === "starting" && "Starting tunnel…"}
             {status.state === "stopped" && "Tunnel not active"}
             {status.state === "error" && (
-              <span className="text-red-400">{status.message}</span>
+              <span className="text-error">{status.message}</span>
             )}
           </span>
         </div>
@@ -86,12 +86,12 @@ export function TunnelStatus() {
           <button
             onClick={handleCopy}
             title="Copy URL"
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
+            className="p-2 rounded-lg bg-surface-elevated border border-border hover:bg-surface-active transition-colors shrink-0"
           >
             {copied ? (
-              <Check className="w-4 h-4 text-green-400" />
+              <Check className="w-4 h-4 text-success" />
             ) : (
-              <Copy className="w-4 h-4 text-white/60" />
+              <Copy className="w-4 h-4 text-on-surface-secondary" />
             )}
           </button>
         )}
@@ -106,9 +106,9 @@ export function TunnelStatus() {
               }
             }}
             title="Open in browser"
-            className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors shrink-0"
+            className="p-2 rounded-lg bg-surface-elevated border border-border hover:bg-surface-active transition-colors shrink-0"
           >
-            <ExternalLink className="w-4 h-4 text-white/60" />
+            <ExternalLink className="w-4 h-4 text-on-surface-secondary" />
           </button>
         )}
 
@@ -118,7 +118,7 @@ export function TunnelStatus() {
           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 disabled:opacity-50 ${
             isActive
               ? "bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
-              : "bg-white/10 border border-white/20 text-white/80 hover:bg-white/20"
+              : "bg-surface-active border border-border-hover text-on-surface hover:bg-surface-active"
           }`}
         >
           {isBusy ? (
@@ -153,5 +153,5 @@ function StatusDot({ state }: { state: TunnelState["state"] }) {
     );
   if (state === "error")
     return <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />;
-  return <span className="w-2 h-2 rounded-full bg-white/20 shrink-0" />;
+  return <span className="w-2 h-2 rounded-full bg-surface-active shrink-0" />;
 }
