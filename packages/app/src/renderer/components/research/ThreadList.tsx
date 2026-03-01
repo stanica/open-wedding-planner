@@ -56,10 +56,18 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
           const tags: string[] = thread.categoryTags ? JSON.parse(thread.categoryTags) : [];
           const isActive = thread.id === activeThreadId;
           return (
-            <button
+            <div
               key={thread.id}
+              role="button"
+              tabIndex={0}
               onClick={() => onSelect(thread.id)}
-              className={`w-full text-left px-3 py-3 border-b border-border-subtle transition-colors group ${
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(thread.id);
+                }
+              }}
+              className={`w-full text-left px-3 py-3 border-b border-border-subtle transition-colors group cursor-pointer ${
                 isActive ? "bg-surface-active" : "hover:bg-surface-hover"
               }`}
             >
@@ -118,7 +126,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                   </button>
                 )}
               </div>
-            </button>
+            </div>
           );
         })}
         {threads.length === 0 && (
