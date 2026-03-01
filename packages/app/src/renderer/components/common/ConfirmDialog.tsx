@@ -28,7 +28,7 @@ export function ConfirmDialog({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay"
           onClick={onCancel}
         >
           <motion.div
@@ -36,7 +36,7 @@ export function ConfirmDialog({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="mx-4 w-full max-w-sm rounded-xl border border-white/10 bg-gray-900 p-6 shadow-2xl"
+            className="mx-4 w-full max-w-sm rounded-xl border border-border bg-surface-dropdown p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
@@ -44,8 +44,8 @@ export function ConfirmDialog({
                 <AlertTriangle className="h-5 w-5 text-red-400" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-white">{title}</h3>
-                <p className="text-sm text-gray-400">{message}</p>
+                <h3 className="text-sm font-semibold text-on-surface">{title}</h3>
+                <p className="text-sm text-on-surface-secondary">{message}</p>
               </div>
             </div>
 
@@ -53,14 +53,14 @@ export function ConfirmDialog({
               <button
                 onClick={onCancel}
                 disabled={loading}
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors disabled:opacity-50"
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-on-surface-secondary hover:text-on-surface transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={onConfirm}
                 disabled={loading}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-on-surface hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {loading ? "Deleting..." : confirmLabel}
               </button>
