@@ -22,7 +22,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+    <div className="min-h-screen bg-[#faf6f1] dark:bg-gray-950 text-stone-900 dark:text-gray-100 transition-colors">
       <Navbar theme={theme} onToggleTheme={toggleTheme} />
       <Routes>
         <Route path="/" element={<Home />} />

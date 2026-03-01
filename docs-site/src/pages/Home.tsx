@@ -69,11 +69,11 @@ export function Home() {
         <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-6">
           Open source · Runs locally · MIT license
         </div>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 dark:text-white mb-6">
           Plan your wedding{" "}
           <span className="text-indigo-600 dark:text-indigo-400">with AI</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400 mb-10">
+        <p className="mx-auto max-w-2xl text-lg text-stone-600 dark:text-gray-400 mb-10">
           An open-source desktop app that combines AI-powered vendor research,
           budget tracking, and WhatsApp messaging — all running on your own
           machine.
@@ -89,7 +89,7 @@ export function Home() {
           </a>
           <Link
             to="/docs"
-            className="w-full sm:w-auto rounded-lg border border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/40 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors"
+            className="w-full sm:w-auto rounded-lg border border-stone-300 dark:border-white/20 hover:border-stone-400 dark:hover:border-white/40 px-6 py-3 text-sm font-semibold text-stone-700 dark:text-gray-300 transition-colors"
           >
             Read the docs →
           </Link>
@@ -98,8 +98,8 @@ export function Home() {
 
       {/* Screenshot placeholder */}
       <section className="mx-auto max-w-5xl px-4 mb-24">
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 aspect-video flex items-center justify-center">
-          <p className="text-sm text-gray-400 dark:text-gray-600">
+        <div className="rounded-2xl border border-stone-200 dark:border-white/10 bg-stone-100 dark:bg-white/5 aspect-video flex items-center justify-center">
+          <p className="text-sm text-stone-400 dark:text-gray-600">
             Screenshots coming soon
           </p>
         </div>
@@ -107,22 +107,22 @@ export function Home() {
 
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900 dark:text-white mb-12">
           Everything you need to plan a wedding
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map(({ icon: Icon, title, description }) => (
             <div
               key={title}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-6"
+              className="rounded-xl border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-6"
             >
               <div className="mb-3 inline-flex rounded-lg bg-indigo-100 dark:bg-indigo-500/20 p-2">
                 <Icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="font-semibold text-stone-900 dark:text-white mb-2">
                 {title}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-stone-600 dark:text-gray-400 leading-relaxed">
                 {description}
               </p>
             </div>
@@ -132,19 +132,19 @@ export function Home() {
 
       {/* Getting started */}
       <section className="mx-auto max-w-6xl px-4 mb-24">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900 dark:text-white mb-12">
           Get started in minutes
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {STEPS.map(({ step, title, code }) => (
             <div
               key={step}
-              className="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-6"
+              className="rounded-xl border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 p-6"
             >
               <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
                 {step}
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="font-semibold text-stone-900 dark:text-white mb-3">
                 {title}
               </h3>
               <pre className="rounded-lg bg-gray-900 dark:bg-black/40 px-4 py-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">
@@ -153,7 +153,7 @@ export function Home() {
             </div>
           ))}
         </div>
-        <p className="text-center text-sm text-gray-500 dark:text-gray-500 mt-6">
+        <p className="text-center text-sm text-stone-500 dark:text-gray-500 mt-6">
           Requires Node.js 22+.{" "}
           <Link
             to="/docs"

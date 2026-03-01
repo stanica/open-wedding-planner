@@ -23,7 +23,7 @@ export function DocsLayout() {
         <nav className="sticky top-20 space-y-6">
           {NAV.map((section) => (
             <div key={section.label}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-500">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-gray-500">
                 {section.label}
               </p>
               <ul className="space-y-1">
@@ -35,8 +35,8 @@ export function DocsLayout() {
                       className={({ isActive }) =>
                         `block rounded-md px-3 py-1.5 text-sm transition-colors ${
                           isActive
-                            ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            ? "bg-amber-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium"
+                            : "text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white"
                         }`
                       }
                     >
@@ -54,7 +54,7 @@ export function DocsLayout() {
       <main
         className="flex-1 min-w-0 prose prose-gray dark:prose-invert max-w-none
         prose-headings:font-bold prose-headings:tracking-tight
-        prose-code:rounded prose-code:bg-gray-100 prose-code:dark:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+        prose-code:rounded prose-code:bg-stone-100 prose-code:dark:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
         prose-pre:bg-gray-900 prose-pre:dark:bg-black/40 prose-pre:rounded-xl
         prose-a:text-indigo-600 prose-a:dark:text-indigo-400 prose-a:no-underline hover:prose-a:underline"
       >

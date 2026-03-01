@@ -12,12 +12,12 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-gray-950/80 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-stone-200 dark:border-white/10 bg-[#faf6f1]/80 dark:bg-gray-950/80 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 flex h-14 items-center justify-between">
         {/* Logo */}
         <Link
           to="/"
-          className="flex items-center gap-2 font-semibold text-gray-900 dark:text-white"
+          className="flex items-center gap-2 font-semibold text-stone-900 dark:text-white"
         >
           <svg viewBox="0 0 32 32" className="h-7 w-7" fill="none">
             <rect width="32" height="32" rx="6" fill="#1a1a2e" />
@@ -48,7 +48,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             className={({ isActive }) =>
               isActive
                 ? "text-indigo-600 dark:text-indigo-400 font-medium"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                : "text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
             }
           >
             Home
@@ -58,7 +58,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             className={({ isActive }) =>
               isActive
                 ? "text-indigo-600 dark:text-indigo-400 font-medium"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                : "text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
             }
           >
             Docs
@@ -67,7 +67,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             href="https://github.com/stanica/open-wedding-planner"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
           >
             GitHub
           </a>
@@ -77,7 +77,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           <button
             onClick={onToggleTheme}
             aria-label="Toggle theme"
-            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+            className="p-2 rounded-lg text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4" />
@@ -89,7 +89,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           {/* Mobile menu button */}
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+            className="md:hidden p-2 rounded-lg text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
             aria-label="Toggle menu"
           >
             {menuOpen ? (
@@ -103,19 +103,19 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-white/10 px-4 py-3 flex flex-col gap-3 text-sm bg-white dark:bg-gray-950">
+        <div className="md:hidden border-t border-stone-200 dark:border-white/10 px-4 py-3 flex flex-col gap-3 text-sm bg-[#faf6f1] dark:bg-gray-950">
           <NavLink
             to="/"
             end
             onClick={() => setMenuOpen(false)}
-            className="text-gray-700 dark:text-gray-300"
+            className="text-stone-700 dark:text-gray-300"
           >
             Home
           </NavLink>
           <NavLink
             to="/docs"
             onClick={() => setMenuOpen(false)}
-            className="text-gray-700 dark:text-gray-300"
+            className="text-stone-700 dark:text-gray-300"
           >
             Docs
           </NavLink>
@@ -123,7 +123,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
             href="https://github.com/stanica/open-wedding-planner"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-700 dark:text-gray-300"
+            className="text-stone-700 dark:text-gray-300"
           >
             GitHub
           </a>
