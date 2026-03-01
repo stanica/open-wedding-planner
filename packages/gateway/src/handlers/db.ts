@@ -47,4 +47,29 @@ export function registerDbHandlers(router: Router, sqlite: Database.Database) {
 
     return { columns, rows, total };
   });
+
+  router.register("db.update", async (_db, params) => {
+    const { table, id, column, value } = params as {
+      table: string;
+      id: number;
+      column: string;
+      value: unknown;
+    };
+    assertValidTable(table);
+
+    const columns = getColumnNames(table);
+    if (!columns.includes(column)) {
+      throw new Error(`Invalid column: ${column}`);
+    }
+
+    sqlite
+      .prepare(`UPDATE "${table}" SET "${column}" = ? WHERE id = ?`)
+      .run(value, id);
+
+    const row = sqlite
+      .prepare(`SELECT * FROM "${table}" WHERE id = ?`)
+      .get(id) as Record<string, unknown>;
+
+    return row;
+  });
 }

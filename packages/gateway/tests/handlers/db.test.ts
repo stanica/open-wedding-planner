@@ -20,9 +20,10 @@ function setup() {
 describe("db handlers", () => {
   let db: ReturnType<typeof drizzle>;
   let router: Router;
+  let sqlite: Database.Database;
 
   beforeEach(() => {
-    ({ db, router } = setup());
+    ({ db, router, sqlite } = setup());
   });
 
   describe("db.tables", () => {
@@ -71,6 +72,46 @@ describe("db handlers", () => {
       await expect(
         router.handle(db, "db.query", { table: "Robert'; DROP TABLE students;--" }),
       ).rejects.toThrow(/invalid table/i);
+    });
+  });
+
+  describe("db.update", () => {
+    it("updates a cell value", async () => {
+      // Seed a category
+      sqlite.prepare(
+        "INSERT INTO categories (id, name, budget_percent_low, budget_percent_high, sort_order) VALUES (99, 'Test', 0, 0, 99)",
+      ).run();
+
+      const result = (await router.handle(db, "db.update", {
+        table: "categories",
+        id: 99,
+        column: "name",
+        value: "Updated",
+      })) as Record<string, unknown>;
+
+      expect(result.name).toBe("Updated");
+    });
+
+    it("rejects invalid table names", async () => {
+      await expect(
+        router.handle(db, "db.update", {
+          table: "nonexistent",
+          id: 1,
+          column: "name",
+          value: "x",
+        }),
+      ).rejects.toThrow(/invalid table/i);
+    });
+
+    it("rejects invalid column names", async () => {
+      await expect(
+        router.handle(db, "db.update", {
+          table: "categories",
+          id: 1,
+          column: "nonexistent_col",
+          value: "x",
+        }),
+      ).rejects.toThrow(/invalid column/i);
     });
   });
 });
