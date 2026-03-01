@@ -9,6 +9,7 @@ import { GuardrailsSettings } from "./GuardrailsSettings";
 import { DataManagement } from "./DataManagement";
 import { LocalServerStatus } from "./LocalServerStatus";
 import { TunnelStatus } from "./TunnelStatus";
+import { VapiSettings } from "./VapiSettings";
 
 export function SettingsView() {
   return (
@@ -29,6 +30,8 @@ export function SettingsView() {
       <GuardrailsSettings />
       <hr className="border-border" />
       <IntegrationStatus />
+      <hr className="border-border" />
+      <VapiSettings />
       <hr className="border-border" />
       <LocalServerStatus />
       <hr className="border-border" />

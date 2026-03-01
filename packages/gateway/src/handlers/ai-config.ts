@@ -42,6 +42,10 @@ export function registerAIConfigHandlers(
           hasOpenaiApiKey,
           maskedOpenaiApiKey,
           whatsappAutoSend: !!row.whatsappAutoSend,
+          vapiApiKey: row.vapiApiKey ?? "",
+          vapiPhoneNumberId: row.vapiPhoneNumberId ?? "",
+          vapiAssistantId: row.vapiAssistantId ?? "",
+          vapiAutoCall: !!row.vapiAutoCall,
         }
       : {
           ...memConfig,
@@ -50,6 +54,10 @@ export function registerAIConfigHandlers(
           hasOpenaiApiKey: false,
           maskedOpenaiApiKey: null,
           whatsappAutoSend: false,
+          vapiApiKey: "",
+          vapiPhoneNumberId: "",
+          vapiAssistantId: "",
+          vapiAutoCall: false,
         };
 
     // Fetch available models
@@ -120,6 +128,18 @@ export function registerAIConfigHandlers(
       }
       if ((data as any).whatsappAutoSend !== undefined) {
         updates.whatsappAutoSend = (data as any).whatsappAutoSend ? 1 : 0;
+      }
+      if ((data as any).vapiApiKey !== undefined) {
+        updates.vapiApiKey = (data as any).vapiApiKey;
+      }
+      if ((data as any).vapiPhoneNumberId !== undefined) {
+        updates.vapiPhoneNumberId = (data as any).vapiPhoneNumberId;
+      }
+      if ((data as any).vapiAssistantId !== undefined) {
+        updates.vapiAssistantId = (data as any).vapiAssistantId;
+      }
+      if ((data as any).vapiAutoCall !== undefined) {
+        updates.vapiAutoCall = (data as any).vapiAutoCall ? 1 : 0;
       }
       await db.update(aiConfig).set(updates);
     } else {
