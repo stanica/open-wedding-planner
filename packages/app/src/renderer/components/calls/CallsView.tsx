@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { useRequest, useMutation } from "../../hooks/useRequest";
+import { useRequest } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { EmptyState } from "../common/EmptyState";
-import { ApprovalActions } from "../outreach/ApprovalActions";
 import { Phone, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
@@ -26,7 +25,6 @@ interface VoiceCall {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "border border-on-surface-faint text-on-surface-muted",
   queued: "bg-on-surface-faint/20 text-on-surface-muted",
   ringing: "bg-yellow-500/20 text-yellow-400",
   "in-progress": "bg-blue-500/20 text-blue-400 animate-pulse",
@@ -70,9 +68,6 @@ export function CallsView() {
     refetch,
   } = useRequest<VoiceCall[]>("vapi.listCalls", {});
 
-  const { mutate: approveDraft } = useMutation<{ callId: number }>("vapi.approveDraft");
-  const { mutate: rejectDraft } = useMutation<{ callId: number }>("vapi.rejectDraft");
-
   // Listen for real-time updates
   const handleEvent = useCallback(
     (event: GatewayEvent) => {
@@ -84,8 +79,7 @@ export function CallsView() {
       }
       if (
         event.name === "agent-activity" &&
-        (event.data.action === "vapi-call-initiated" ||
-          event.data.action === "vapi-call-draft")
+        event.data.action === "vapi-call-initiated"
       ) {
         refetch();
       }
@@ -103,18 +97,6 @@ export function CallsView() {
   useEffect(() => {
     setTranscriptOpen(false);
   }, [selectedCallId]);
-
-  async function handleApprove() {
-    if (!selectedCall) return;
-    await approveDraft({ callId: selectedCall.id });
-    refetch();
-  }
-
-  async function handleReject() {
-    if (!selectedCall) return;
-    await rejectDraft({ callId: selectedCall.id });
-    refetch();
-  }
 
   if (loading) {
     return (
@@ -215,26 +197,8 @@ export function CallsView() {
             </div>
 
             <div className="px-6 py-4 space-y-6">
-              {/* Draft approval */}
-              {selectedCall.status === "draft" && (
-                <div className="rounded-lg border border-border p-4">
-                  <h3 className="text-sm font-semibold text-on-surface mb-2">
-                    Pending Approval
-                  </h3>
-                  {selectedCall.instructions && (
-                    <blockquote className="border-l-2 border-on-surface-faint pl-3 mb-3 text-sm text-on-surface-muted italic">
-                      {selectedCall.instructions}
-                    </blockquote>
-                  )}
-                  <ApprovalActions
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                  />
-                </div>
-              )}
-
-              {/* Instructions (non-draft) */}
-              {selectedCall.status !== "draft" && selectedCall.instructions && (
+              {/* Instructions */}
+              {selectedCall.instructions && (
                 <div>
                   <h3 className="text-sm font-semibold text-on-surface mb-1">
                     Instructions

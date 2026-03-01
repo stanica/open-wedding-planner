@@ -125,7 +125,7 @@ export function GoogleServicesSetup() {
     <div className="rounded-lg border border-border bg-surface-elevated px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Mail className="h-5 w-5 text-blue-400" />
+          <Mail className="h-5 w-5 text-accent" />
           <div>
             <p className="text-sm font-medium text-on-surface">Google Services</p>
             <p className="text-xs text-on-surface-secondary">
@@ -146,14 +146,14 @@ export function GoogleServicesSetup() {
             You can create one at{" "}
             <button
               onClick={() => openExternal("https://console.cloud.google.com/apis/credentials")}
-              className="text-blue-400 hover:underline"
+              className="text-accent hover:underline"
             >
               Google Cloud Console
             </button>
             .
           </p>
           {credError && (
-            <p className="text-xs text-error rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
+            <p className="text-xs text-error rounded-lg bg-error-bg border border-error/20 px-3 py-2">
               {credError}
             </p>
           )}
@@ -164,13 +164,13 @@ export function GoogleServicesSetup() {
                 onChange={(e) => setPastedJson(e.target.value)}
                 placeholder='Paste your client_secret JSON here...'
                 rows={6}
-                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs font-mono text-on-surface placeholder:text-placeholder focus:border-blue-500 focus:outline-none resize-none"
+                className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-xs font-mono text-on-surface placeholder:text-placeholder focus:border-accent focus:outline-none resize-none"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handlePasteCredentials}
                   disabled={settingCreds || !pastedJson.trim()}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
                 >
                   {settingCreds ? "Saving..." : "Save Credentials"}
                 </button>
@@ -187,7 +187,7 @@ export function GoogleServicesSetup() {
               <button
                 onClick={handleCredentialsFile}
                 disabled={settingCreds}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
               >
                 <Upload className="h-4 w-4" />
                 {settingCreds ? "Saving..." : "Upload File"}
@@ -212,7 +212,7 @@ export function GoogleServicesSetup() {
             placeholder="your@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder:text-placeholder focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-lg border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder:text-placeholder focus:border-accent focus:outline-none"
           />
           <div className="space-y-2">
             <p className="text-xs text-on-surface-secondary">Select services to authorize:</p>
@@ -235,14 +235,14 @@ export function GoogleServicesSetup() {
             ))}
           </div>
           {connectError && (
-            <p className="text-xs text-error rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 break-all">
+            <p className="text-xs text-error rounded-lg bg-error-bg border border-error/20 px-3 py-2 break-all">
               {connectError}
             </p>
           )}
           <button
             onClick={handleConnect}
             disabled={connecting || !email || selectedServices.length === 0}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
           >
             {connecting ? "Opening browser..." : "Connect Google Account"}
           </button>
@@ -256,7 +256,7 @@ export function GoogleServicesSetup() {
             {status?.services.map((svc) => (
               <span
                 key={svc}
-                className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs text-blue-300"
+                className="rounded-full bg-accent-subtle px-2 py-0.5 text-xs text-accent"
               >
                 {svc}
               </span>
@@ -273,7 +273,7 @@ export function GoogleServicesSetup() {
             <button
               onClick={() => updateAutoSend({ autoSend: !status?.autoSend })}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                status?.autoSend ? "bg-blue-600" : "bg-gray-600"
+                status?.autoSend ? "bg-blue-600" : "bg-on-surface-faint"
               }`}
             >
               <span
@@ -289,7 +289,7 @@ export function GoogleServicesSetup() {
               await disconnect({});
               refetch();
             }}
-            className="w-full rounded-lg border border-red-500/30 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full rounded-lg border border-error/30 px-4 py-2 text-sm text-error hover:bg-error-bg transition-colors"
           >
             Disconnect
           </button>

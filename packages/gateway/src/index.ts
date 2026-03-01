@@ -110,20 +110,6 @@ export async function startGateway(options: GatewayOptions = {}) {
     embeddingService,
     sqlite,
     broadcast,
-    {
-      vapiChannel: {
-        createCall: (params) => {
-          const cfg = readVapiConfig();
-          if (!cfg) throw new Error("VAPI is not configured");
-          return new VapiChannel({ apiKey: cfg.apiKey }).createCall(params);
-        },
-      } as VapiChannel,
-      getVapiConfig: () => {
-        const cfg = readVapiConfig();
-        return cfg ? { phoneNumberId: cfg.phoneNumberId, assistantId: cfg.assistantId } : null;
-      },
-      broadcast,
-    },
   );
 
   // 7c. WhatsApp channel + delivery queue
@@ -334,13 +320,6 @@ export async function startGateway(options: GatewayOptions = {}) {
     };
   };
 
-  const getVapiAutoCall = () => {
-    const rows = sqlite
-      .prepare("SELECT vapi_auto_call FROM ai_config LIMIT 1")
-      .all() as any[];
-    return rows.length > 0 && rows[0].vapi_auto_call === 1;
-  };
-
   // 8c-ii. Auto-start VAPI tunnel (always start — no harm if VAPI isn't configured yet)
   // When the tunnel connects, update VAPI phone number's server URL if configured.
   vapiTunnelManager.onStatus(async (status) => {
@@ -384,7 +363,6 @@ export async function startGateway(options: GatewayOptions = {}) {
         const cfg = getVapiConfig();
         return cfg ? new VapiChannel({ apiKey: cfg.apiKey }) : null;
       },
-      getVapiAutoCall,
       getVapiConfig: () => {
         const cfg = getVapiConfig();
         if (!cfg) return null;

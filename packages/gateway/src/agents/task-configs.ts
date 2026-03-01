@@ -22,6 +22,7 @@ const RESEARCH_PROMPT = `You are a wedding vendor research assistant. Your job i
 - After finding multiple vendors, provide a brief comparison summary highlighting key differences
 - You can use the cmd tool to run scripts for data processing
 - You can use dbQuery and dbSchema to inspect or modify the database directly
+- When making a phone call, always check to see if the number already exists in the vendor table
 
 ## Categories
 Venue, Food/Beverage, Ceremony, Photography/Videography, Decor, Stationery, Attire, Entertainment, Planner/Coordinator, Miscellaneous, Contingency

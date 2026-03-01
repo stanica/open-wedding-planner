@@ -82,7 +82,7 @@ export function DataManagement() {
             ) : (
               <button
                 onClick={() => setClearing(group.key)}
-                className="flex items-center gap-1.5 rounded-lg bg-red-600/10 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-600/20 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg bg-error-bg px-3 py-1.5 text-sm font-medium text-error hover:bg-error-bg/80 transition-colors"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Clear

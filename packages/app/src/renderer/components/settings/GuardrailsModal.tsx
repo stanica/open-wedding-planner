@@ -36,7 +36,7 @@ function NumberField({
         value={value}
         min={min}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
+        className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-accent focus:outline-none"
       />
       {hint && <p className="text-xs text-on-surface-faint">{hint}</p>}
     </div>
@@ -58,7 +58,7 @@ function DetectorToggle({
         type="checkbox"
         checked={enabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-3.5 w-3.5 rounded accent-indigo-500"
+        className="h-3.5 w-3.5 rounded accent-accent"
       />
       <span className="text-sm font-medium text-on-surface">{label}</span>
     </label>
@@ -192,7 +192,7 @@ export function GuardrailsModal({
                     e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                   )
                 }
-                className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-md border border-border bg-surface-elevated px-3 py-1.5 text-sm text-on-surface focus:border-accent focus:outline-none"
                 placeholder="dbQuery, dbSchema"
               />
               <p className="text-xs text-on-surface-faint">Comma-separated tool names</p>
@@ -257,7 +257,7 @@ export function GuardrailsModal({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50 transition-colors"
           >
             {saving ? "Saving..." : "Save"}
           </button>

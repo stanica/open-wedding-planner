@@ -40,7 +40,7 @@ export function LocalServerStatus() {
 
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 flex-1 bg-surface-elevated border border-border rounded-lg px-3 py-2">
-          <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-success shrink-0" />
           <span className="text-sm text-on-surface font-mono truncate">
             {url ?? "Starting…"}
           </span>

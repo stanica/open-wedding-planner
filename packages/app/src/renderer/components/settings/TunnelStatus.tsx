@@ -117,7 +117,7 @@ export function TunnelStatus() {
           disabled={isBusy}
           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 disabled:opacity-50 ${
             isActive
-              ? "bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+              ? "bg-error-bg border border-error/30 text-error hover:bg-error-bg/80"
               : "bg-surface-active border border-border-hover text-on-surface hover:bg-surface-active"
           }`}
         >
@@ -132,7 +132,7 @@ export function TunnelStatus() {
       </div>
 
       {status.state === "error" && (
-        <div className="flex items-start gap-2 text-xs text-red-400/80 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+        <div className="flex items-start gap-2 text-xs text-error/80 bg-error-bg border border-error/20 rounded-lg px-3 py-2">
           <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
             Make sure the app was installed via the packaged installer, which
@@ -146,12 +146,12 @@ export function TunnelStatus() {
 
 function StatusDot({ state }: { state: TunnelState["state"] }) {
   if (state === "running")
-    return <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />;
+    return <span className="w-2 h-2 rounded-full bg-success shrink-0" />;
   if (state === "starting")
     return (
-      <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shrink-0" />
+      <span className="w-2 h-2 rounded-full bg-warning animate-pulse shrink-0" />
     );
   if (state === "error")
-    return <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />;
+    return <span className="w-2 h-2 rounded-full bg-error shrink-0" />;
   return <span className="w-2 h-2 rounded-full bg-surface-active shrink-0" />;
 }

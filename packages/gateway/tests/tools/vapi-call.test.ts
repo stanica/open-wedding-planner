@@ -46,7 +46,6 @@ describe("makeVapiCallTool", () => {
     ctx = {
       db,
       emit: vi.fn(),
-      getAutoCall: () => false,
       createCall: mockCreateCall,
       getVapiConfig: () => ({
         phoneNumberId: "pn-1",
@@ -55,20 +54,7 @@ describe("makeVapiCallTool", () => {
     };
   });
 
-  it("creates a draft voice call when auto-call is off", async () => {
-    const tool = makeVapiCallTool(ctx);
-    const result = await tool.execute!(
-      { vendorId: 1, phoneNumber: "+15551234567", instructions: "Ask about flower pricing" },
-      toolContext,
-    ) as any;
-
-    expect(result.status).toBe("draft");
-    expect(result.callId).toBeDefined();
-    expect(mockCreateCall).not.toHaveBeenCalled();
-  });
-
-  it("creates and initiates call when auto-call is on", async () => {
-    ctx.getAutoCall = () => true;
+  it("creates and initiates call immediately", async () => {
     const tool = makeVapiCallTool(ctx);
     const result = await tool.execute!(
       { vendorId: 1, phoneNumber: "+15551234567", instructions: "Ask about flower pricing" },
@@ -81,7 +67,6 @@ describe("makeVapiCallTool", () => {
   });
 
   it("looks up vendor phone number when not provided", async () => {
-    ctx.getAutoCall = () => true;
     const tool = makeVapiCallTool(ctx);
     const result = await tool.execute!(
       { vendorId: 1, instructions: "Ask about flower pricing" },

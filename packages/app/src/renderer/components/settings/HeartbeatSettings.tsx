@@ -64,7 +64,7 @@ export function HeartbeatSettings() {
             type="checkbox"
             checked={enabled}
             onChange={(e) => setEnabled(e.target.checked)}
-            className="h-4 w-4 rounded accent-indigo-500"
+            className="h-4 w-4 rounded accent-accent"
           />
           <div>
             <p className="text-sm font-medium text-on-surface">
@@ -84,7 +84,7 @@ export function HeartbeatSettings() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="e.g. Find florists in Tuscany under €3,000. Check for availability on our wedding date."
             rows={4}
-            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none resize-y"
+            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none resize-y"
           />
         </div>
 
@@ -94,7 +94,7 @@ export function HeartbeatSettings() {
           <select
             value={intervalMinutes}
             onChange={(e) => setIntervalMinutes(Number(e.target.value))}
-            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-accent focus:outline-none"
           >
             {INTERVAL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -116,7 +116,7 @@ export function HeartbeatSettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

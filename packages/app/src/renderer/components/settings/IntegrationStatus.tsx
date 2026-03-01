@@ -84,9 +84,9 @@ export function StatusIndicator({
   label?: string;
 }) {
   const colors = {
-    disconnected: "bg-gray-600",
-    connecting: "bg-yellow-500 animate-pulse",
-    connected: "bg-green-500",
+    disconnected: "bg-on-surface-faint",
+    connecting: "bg-warning animate-pulse",
+    connected: "bg-success",
   };
 
   const labels = {
@@ -96,7 +96,7 @@ export function StatusIndicator({
   };
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-800 px-2.5 py-1 text-xs text-on-surface-secondary">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-active px-2.5 py-1 text-xs text-on-surface-secondary">
       <span className={`h-1.5 w-1.5 rounded-full ${colors[status]}`} />
       {label ?? labels[status]}
     </span>

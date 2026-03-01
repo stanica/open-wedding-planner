@@ -55,7 +55,7 @@ export function GuardrailsSettings() {
             type="checkbox"
             checked={config.enabled}
             onChange={(e) => handleToggle(e.target.checked)}
-            className="h-4 w-4 rounded accent-indigo-500"
+            className="h-4 w-4 rounded accent-accent"
           />
           <div>
             <p className="text-sm font-medium text-on-surface">Enable guardrails</p>

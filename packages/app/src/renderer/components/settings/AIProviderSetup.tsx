@@ -163,7 +163,7 @@ export function AIProviderSetup() {
               name="ai-provider"
               checked={provider === "api-key"}
               onChange={() => handleProviderChange("api-key")}
-              className="accent-indigo-500"
+              className="accent-accent"
             />
             <div>
               <p className="text-sm font-medium text-on-surface">
@@ -181,7 +181,7 @@ export function AIProviderSetup() {
               name="ai-provider"
               checked={provider === "claude-max"}
               onChange={() => handleProviderChange("claude-max")}
-              className="accent-indigo-500"
+              className="accent-accent"
             />
             <div>
               <p className="text-sm font-medium text-on-surface">
@@ -201,7 +201,7 @@ export function AIProviderSetup() {
             <div className="flex items-center gap-2">
               <div
                 className={`h-2 w-2 rounded-full ${
-                  config.hasApiKey ? "bg-green-400" : "bg-gray-500"
+                  config.hasApiKey ? "bg-success" : "bg-on-surface-faint"
                 }`}
               />
               <p className="text-xs text-on-surface-secondary">
@@ -225,7 +225,7 @@ export function AIProviderSetup() {
                     setValidationResult(null);
                   }}
                   placeholder="sk-ant-..."
-                  className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
                 />
                 <button
                   onClick={handleValidate}
@@ -270,12 +270,12 @@ export function AIProviderSetup() {
               <div
                 className={`h-2 w-2 rounded-full ${
                   proxyStatus.running
-                    ? "bg-green-400"
+                    ? "bg-success"
                     : startingProxy
-                      ? "bg-yellow-400 animate-pulse"
+                      ? "bg-warning animate-pulse"
                       : proxyError || proxyStatus.error
-                        ? "bg-red-400"
-                        : "bg-gray-500"
+                        ? "bg-error"
+                        : "bg-on-surface-faint"
                 }`}
               />
               <p className="text-xs text-on-surface-secondary">
@@ -324,7 +324,7 @@ export function AIProviderSetup() {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-accent focus:outline-none"
             >
               {models.map((m) => (
                 <option key={m} value={m}>
@@ -341,7 +341,7 @@ export function AIProviderSetup() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               placeholder="e.g. claude-sonnet-4-20250514"
-              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
             />
           )}
         </div>
@@ -360,7 +360,7 @@ export function AIProviderSetup() {
             <div className="flex items-center gap-2">
               <div
                 className={`h-2 w-2 rounded-full ${
-                  config.hasOpenaiApiKey ? "bg-green-400" : "bg-gray-500"
+                  config.hasOpenaiApiKey ? "bg-success" : "bg-on-surface-faint"
                 }`}
               />
               <p className="text-xs text-on-surface-secondary">
@@ -376,7 +376,7 @@ export function AIProviderSetup() {
               value={openaiApiKey}
               onChange={(e) => setOpenaiApiKey(e.target.value)}
               placeholder="sk-..."
-              className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-indigo-500 focus:outline-none"
+              className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
             />
           </div>
           {!config.hasOpenaiApiKey && (
@@ -393,7 +393,7 @@ export function AIProviderSetup() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-on-surface hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>

@@ -28,7 +28,7 @@ export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: Wh
     <div className="rounded-lg border border-border bg-surface-elevated px-4 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageCircle className="h-5 w-5 text-green-400" />
+          <MessageCircle className="h-5 w-5 text-success" />
           <div>
             <p className="text-sm font-medium text-on-surface">WhatsApp</p>
             <p className="text-xs text-on-surface-secondary">
@@ -81,7 +81,7 @@ export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: Wh
             <button
               onClick={() => onAutoSendChange(!autoSend)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                autoSend ? "bg-green-600" : "bg-gray-600"
+                autoSend ? "bg-green-600" : "bg-on-surface-faint"
               }`}
             >
               <span
@@ -94,7 +94,7 @@ export function WhatsAppSetup({ status, qrCode, autoSend, onAutoSendChange }: Wh
 
           <button
             onClick={handleDisconnect}
-            className="w-full rounded-lg border border-red-500/30 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full rounded-lg border border-error/30 px-4 py-2 text-sm text-error hover:bg-error-bg transition-colors"
           >
             Disconnect
           </button>
