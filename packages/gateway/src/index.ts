@@ -85,11 +85,21 @@ export async function startGateway(options: GatewayOptions = {}) {
   let broadcastFn: ((event: GatewayEvent) => void) | undefined;
   const broadcast = (event: GatewayEvent) => broadcastFn?.(event);
 
-  // Lazy VAPI refs — vapiChannel and config are created after handler registration,
-  // but handlers are only called after startup completes.
-  let lazyVapiChannel: VapiChannel | null = null;
-  let lazyGetVapiConfig: (() => { phoneNumberId: string; assistantId: string } | null) | null =
-    null;
+  // Dynamic VAPI config reader — reads fresh from DB on every call
+  // so config changes in Settings take effect without restart.
+  const readVapiConfig = () => {
+    const rows = sqlite
+      .prepare("SELECT vapi_api_key, vapi_phone_number_id, vapi_assistant_id FROM ai_config LIMIT 1")
+      .all() as any[];
+    if (!rows.length) return null;
+    const r = rows[0];
+    if (!r.vapi_api_key || !r.vapi_phone_number_id || !r.vapi_assistant_id) return null;
+    return {
+      apiKey: r.vapi_api_key as string,
+      phoneNumberId: r.vapi_phone_number_id as string,
+      assistantId: r.vapi_assistant_id as string,
+    };
+  };
 
   registerAllHandlers(
     router,
@@ -103,11 +113,15 @@ export async function startGateway(options: GatewayOptions = {}) {
     {
       vapiChannel: {
         createCall: (params) => {
-          if (!lazyVapiChannel) throw new Error("VAPI channel not initialized");
-          return lazyVapiChannel.createCall(params);
+          const cfg = readVapiConfig();
+          if (!cfg) throw new Error("VAPI is not configured");
+          return new VapiChannel({ apiKey: cfg.apiKey }).createCall(params);
         },
       } as VapiChannel,
-      getVapiConfig: () => lazyGetVapiConfig?.() ?? null,
+      getVapiConfig: () => {
+        const cfg = readVapiConfig();
+        return cfg ? { phoneNumberId: cfg.phoneNumberId, assistantId: cfg.assistantId } : null;
+      },
       broadcast,
     },
   );
@@ -327,24 +341,16 @@ export async function startGateway(options: GatewayOptions = {}) {
     return rows.length > 0 && rows[0].vapi_auto_call === 1;
   };
 
-  const vapiConfig = getVapiConfig();
-  const vapiChannel = vapiConfig ? new VapiChannel({ apiKey: vapiConfig.apiKey }) : null;
-
-  // Wire up lazy VAPI refs for handler deps
-  lazyVapiChannel = vapiChannel;
-  lazyGetVapiConfig = () => {
-    const cfg = getVapiConfig();
-    if (!cfg) return null;
-    return { phoneNumberId: cfg.phoneNumberId, assistantId: cfg.assistantId };
-  };
-
-  // 8c-ii. Auto-start VAPI tunnel if VAPI is configured
-  if (vapiChannel && vapiConfig) {
-    vapiTunnelManager.onStatus(async (status) => {
-      if (status.state === "running" && status.url) {
+  // 8c-ii. Auto-start VAPI tunnel (always start — no harm if VAPI isn't configured yet)
+  // When the tunnel connects, update VAPI phone number's server URL if configured.
+  vapiTunnelManager.onStatus(async (status) => {
+    if (status.state === "running" && status.url) {
+      const cfg = getVapiConfig();
+      if (cfg) {
         try {
-          await vapiChannel.updatePhoneNumberServerUrl(
-            vapiConfig.phoneNumberId,
+          const ch = new VapiChannel({ apiKey: cfg.apiKey });
+          await ch.updatePhoneNumberServerUrl(
+            cfg.phoneNumberId,
             `${status.url}/vapi/webhook`,
           );
           console.log(`VAPI webhook URL set to: ${status.url}/vapi/webhook`);
@@ -352,11 +358,11 @@ export async function startGateway(options: GatewayOptions = {}) {
           console.error("Failed to update VAPI phone number server URL:", err);
         }
       }
-    });
-    vapiTunnelManager.start(port).catch((err) => {
-      console.error("Failed to start VAPI tunnel:", err);
-    });
-  }
+    }
+  });
+  vapiTunnelManager.start(port).catch((err) => {
+    console.error("Failed to start VAPI tunnel:", err);
+  });
 
   const orchestrator = new Orchestrator(
     db,
@@ -374,7 +380,10 @@ export async function startGateway(options: GatewayOptions = {}) {
       getGoogleConfig,
       imagesDir,
       embeddingService,
-      vapiChannel,
+      getVapiChannel: () => {
+        const cfg = getVapiConfig();
+        return cfg ? new VapiChannel({ apiKey: cfg.apiKey }) : null;
+      },
       getVapiAutoCall,
       getVapiConfig: () => {
         const cfg = getVapiConfig();

@@ -163,19 +163,16 @@ export function createToolRegistry(): ToolRegistry {
     description: "Initiate a voice call to a vendor via VAPI",
     category: "messaging",
     create: (ctx: unknown) => {
-      const { db, emit, vapiChannel, getVapiAutoCall, getVapiConfig } = ctx as any;
-      if (!vapiChannel) {
-        return tool({
-          description: "Voice calling is not configured. Ask the user to set up VAPI in Settings.",
-          inputSchema: z.object({}),
-          execute: async () => ({ error: "VAPI is not configured. The user needs to add VAPI credentials in Settings." }),
-        });
-      }
+      const { db, emit, getVapiAutoCall, getVapiConfig, getVapiChannel } = ctx as any;
       return makeVapiCallTool({
         db,
         emit,
         getAutoCall: getVapiAutoCall ?? (() => false),
-        createCall: (params) => vapiChannel.createCall(params),
+        createCall: (params) => {
+          const ch = getVapiChannel?.();
+          if (!ch) throw new Error("VAPI is not configured. Set API key, phone number ID, and assistant ID in Settings.");
+          return ch.createCall(params);
+        },
         getVapiConfig: getVapiConfig ?? (() => null),
       });
     },
