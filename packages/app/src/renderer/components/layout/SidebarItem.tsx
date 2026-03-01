@@ -16,8 +16,8 @@ export function SidebarItem({ to, icon: Icon, label, collapsed }: SidebarItemPro
       className={({ isActive }) =>
         `relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
           isActive
-            ? "text-white"
-            : "text-gray-400 hover:text-white hover:bg-white/5"
+            ? "text-on-surface"
+            : "text-on-surface-secondary hover:text-on-surface hover:bg-surface-hover"
         }`
       }
     >
@@ -26,7 +26,7 @@ export function SidebarItem({ to, icon: Icon, label, collapsed }: SidebarItemPro
           {isActive && (
             <motion.div
               layoutId="sidebar-active"
-              className="absolute inset-0 rounded-lg bg-white/10"
+              className="absolute inset-0 rounded-lg bg-surface-active"
               transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
             />
           )}

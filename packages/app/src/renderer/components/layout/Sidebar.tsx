@@ -30,19 +30,19 @@ const NAV_ITEMS = [
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
-      className={`flex h-full flex-col border-r border-white/10 bg-gray-950 transition-[width] duration-200 ${
+      className={`flex h-full flex-col border-r border-border bg-surface transition-[width] duration-200 ${
         collapsed ? "w-16" : "w-56"
       }`}
     >
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-4">
+      <div className="flex items-center gap-2 border-b border-border px-3 py-4">
         {!collapsed && (
-          <span className="text-sm font-semibold text-white truncate">
+          <span className="text-sm font-semibold text-on-surface truncate">
             Open Wedding Planner
           </span>
         )}
         <button
           onClick={onToggle}
-          className="ml-auto text-gray-400 hover:text-white p-1 rounded hover:bg-white/5"
+          className="ml-auto text-on-surface-secondary hover:text-on-surface p-1 rounded hover:bg-surface-hover"
         >
           {collapsed ? (
             <PanelLeft className="h-4 w-4" />
@@ -58,7 +58,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ))}
       </nav>
 
-      <div className="border-t border-white/10 px-2 py-3 space-y-1">
+      <div className="border-t border-border px-2 py-3 space-y-1">
 <SidebarItem
           to="/settings"
           icon={Settings}
