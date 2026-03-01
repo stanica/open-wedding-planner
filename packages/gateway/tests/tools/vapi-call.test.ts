@@ -47,10 +47,12 @@ describe("makeVapiCallTool", () => {
       db,
       emit: vi.fn(),
       createCall: mockCreateCall,
+      getCall: vi.fn(),
       getVapiConfig: () => ({
         phoneNumberId: "pn-1",
         assistantId: "asst-1",
       }),
+      broadcast: vi.fn(),
     };
   });
 

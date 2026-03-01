@@ -80,4 +80,19 @@ describe("VAPI handlers", () => {
       ).rejects.toThrow("not found");
     });
   });
+
+  describe("vapi.deleteCall", () => {
+    it("deletes a call", async () => {
+      await db.insert(schema.voiceCalls).values({
+        vendorId: 1,
+        phoneNumber: "+15551234567",
+        status: "ended",
+        instructions: "Ask about pricing",
+      });
+
+      await router.handle(db, "vapi.deleteCall", { id: 1 });
+      const result = (await router.handle(db, "vapi.listCalls", {})) as any[];
+      expect(result).toHaveLength(0);
+    });
+  });
 });

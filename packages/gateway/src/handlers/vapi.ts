@@ -58,4 +58,10 @@ export function registerVapiHandlers(router: Router) {
     if (!row) throw new Error(`Voice call ${id} not found`);
     return row;
   });
+
+  router.register("vapi.deleteCall", async (db: Db, params: unknown) => {
+    const { id } = params as { id: number };
+    await db.delete(voiceCalls).where(eq(voiceCalls.id, id));
+    return { ok: true };
+  });
 }

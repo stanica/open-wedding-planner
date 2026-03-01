@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { generateText } from "ai";
-import { researchMessages, communications, vendors } from "../db/schema.js";
+import { researchMessages, communications, vendors, voiceCalls } from "../db/schema.js";
 import type { Router, Db } from "../infra/router.js";
 import type { Orchestrator } from "../agents/orchestrator.js";
 import { getSummarizationModel, setAIConfig, getAIConfig } from "../agents/model-provider.js";
@@ -127,6 +127,52 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
     const { taskId, sessionKey } = await orchestrator.dispatch("action", {
       communicationId,
       vendorId: targetVendorId,
+      instruction,
+      messages: contextMessages,
+    });
+    return { taskId, sessionKey };
+  });
+
+  router.register("agent.callAction", async (db, params) => {
+    const { callId, instruction, history } = params as {
+      callId: number;
+      instruction: string;
+      history?: Array<{ role: string; content: string }>;
+    };
+
+    const [call] = await db
+      .select()
+      .from(voiceCalls)
+      .where(eq(voiceCalls.id, callId));
+
+    if (!call) throw new Error(`Voice call ${callId} not found`);
+
+    let vendorName = "Unknown";
+    if (call.vendorId) {
+      const [vendor] = await db.select({ name: vendors.name }).from(vendors).where(eq(vendors.id, call.vendorId));
+      vendorName = vendor?.name ?? "Unknown";
+    }
+
+    let contextText = `## Voice Call with ${vendorName}\n`;
+    contextText += `Phone: ${call.phoneNumber}\n`;
+    contextText += `Status: ${call.status}\n`;
+    if (call.createdAt) contextText += `Date: ${call.createdAt}\n`;
+    if (call.duration) contextText += `Duration: ${Math.floor(call.duration / 60)}m ${call.duration % 60}s\n`;
+    if (call.instructions) contextText += `\n## Call Instructions\n${call.instructions}\n`;
+    if (call.summary) contextText += `\n## Call Summary\n${call.summary}\n`;
+    if (call.transcript) contextText += `\n## Full Transcript\n${call.transcript}\n`;
+    if (call.structuredData) contextText += `\n## Structured Data\n${call.structuredData}\n`;
+
+    const contextMessages = [
+      {
+        role: "user",
+        content: `${contextText}\nUser instruction: ${instruction}`,
+      },
+      ...(history ?? []).slice(0, -1),
+    ];
+
+    const { taskId, sessionKey } = await orchestrator.dispatch("action", {
+      vendorId: call.vendorId ?? undefined,
       instruction,
       messages: contextMessages,
     });

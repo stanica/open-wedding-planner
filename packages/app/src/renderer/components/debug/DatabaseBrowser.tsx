@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { wsClient } from "../../lib/ws-client";
 
 const PAGE_SIZE = 50;
@@ -169,6 +169,7 @@ function EditableCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
+  const savingRef = useRef(false);
 
   const displayValue =
     value === null
@@ -182,13 +183,15 @@ function EditableCell({
     setDraft(value === null ? "" : String(value));
     setEditing(true);
     setStatus("idle");
+    savingRef.current = false;
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setStatus("saving");
     try {
-      const parsed =
-        draft === "" ? null : isFinite(Number(draft)) ? Number(draft) : draft;
+      const parsed = draft === "" ? null : draft;
       await wsClient.request("db.update", {
         table,
         id: rowId,
@@ -200,12 +203,17 @@ function EditableCell({
       onSaved();
     } catch {
       setStatus("error");
+      savingRef.current = false;
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSave();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    }
     if (e.key === "Escape") {
+      savingRef.current = true; // Prevent blur from saving
       setEditing(false);
       setStatus("idle");
     }
@@ -219,10 +227,7 @@ function EditableCell({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={() => {
-            setEditing(false);
-            setStatus("idle");
-          }}
+          onBlur={() => handleSave()}
           className={`w-full bg-surface-elevated border rounded px-1 py-0.5 text-xs text-on-surface outline-none ${
             status === "error" ? "border-error" : "border-border-hover"
           }`}

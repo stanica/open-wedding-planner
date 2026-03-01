@@ -8,6 +8,12 @@ export interface CreateCallParams {
   customerNumber: string;
   assistantOverrides?: {
     variableValues?: Record<string, string>;
+    model?: {
+      provider?: string;
+      model?: string;
+      messages?: Array<{ role: string; content: string }>;
+    };
+    firstMessage?: string;
   };
 }
 
