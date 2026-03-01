@@ -78,7 +78,7 @@ export function WhileYouWereGone() {
         <Bot className="h-5 w-5 text-indigo-400" />
         <h2 className="text-lg font-semibold">While You Were Gone</h2>
         {data.lastRunAt && (
-          <span className="text-xs text-gray-500 ml-auto">
+          <span className="text-xs text-on-surface-tertiary ml-auto">
             Last run: {new Date(data.lastRunAt).toLocaleString()}
           </span>
         )}
@@ -87,7 +87,7 @@ export function WhileYouWereGone() {
       {!hasActivity ? (
         <Card>
           <CardContent>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-on-surface-secondary">
               {data.heartbeatEnabled
                 ? "No activity yet. The scheduled research agent will run automatically and results will appear here."
                 : (
@@ -110,7 +110,7 @@ export function WhileYouWereGone() {
         {data.tasks.length > 0 && (
           <Card>
             <CardContent>
-              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+              <p className="text-xs font-medium text-on-surface-secondary mb-2 uppercase tracking-wide">
                 Research completed
               </p>
               <div className="space-y-2">
@@ -121,10 +121,10 @@ export function WhileYouWereGone() {
                     >
                       {task.status}
                     </Badge>
-                    <p className="text-sm text-gray-300 flex-1">
+                    <p className="text-sm text-on-surface-secondary flex-1">
                       {task.summary ?? "No summary available"}
                     </p>
-                    <span className="text-xs text-gray-500 shrink-0">
+                    <span className="text-xs text-on-surface-tertiary shrink-0">
                       {task.completedAt
                         ? new Date(task.completedAt).toLocaleTimeString()
                         : ""}
@@ -140,7 +140,7 @@ export function WhileYouWereGone() {
         {data.newVendors.length > 0 && (
           <Card>
             <CardContent>
-              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+              <p className="text-xs font-medium text-on-surface-secondary mb-2 uppercase tracking-wide">
                 Vendors found
               </p>
               <div className="space-y-1">
@@ -148,10 +148,10 @@ export function WhileYouWereGone() {
                   <button
                     key={vendor.id}
                     onClick={() => navigate(`/vendors/${vendor.id}`)}
-                    className="flex items-center gap-2 w-full text-left rounded-md px-2 py-1.5 hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2 w-full text-left rounded-md px-2 py-1.5 hover:bg-surface-hover transition-colors"
                   >
                     <UserPlus className="h-4 w-4 text-blue-400 shrink-0" />
-                    <span className="text-sm text-gray-200 truncate">
+                    <span className="text-sm text-on-surface truncate">
                       {vendor.name}
                     </span>
                     {vendor.categoryName && (
@@ -168,25 +168,25 @@ export function WhileYouWereGone() {
         {data.drafts.length > 0 && (
           <Card>
             <CardContent>
-              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+              <p className="text-xs font-medium text-on-surface-secondary mb-2 uppercase tracking-wide">
                 Drafts awaiting review
               </p>
-              <div className="space-y-3 divide-y divide-white/5">
+              <div className="space-y-3 divide-y divide-border-subtle">
                 {data.drafts.map((draft) => (
                   <div key={draft.id} className="pt-2 first:pt-0">
                     <div className="flex items-center gap-2 mb-1">
                       <MessageSquare className="h-4 w-4 text-purple-400 shrink-0" />
-                      <span className="text-sm font-medium text-gray-200">
+                      <span className="text-sm font-medium text-on-surface">
                         {draft.vendorName ?? `Vendor #${draft.vendorId}`}
                       </span>
                       <Badge variant="info">{draft.channel}</Badge>
                     </div>
                     {draft.subject && (
-                      <p className="text-xs text-gray-400 mb-1 ml-6">
+                      <p className="text-xs text-on-surface-secondary mb-1 ml-6">
                         {draft.subject}
                       </p>
                     )}
-                    <p className="text-sm text-gray-400 ml-6 line-clamp-2">
+                    <p className="text-sm text-on-surface-secondary ml-6 line-clamp-2">
                       {draft.bodyOriginal}
                     </p>
                     <div className="flex gap-2 ml-6 mt-2">
@@ -199,7 +199,7 @@ export function WhileYouWereGone() {
                       </button>
                       <button
                         onClick={() => navigate(`/inbox`)}
-                        className="flex items-center gap-1 rounded-md bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-400 hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-1 rounded-md bg-surface-elevated px-2.5 py-1 text-xs font-medium text-on-surface-secondary hover:bg-surface-active transition-colors"
                       >
                         <Pencil className="h-3 w-3" />
                         Edit
@@ -223,18 +223,18 @@ export function WhileYouWereGone() {
         {data.sent.length > 0 && (
           <Card>
             <CardContent>
-              <p className="text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+              <p className="text-xs font-medium text-on-surface-secondary mb-2 uppercase tracking-wide">
                 Messages sent
               </p>
               <div className="space-y-1">
                 {data.sent.map((msg) => (
                   <div key={msg.id} className="flex items-center gap-2 py-1">
                     <Send className="h-4 w-4 text-green-400 shrink-0" />
-                    <span className="text-sm text-gray-300">
+                    <span className="text-sm text-on-surface-secondary">
                       {msg.vendorName ?? `Vendor #${msg.vendorId}`}
                     </span>
                     <Badge variant="default">{msg.channel}</Badge>
-                    <span className="text-xs text-gray-500 ml-auto">
+                    <span className="text-xs text-on-surface-tertiary ml-auto">
                       {msg.sentAt
                         ? new Date(msg.sentAt).toLocaleTimeString()
                         : ""}

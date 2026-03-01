@@ -97,7 +97,7 @@ export function DashboardView() {
             className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`}
           />
           {!connected && (
-            <span className="text-sm text-gray-400">Connecting...</span>
+            <span className="text-sm text-on-surface-secondary">Connecting...</span>
           )}
         </div>
       </div>
@@ -105,14 +105,14 @@ export function DashboardView() {
       {/* Quick research */}
       <form onSubmit={handleResearch}>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-tertiary" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Research vendors... (e.g. 'florists in Tuscany')"
             disabled={researching}
-            className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-xl border border-border bg-surface-elevated py-3 pl-10 pr-4 text-sm text-on-surface placeholder-placeholder focus:border-blue-500 focus:outline-none"
           />
         </div>
       </form>
@@ -122,7 +122,7 @@ export function DashboardView() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-xl bg-white/5" />
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-surface-elevated" />
           ))}
         </div>
       ) : stats ? (
@@ -135,7 +135,7 @@ export function DashboardView() {
                   <Users className="h-5 w-5 text-blue-400" />
                   <span className="text-2xl font-bold">{stats.vendors.total}</span>
                 </div>
-                <p className="mt-2 text-sm text-gray-400">Total Vendors</p>
+                <p className="mt-2 text-sm text-on-surface-secondary">Total Vendors</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {Object.entries(stats.vendors.byStatus).map(([status, count]) => (
                     <Badge key={status} variant={STATUS_CONFIG[status]?.variant ?? "default"}>
@@ -156,17 +156,17 @@ export function DashboardView() {
                     className="text-2xl font-bold"
                   />
                 </div>
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="mt-2 text-sm text-on-surface-secondary">
                   {stats.budget.total > 0 ? (
                     <>
-                      of <CurrencyDisplay amount={stats.budget.total} currency={stats.budget.currency} className="text-gray-300" /> budget
+                      of <CurrencyDisplay amount={stats.budget.total} currency={stats.budget.currency} className="text-on-surface-secondary" /> budget
                     </>
                   ) : (
                     "Estimated costs"
                   )}
                 </p>
                 {stats.budget.total > 0 && (
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-surface-active overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         stats.budget.actual / stats.budget.total > 1
@@ -190,19 +190,19 @@ export function DashboardView() {
                   <Inbox className="h-5 w-5 text-purple-400" />
                   <span className="text-2xl font-bold">{stats.unreadMessages}</span>
                 </div>
-                <p className="mt-2 text-sm text-gray-400">Unread Messages</p>
+                <p className="mt-2 text-sm text-on-surface-secondary">Unread Messages</p>
               </CardContent>
             </Card>
 
             {stats.vendors.byCategory.length > 0 && (
               <Card>
                 <CardContent>
-                  <p className="text-sm text-gray-400 mb-2">By Category</p>
+                  <p className="text-sm text-on-surface-secondary mb-2">By Category</p>
                   <div className="space-y-1">
                     {stats.vendors.byCategory.slice(0, 4).map((cat) => (
                       <div key={cat.categoryId} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-300 truncate">{cat.categoryName}</span>
-                        <span className="text-gray-500 ml-2">{cat.count}</span>
+                        <span className="text-on-surface-secondary truncate">{cat.categoryName}</span>
+                        <span className="text-on-surface-tertiary ml-2">{cat.count}</span>
                       </div>
                     ))}
                   </div>
@@ -216,7 +216,7 @@ export function DashboardView() {
             <div>
               <h2 className="text-lg font-semibold mb-3">Recent Activity</h2>
               <Card>
-                <CardContent className="divide-y divide-white/5">
+                <CardContent className="divide-y divide-border-subtle">
                   {stats.recentActivity.map((task) => (
                     <div
                       key={task.id}
@@ -225,10 +225,10 @@ export function DashboardView() {
                       <div className="flex items-center gap-3">
                         <ActivityIcon status={task.status} />
                         <div>
-                          <span className="text-sm text-gray-200 capitalize">
+                          <span className="text-sm text-on-surface capitalize">
                             {task.type}
                           </span>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-on-surface-tertiary">
                             {new Date(task.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -267,6 +267,6 @@ function ActivityIcon({ status }: { status: string }) {
     case "running":
       return <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />;
     default:
-      return <Clock className="h-4 w-4 text-gray-400" />;
+      return <Clock className="h-4 w-4 text-on-surface-secondary" />;
   }
 }
