@@ -223,7 +223,7 @@ function EditableCell({
             setEditing(false);
             setStatus("idle");
           }}
-          className={`w-full bg-gray-800 border rounded px-1 py-0.5 text-xs text-on-surface outline-none ${
+          className={`w-full bg-surface-elevated border rounded px-1 py-0.5 text-xs text-on-surface outline-none ${
             status === "error" ? "border-error" : "border-border-hover"
           }`}
         />

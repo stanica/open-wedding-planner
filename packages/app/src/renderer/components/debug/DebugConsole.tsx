@@ -222,7 +222,7 @@ export function DebugConsole() {
               placeholder="Filter..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-gray-800 border border-border rounded px-2 py-1 text-xs text-on-surface placeholder:text-placeholder w-48 focus:outline-none focus:border-border-hover"
+              className="bg-surface-elevated border border-border rounded px-2 py-1 text-xs text-on-surface placeholder:text-placeholder w-48 focus:outline-none focus:border-border-hover"
             />
 
             <button

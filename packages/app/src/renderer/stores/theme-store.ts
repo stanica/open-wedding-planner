@@ -54,3 +54,13 @@ window
       useThemeStore.setState({ resolved });
     }
   });
+
+// Sync theme across windows (debug console is a separate BrowserWindow)
+window.addEventListener("storage", (e) => {
+  if (e.key === "theme-preference" && e.newValue) {
+    const pref = e.newValue as ThemePreference;
+    const resolved = resolveTheme(pref);
+    applyTheme(resolved);
+    useThemeStore.setState({ preference: pref, resolved });
+  }
+});
