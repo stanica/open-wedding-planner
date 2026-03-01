@@ -14,8 +14,10 @@ import {
   Clock,
   XCircle,
   Loader2,
+  Phone,
 } from "lucide-react";
 import { WhileYouWereGone } from "./WhileYouWereGone";
+import { Markdown } from "../shared/Markdown";
 
 interface DashboardStats {
   vendors: {
@@ -35,11 +37,12 @@ interface DashboardStats {
     currency: string;
   };
   recentActivity: Array<{
-    id: number;
+    id: string;
     type: string;
     status: string;
+    summary: string | null;
+    vendorName: string | null;
     createdAt: string;
-    completedAt: string | null;
   }>;
   unreadMessages: number;
 }
@@ -222,12 +225,17 @@ export function DashboardView() {
                       key={task.id}
                       className="flex items-center justify-between py-2 first:pt-0 last:pb-0"
                     >
-                      <div className="flex items-center gap-3">
-                        <ActivityIcon status={task.status} />
-                        <div>
-                          <span className="text-sm text-on-surface capitalize">
-                            {task.type}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ActivityIcon type={task.type} status={task.status} />
+                        <div className="min-w-0">
+                          <span className="text-sm text-on-surface">
+                            <ActivityLabel type={task.type} vendorName={task.vendorName} />
                           </span>
+                          {task.summary && (
+                            <div className="text-xs text-on-surface-secondary line-clamp-2">
+                              <Markdown content={task.summary} />
+                            </div>
+                          )}
                           <p className="text-xs text-on-surface-tertiary">
                             {new Date(task.createdAt).toLocaleString()}
                           </p>
@@ -235,11 +243,11 @@ export function DashboardView() {
                       </div>
                       <Badge
                         variant={
-                          task.status === "completed"
+                          task.status === "completed" || task.status === "ended"
                             ? "success"
                             : task.status === "failed"
                               ? "danger"
-                              : task.status === "running"
+                              : task.status === "running" || task.status === "in-progress" || task.status === "ringing"
                                 ? "info"
                                 : "default"
                         }
@@ -258,7 +266,11 @@ export function DashboardView() {
   );
 }
 
-function ActivityIcon({ status }: { status: string }) {
+function ActivityIcon({ type, status }: { type: string; status: string }) {
+  if (type === "voice-call") {
+    const color = status === "ended" ? "text-green-400" : status === "failed" ? "text-red-400" : "text-blue-400";
+    return <Phone className={`h-4 w-4 ${color}`} />;
+  }
   switch (status) {
     case "completed":
       return <CheckCircle className="h-4 w-4 text-green-400" />;
@@ -269,4 +281,19 @@ function ActivityIcon({ status }: { status: string }) {
     default:
       return <Clock className="h-4 w-4 text-on-surface-secondary" />;
   }
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  research: "Research",
+  outreach: "Outreach",
+  action: "AI Action",
+  "voice-call": "Voice Call",
+  parse: "Parse",
+  translate: "Translate",
+};
+
+function ActivityLabel({ type, vendorName }: { type: string; vendorName: string | null }) {
+  const label = TYPE_LABELS[type] ?? type;
+  if (vendorName) return <>{label} &middot; {vendorName}</>;
+  return <>{label}</>;
 }

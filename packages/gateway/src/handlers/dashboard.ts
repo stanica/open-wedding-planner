@@ -5,6 +5,7 @@ import {
   budgetEntries,
   communications,
   agentTasks,
+  voiceCalls,
   weddingConfig,
   heartbeatConfig,
 } from "../db/schema.js";
@@ -57,11 +58,36 @@ export function registerDashboardHandlers(router: Router) {
 
     // Recent activity (last 10 agent tasks, excluding heartbeat)
     const recentTasks = await db
-      .select()
+      .select({
+        id: agentTasks.id,
+        type: agentTasks.type,
+        status: agentTasks.status,
+        output: agentTasks.output,
+        vendorId: agentTasks.vendorId,
+        createdAt: agentTasks.createdAt,
+        completedAt: agentTasks.completedAt,
+        vendorName: vendors.name,
+      })
       .from(agentTasks)
+      .leftJoin(vendors, sql`${agentTasks.vendorId} = ${vendors.id}`)
       .where(sql`${agentTasks.type} NOT IN ('heartbeat', 'heartbeat-research')`)
       .orderBy(sql`${agentTasks.createdAt} desc`)
       .limit(10);
+
+    // Recent voice calls
+    const recentCalls = await db
+      .select({
+        id: voiceCalls.id,
+        phoneNumber: voiceCalls.phoneNumber,
+        status: voiceCalls.status,
+        summary: voiceCalls.summary,
+        vendorName: vendors.name,
+        createdAt: voiceCalls.createdAt,
+      })
+      .from(voiceCalls)
+      .leftJoin(vendors, sql`${voiceCalls.vendorId} = ${vendors.id}`)
+      .orderBy(sql`${voiceCalls.createdAt} desc`)
+      .limit(5);
 
     // Unread incoming messages
     const [unreadRow] = await db
@@ -84,13 +110,36 @@ export function registerDashboardHandlers(router: Router) {
         paid: budgetRows[0]?.totalPaid ?? 0,
         currency: config?.currency ?? "EUR",
       },
-      recentActivity: recentTasks.map((t) => ({
-        id: t.id,
-        type: t.type,
-        status: t.status,
-        createdAt: t.createdAt,
-        completedAt: t.completedAt,
-      })),
+      recentActivity: [
+        ...recentTasks.map((t) => {
+          let summary: string | null = null;
+          try {
+            if (t.output) summary = JSON.parse(t.output).summary ?? null;
+          } catch { /* ignore */ }
+          return {
+            id: `task-${t.id}`,
+            type: t.type,
+            status: t.status,
+            summary,
+            vendorName: t.vendorName ?? null,
+            createdAt: t.createdAt,
+          };
+        }),
+        ...recentCalls.map((c) => ({
+          id: `call-${c.id}`,
+          type: "voice-call",
+          status: c.status,
+          summary: c.summary ?? null,
+          vendorName: c.vendorName ?? c.phoneNumber,
+          createdAt: c.createdAt,
+        })),
+      ]
+        .sort((a, b) => {
+          const aT = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bT = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bT - aT;
+        })
+        .slice(0, 10),
       unreadMessages: unreadRow?.count ?? 0,
     };
   });

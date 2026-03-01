@@ -347,7 +347,7 @@ export function CallsView() {
     <div className="flex h-full">
       {/* Left panel: call list */}
       <div
-        className="shrink-0 flex flex-col"
+        className="shrink-0 flex flex-col border-r border-border"
         style={{ width: listWidth }}
       >
         <div className="px-4 py-3 border-b border-border">
@@ -453,9 +453,9 @@ export function CallsView() {
                   <h3 className="text-sm font-semibold text-on-surface mb-1">
                     Instructions
                   </h3>
-                  <p className="text-sm text-on-surface-muted whitespace-pre-wrap">
-                    {selectedCall.instructions}
-                  </p>
+                  <div className="text-sm text-on-surface-muted">
+                    <Markdown content={selectedCall.instructions} />
+                  </div>
                 </div>
               )}
 
@@ -465,9 +465,9 @@ export function CallsView() {
                   <h3 className="text-sm font-semibold text-on-surface mb-1">
                     Summary
                   </h3>
-                  <p className="text-sm text-on-surface-muted whitespace-pre-wrap">
-                    {selectedCall.summary}
-                  </p>
+                  <div className="text-sm text-on-surface-muted">
+                    <Markdown content={selectedCall.summary} />
+                  </div>
                 </div>
               )}
 
@@ -508,9 +508,9 @@ export function CallsView() {
                     Transcript
                   </button>
                   {transcriptOpen && (
-                    <p className="mt-2 text-sm text-on-surface-muted whitespace-pre-wrap">
-                      {selectedCall.transcript}
-                    </p>
+                    <div className="mt-2 text-sm text-on-surface-muted">
+                      <Markdown content={selectedCall.transcript} />
+                    </div>
                   )}
                 </div>
               )}
