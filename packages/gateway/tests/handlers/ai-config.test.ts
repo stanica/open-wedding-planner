@@ -6,6 +6,7 @@ import * as schema from "../../src/db/schema.js";
 import { pushSchema } from "../../src/db/migrate.js";
 import { Router } from "../../src/infra/router.js";
 import { registerAIConfigHandlers } from "../../src/handlers/ai-config.js";
+import { setAIConfig } from "../../src/agents/model-provider.js";
 
 function setup() {
   const sqlite = new Database(":memory:");
@@ -23,6 +24,8 @@ describe("ai-config handlers", () => {
 
   beforeEach(() => {
     ({ db, router } = setup());
+    // Reset in-memory config to defaults between tests
+    setAIConfig({ provider: "anthropic", model: "claude-sonnet-4-20250514", apiKey: null, baseUrl: null });
   });
 
   it("returns defaults when no config exists", async () => {
@@ -44,5 +47,32 @@ describe("ai-config handlers", () => {
     const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
     expect(result).toHaveProperty("availableModels");
     expect(result.availableModels).toEqual([]);
+  });
+
+  it("stores and retrieves provider and baseUrl", async () => {
+    await router.handle(db, "ai-config.update", {
+      provider: "openrouter",
+      baseUrl: "https://openrouter.ai/api/v1",
+      model: "meta-llama/llama-3-70b",
+      apiKey: "sk-or-test-key",
+    });
+    const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
+    expect(result.provider).toBe("openrouter");
+    expect(result.baseUrl).toBe("https://openrouter.ai/api/v1");
+    expect(result.model).toBe("meta-llama/llama-3-70b");
+    expect(result.hasApiKey).toBe(true);
+  });
+
+  it("defaults to anthropic provider when not specified", async () => {
+    const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
+    expect(result.provider).toBe("anthropic");
+  });
+
+  it("updates provider without losing other fields", async () => {
+    await router.handle(db, "ai-config.update", { model: "claude-opus-4-20250514" });
+    await router.handle(db, "ai-config.update", { provider: "openai", apiKey: "sk-test" });
+    const result = (await router.handle(db, "ai-config.get", undefined)) as Record<string, unknown>;
+    expect(result.provider).toBe("openai");
+    expect(result.hasApiKey).toBe(true);
   });
 });
