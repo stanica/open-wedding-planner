@@ -40,6 +40,7 @@
 
 /* ── Dark theme (default) ── */
 :root {
+  color-scheme: dark;
   --theme-surface: #0a0a0f;
   --theme-surface-elevated: rgba(255, 255, 255, 0.05);
   --theme-surface-hover: rgba(255, 255, 255, 0.07);
@@ -78,6 +79,7 @@
 
 /* ── Light theme (warm cream) ── */
 :root[data-theme="light"] {
+  color-scheme: light;
   --theme-surface: #faf6f1;
   --theme-surface-elevated: #ffffff;
   --theme-surface-hover: rgba(44, 36, 32, 0.04);

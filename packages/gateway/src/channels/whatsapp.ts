@@ -24,6 +24,7 @@ export class WhatsAppChannel {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
   private shouldReconnect = true;
+  private uncaughtHandler: ((err: Error) => void) | null = null;
 
   constructor(config: WhatsAppConfig, broadcast: (event: GatewayEvent) => void) {
     this.config = config;
@@ -45,6 +46,7 @@ export class WhatsAppChannel {
 
   private async doConnect(): Promise<void> {
     console.log("[WhatsApp] doConnect called, attempt:", this.reconnectAttempts);
+    this.registerErrorHandler();
     // Backup creds before connecting
     this.backupCreds();
 
@@ -239,6 +241,7 @@ export class WhatsAppChannel {
 
   disconnect(): void {
     this.shouldReconnect = false;
+    this.removeErrorHandler();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -281,6 +284,59 @@ export class WhatsAppChannel {
   /**
    * Restore credentials from backup if main creds file is corrupted.
    */
+  /**
+   * Catch Baileys Noise protocol crypto errors (e.g. from macOS sleep/wake
+   * desynchronising the encrypted WebSocket) and reconnect instead of crashing.
+   */
+  private registerErrorHandler(): void {
+    this.removeErrorHandler();
+    this.uncaughtHandler = (err: Error) => {
+      const isBaileysNoiseError =
+        err.message?.includes("unable to authenticate data") &&
+        err.stack?.includes("noise-handler");
+
+      if (!isBaileysNoiseError) {
+        // Not a Baileys error — preserve default crash behavior
+        console.error("Uncaught exception:", err);
+        process.exit(1);
+      }
+
+      console.error(
+        "[WhatsApp] Noise protocol error (likely sleep/wake), reconnecting:",
+        err.message,
+      );
+      this.broadcast({
+        name: "channel-status",
+        data: { channel: "whatsapp", status: "disconnected" },
+      });
+      try {
+        this.socket?.end(undefined);
+      } catch {
+        /* ignore cleanup errors */
+      }
+      this.socket = null;
+
+      if (this.shouldReconnect) {
+        this.reconnectAttempts++;
+        if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+          this.reconnectTimer = setTimeout(
+            () => this.doConnect(),
+            this.reconnectDelay,
+          );
+          this.reconnectDelay = Math.min(this.reconnectDelay * 2, 5 * 60_000);
+        }
+      }
+    };
+    process.on("uncaughtException", this.uncaughtHandler);
+  }
+
+  private removeErrorHandler(): void {
+    if (this.uncaughtHandler) {
+      process.removeListener("uncaughtException", this.uncaughtHandler);
+      this.uncaughtHandler = null;
+    }
+  }
+
   restoreCredsFromBackup(): boolean {
     const credsPath = path.join(this.authDir, "creds.json");
     const backupPath = path.join(this.authDir, "creds.json.bak");

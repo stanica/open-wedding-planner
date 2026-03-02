@@ -200,7 +200,7 @@ function CallAgentPanel({
       exit={{ width: 0, opacity: 0 }}
       transition={{ duration: 0.2 }}
       style={{ width }}
-      className="h-full flex flex-col bg-surface overflow-hidden shrink-0"
+      className="h-full flex flex-col bg-surface overflow-hidden shrink-0 border-l border-border"
     >
       <div className="flex items-center justify-between p-3 border-b border-border">
         <div className="flex items-center gap-2">
@@ -520,8 +520,47 @@ export function CallsView() {
                     Transcript
                   </button>
                   {transcriptOpen && (
-                    <div className="mt-2 text-sm text-on-surface-muted">
-                      <Markdown content={selectedCall.transcript} />
+                    <div className="mt-2 space-y-3">
+                      {selectedCall.transcript.split("\n").map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return null;
+                        const colonIdx = trimmed.indexOf(":");
+                        const speaker =
+                          colonIdx > 0 && colonIdx < 20
+                            ? trimmed.slice(0, colonIdx).trim()
+                            : null;
+                        const text = speaker
+                          ? trimmed.slice(colonIdx + 1).trim()
+                          : trimmed;
+                        const isAi =
+                          speaker &&
+                          /^(ai|assistant|bot)/i.test(speaker);
+                        return (
+                          <div
+                            key={i}
+                            className={`flex ${isAi ? "justify-start" : "justify-end"}`}
+                          >
+                            <div
+                              className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                                isAi
+                                  ? "bg-surface-hover border border-border"
+                                  : speaker
+                                    ? "bg-blue-600/20 border border-blue-500/20"
+                                    : "bg-surface-hover border border-border"
+                              }`}
+                            >
+                              {speaker && (
+                                <span className="text-xs font-medium text-on-surface-secondary block mb-1">
+                                  {speaker}
+                                </span>
+                              )}
+                              <span className="text-sm text-on-surface-secondary leading-relaxed">
+                                {text}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
