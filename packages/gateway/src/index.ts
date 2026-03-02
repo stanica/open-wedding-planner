@@ -30,7 +30,7 @@ import { EmbeddingService } from "./db/embeddings.js";
 import { registerAgentHandlers } from "./handlers/agents.js";
 import { createToolRegistry } from "./tools/index.js";
 import { HeartbeatScheduler } from "./infra/heartbeat-scheduler.js";
-import { setAIConfig } from "./agents/model-provider.js";
+import { setAIConfig, type ProviderType } from "./agents/model-provider.js";
 import { setSearchConfig, type SearchProviderType } from "./tools/search.js";
 import { aiConfig, searchConfig, voiceCalls } from "./db/schema.js";
 import {
@@ -238,8 +238,10 @@ export async function startGateway(options: GatewayOptions = {}) {
   const [savedAiConfig] = await db.select().from(aiConfig).limit(1);
   if (savedAiConfig) {
     setAIConfig({
+      provider: (savedAiConfig.provider ?? "anthropic") as ProviderType,
       model: savedAiConfig.model,
       apiKey: savedAiConfig.apiKey,
+      baseUrl: savedAiConfig.baseUrl,
     });
   }
 
