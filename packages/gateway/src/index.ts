@@ -42,6 +42,7 @@ import type {
   GatewayStateSnapshot,
 } from "@wedding-planner/shared";
 import { handleWhatsAppCommand } from "./channels/whatsapp-commands.js";
+import type { UserResponse } from "./tools/permission-wrapper.js";
 
 export interface GatewayOptions {
   port?: number;
@@ -270,6 +271,8 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   let whatsappActiveThreadId: number | null =
     savedAiConfig?.whatsappActiveThreadId ?? null;
+  let whatsAppResearchSessionKey: string | null = null;
+  let pendingWhatsAppPermissionId: string | null = null;
 
   const toolRegistry = createToolRegistry();
 
@@ -423,6 +426,27 @@ export async function startGateway(options: GatewayOptions = {}) {
       });
       if (cmdResult.handled) return;
 
+      // Check if this is a reply to a pending permission prompt
+      if (pendingWhatsAppPermissionId) {
+        const normalized = body.trim().toLowerCase();
+        let response: UserResponse | null = null;
+        if (normalized === "yes" || normalized === "y" || normalized === "allow") {
+          response = "allow";
+        } else if (normalized === "always" || normalized === "always allow") {
+          response = "always-allow";
+        } else if (normalized === "no" || normalized === "n" || normalized === "deny") {
+          response = "deny";
+        }
+
+        if (response) {
+          orchestrator.resolvePermission(pendingWhatsAppPermissionId, response);
+          pendingWhatsAppPermissionId = null;
+          whatsapp.sendTyping(userJid);
+          return;
+        }
+        // Not a recognized permission response — fall through to normal message handling
+      }
+
       // Get or create active thread
       const threadId = await getOrCreateWhatsAppThread();
 
@@ -459,6 +483,7 @@ export async function startGateway(options: GatewayOptions = {}) {
       })) as any;
 
       if (result && !result.queued && result.sessionKey) {
+        whatsAppResearchSessionKey = result.sessionKey;
         whatsapp.sendTyping(userJid);
       }
 
@@ -574,6 +599,33 @@ export async function startGateway(options: GatewayOptions = {}) {
         if (userJid) {
           whatsapp
             .send(userJid, "Something went wrong, try again.")
+            .then(() => whatsapp.stopTyping(userJid));
+        }
+      }
+    }
+
+    // Send permission prompts to WhatsApp when agent needs approval
+    if (event.name === "research.permissionRequest") {
+      const data = event.data as {
+        sessionKey: string;
+        requestId: string;
+        toolName: string;
+        toolDescription: string;
+        context?: string;
+      };
+      if (data.sessionKey === whatsAppResearchSessionKey) {
+        const userJid = whatsapp.getUserJid();
+        if (userJid) {
+          pendingWhatsAppPermissionId = data.requestId;
+          const lines = [
+            `Permission needed: *${data.toolName}*`,
+            `"${data.toolDescription}"`,
+            ...(data.context ? [`Context: ${data.context}`] : []),
+            "",
+            "Reply: *yes*, *always*, or *no*",
+          ];
+          whatsapp
+            .send(userJid, lines.join("\n"))
             .then(() => whatsapp.stopTyping(userJid));
         }
       }

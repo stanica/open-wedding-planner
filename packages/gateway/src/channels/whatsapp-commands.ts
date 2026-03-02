@@ -56,6 +56,11 @@ export async function handleWhatsAppCommand(
         "/new — Start a new research thread",
         "/status — Show current thread and queue status",
         "/help — Show this help message",
+        "",
+        "When a permission prompt appears:",
+        "yes/y — Allow once",
+        "always — Always allow this tool",
+        "no/n — Deny",
       ].join("\n"),
     );
     return { handled: true };

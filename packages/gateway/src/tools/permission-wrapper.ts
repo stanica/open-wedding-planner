@@ -65,7 +65,7 @@ export function wrapToolWithPermission(
       }
 
       // decision === "prompt"
-      const response = await callbacks.requestPermission(toolName, undefined);
+      const response = await callbacks.requestPermission(toolName, JSON.stringify(params));
 
       if (response === "always-allow") {
         await manager.setDecision(toolName, "allow");
