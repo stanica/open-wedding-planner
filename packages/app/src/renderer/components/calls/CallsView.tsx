@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { EmptyState } from "../common/EmptyState";
@@ -268,11 +269,22 @@ function CallAgentPanel({
 }
 
 export function CallsView() {
-  const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCallId, setSelectedCallId] = useState<number | null>(() => {
+    const id = searchParams.get("id");
+    return id ? Number(id) : null;
+  });
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [listWidth, setListWidth] = useState(288); // 72 * 4 = w-72
   const [aiWidth, setAiWidth] = useState(400);
+
+  // Clear search param after consuming it
+  useEffect(() => {
+    if (searchParams.has("id")) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const {
     data: calls,

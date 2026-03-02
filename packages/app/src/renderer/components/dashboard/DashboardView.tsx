@@ -15,6 +15,7 @@ import {
   XCircle,
   Loader2,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 import { WhileYouWereGone } from "./WhileYouWereGone";
 import { Markdown } from "../shared/Markdown";
@@ -42,6 +43,10 @@ interface DashboardStats {
     status: string;
     summary: string | null;
     vendorName: string | null;
+    vendorId?: number | null;
+    threadId?: number | null;
+    callId?: number;
+    channel?: string | null;
     createdAt: string;
   }>;
   unreadMessages: number;
@@ -223,7 +228,20 @@ export function DashboardView() {
                   {stats.recentActivity.map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between py-2 first:pt-0 last:pb-0"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        const path = activityRoute(task);
+                        if (path) navigate(path);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          const path = activityRoute(task);
+                          if (path) navigate(path);
+                        }
+                      }}
+                      className="flex items-center justify-between py-2 first:pt-0 last:pb-0 cursor-pointer hover:bg-surface-hover rounded-md -mx-1 px-1 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <ActivityIcon type={task.type} status={task.status} />
@@ -271,6 +289,9 @@ function ActivityIcon({ type, status }: { type: string; status: string }) {
     const color = status === "ended" ? "text-green-400" : status === "failed" ? "text-red-400" : "text-blue-400";
     return <Phone className={`h-4 w-4 ${color}`} />;
   }
+  if (type === "whatsapp-in" || type === "whatsapp-out") {
+    return <MessageCircle className={`h-4 w-4 ${type === "whatsapp-in" ? "text-green-400" : "text-blue-400"}`} />;
+  }
   switch (status) {
     case "completed":
       return <CheckCircle className="h-4 w-4 text-green-400" />;
@@ -288,6 +309,8 @@ const TYPE_LABELS: Record<string, string> = {
   outreach: "Outreach",
   action: "AI Action",
   "voice-call": "Voice Call",
+  "whatsapp-in": "WhatsApp Received",
+  "whatsapp-out": "WhatsApp Sent",
   parse: "Parse",
   translate: "Translate",
 };
@@ -296,4 +319,29 @@ function ActivityLabel({ type, vendorName }: { type: string; vendorName: string 
   const label = TYPE_LABELS[type] ?? type;
   if (vendorName) return <>{label} &middot; {vendorName}</>;
   return <>{label}</>;
+}
+
+function activityRoute(task: { type: string; threadId?: number | null; callId?: number; vendorId?: number | null; channel?: string | null }): string | null {
+  switch (task.type) {
+    case "research":
+      return task.threadId ? `/research?threadId=${task.threadId}` : "/research";
+    case "voice-call":
+      return task.callId ? `/calls?id=${task.callId}` : "/calls";
+    case "whatsapp-in":
+    case "whatsapp-out":
+      return task.vendorId ? `/whatsapp?vendorId=${task.vendorId}` : "/whatsapp";
+    case "outreach":
+    case "action":
+    case "parse": {
+      if (task.callId) {
+        return `/calls?id=${task.callId}`;
+      }
+      if (task.channel === "whatsapp") {
+        return task.vendorId ? `/whatsapp?vendorId=${task.vendorId}` : "/whatsapp";
+      }
+      return task.vendorId ? `/inbox?vendorId=${task.vendorId}` : "/inbox";
+    }
+    default:
+      return null;
+  }
 }

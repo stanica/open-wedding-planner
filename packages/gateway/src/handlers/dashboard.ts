@@ -62,6 +62,7 @@ export function registerDashboardHandlers(router: Router) {
         id: agentTasks.id,
         type: agentTasks.type,
         status: agentTasks.status,
+        input: agentTasks.input,
         output: agentTasks.output,
         vendorId: agentTasks.vendorId,
         createdAt: agentTasks.createdAt,
@@ -89,6 +90,24 @@ export function registerDashboardHandlers(router: Router) {
       .orderBy(sql`${voiceCalls.createdAt} desc`)
       .limit(5);
 
+    // Recent WhatsApp messages
+    const recentWhatsApp = await db
+      .select({
+        id: communications.id,
+        vendorId: communications.vendorId,
+        direction: communications.direction,
+        subject: communications.subject,
+        bodyOriginal: communications.bodyOriginal,
+        status: communications.status,
+        sentAt: communications.sentAt,
+        vendorName: vendors.name,
+      })
+      .from(communications)
+      .leftJoin(vendors, sql`${communications.vendorId} = ${vendors.id}`)
+      .where(sql`${communications.channel} = 'whatsapp'`)
+      .orderBy(sql`coalesce(${communications.sentAt}, ${communications.id}) desc`)
+      .limit(10);
+
     // Unread incoming messages
     const [unreadRow] = await db
       .select({
@@ -96,6 +115,25 @@ export function registerDashboardHandlers(router: Router) {
       })
       .from(communications)
       .where(sql`${communications.direction} = 'in' AND ${communications.status} = 'received'`);
+
+    // Look up channels for tasks that reference a communicationId
+    const commIds: number[] = [];
+    for (const t of recentTasks) {
+      try {
+        if (t.input) {
+          const cid = JSON.parse(t.input).communicationId;
+          if (cid) commIds.push(cid);
+        }
+      } catch { /* ignore */ }
+    }
+    const commChannelMap = new Map<number, string>();
+    if (commIds.length > 0) {
+      const rows = await db
+        .select({ id: communications.id, channel: communications.channel })
+        .from(communications)
+        .where(sql`${communications.id} IN (${sql.join(commIds.map(id => sql`${id}`), sql`, `)})`);
+      for (const r of rows) commChannelMap.set(r.id, r.channel);
+    }
 
     return {
       vendors: {
@@ -113,8 +151,21 @@ export function registerDashboardHandlers(router: Router) {
       recentActivity: [
         ...recentTasks.map((t) => {
           let summary: string | null = null;
+          let threadId: number | null = null;
+          let callId: number | null = null;
+          let channel: string | null = null;
           try {
             if (t.output) summary = JSON.parse(t.output).summary ?? null;
+          } catch { /* ignore */ }
+          try {
+            if (t.input) {
+              const parsed = JSON.parse(t.input);
+              threadId = parsed.threadId ?? null;
+              callId = parsed.callId ?? null;
+              if (parsed.communicationId) {
+                channel = commChannelMap.get(parsed.communicationId) ?? null;
+              }
+            }
           } catch { /* ignore */ }
           return {
             id: `task-${t.id}`,
@@ -122,6 +173,10 @@ export function registerDashboardHandlers(router: Router) {
             status: t.status,
             summary,
             vendorName: t.vendorName ?? null,
+            vendorId: t.vendorId ?? null,
+            threadId,
+            callId,
+            channel,
             createdAt: t.createdAt,
           };
         }),
@@ -131,7 +186,17 @@ export function registerDashboardHandlers(router: Router) {
           status: c.status,
           summary: c.summary ?? null,
           vendorName: c.vendorName ?? c.phoneNumber,
+          callId: c.id,
           createdAt: c.createdAt,
+        })),
+        ...recentWhatsApp.map((m) => ({
+          id: `wa-${m.id}`,
+          type: m.direction === "in" ? "whatsapp-in" : "whatsapp-out",
+          status: m.status,
+          summary: m.bodyOriginal.length > 120 ? m.bodyOriginal.slice(0, 120) + "…" : m.bodyOriginal,
+          vendorName: m.vendorName ?? null,
+          vendorId: m.vendorId,
+          createdAt: m.sentAt,
         })),
       ]
         .sort((a, b) => {

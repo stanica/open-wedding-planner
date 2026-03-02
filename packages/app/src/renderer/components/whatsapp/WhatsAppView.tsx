@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { ContactList, type ContactSummary } from "../common/ContactList";
@@ -13,10 +14,21 @@ import { MessageCircle } from "lucide-react";
 import type { GatewayEvent } from "@wedding-planner/shared";
 
 export function WhatsAppView() {
-  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(() => {
+    const id = searchParams.get("vendorId");
+    return id ? Number(id) : null;
+  });
   const [selectedVendorName, setSelectedVendorName] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [sidePanelComm, setSidePanelComm] = useState<Communication | null>(null);
+
+  // Clear search param after consuming it
+  useEffect(() => {
+    if (searchParams.has("vendorId")) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Fetch all WhatsApp communications
   const {

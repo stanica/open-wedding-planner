@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Square, Wrench } from "lucide-react";
 import { wsClient } from "../../lib/ws-client";
 import { useRequest, useMutation } from "../../hooks/useRequest";
@@ -46,6 +47,16 @@ export function ResearchView() {
   } = useResearchStore();
   const isSessionThread = activeThreadId === sessionThreadId;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link: select thread from URL param
+  useEffect(() => {
+    const threadId = searchParams.get("threadId");
+    if (threadId) {
+      setActiveThreadId(Number(threadId));
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setActiveThreadId, setSearchParams]);
 
   // Data fetching
   const { data: threads, refetch: refetchThreads } = useRequest<Thread[]>(

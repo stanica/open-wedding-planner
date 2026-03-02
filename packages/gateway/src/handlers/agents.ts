@@ -172,6 +172,7 @@ export function registerAgentHandlers(router: Router, orchestrator: Orchestrator
     ];
 
     const { taskId, sessionKey } = await orchestrator.dispatch("action", {
+      callId,
       vendorId: call.vendorId ?? undefined,
       instruction,
       messages: contextMessages,

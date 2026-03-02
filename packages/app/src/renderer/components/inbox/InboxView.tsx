@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useRequest, useMutation } from "../../hooks/useRequest";
 import { wsClient } from "../../lib/ws-client";
 import { isOutbound } from "../common/MessageBubble";
@@ -20,8 +21,19 @@ interface VendorGroup {
 }
 
 export function InboxView() {
-  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(() => {
+    const id = searchParams.get("vendorId");
+    return id ? Number(id) : null;
+  });
   const [sidePanelComm, setSidePanelComm] = useState<Communication | null>(null);
+
+  // Clear search param after consuming it
+  useEffect(() => {
+    if (searchParams.has("vendorId")) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const {
     data: messages,
