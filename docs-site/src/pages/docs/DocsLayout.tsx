@@ -11,6 +11,7 @@ const NAV = [
       { to: "/docs/configuration", label: "Settings overview" },
       { to: "/docs/ai-provider", label: "AI provider" },
       { to: "/docs/whatsapp", label: "WhatsApp" },
+      { to: "/docs/voice-calling", label: "Voice calling" },
     ],
   },
 ];

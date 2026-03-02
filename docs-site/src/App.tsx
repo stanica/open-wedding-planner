@@ -8,6 +8,7 @@ import { DocsIndex } from "./pages/docs/DocsIndex";
 import { DocsConfiguration } from "./pages/docs/DocsConfiguration";
 import { DocsAIProvider } from "./pages/docs/DocsAIProvider";
 import { DocsWhatsApp } from "./pages/docs/DocsWhatsApp";
+import { DocsVoiceCalling } from "./pages/docs/DocsVoiceCalling";
 import { getTheme, setTheme, type Theme } from "./lib/theme";
 
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
           <Route path="configuration" element={<DocsConfiguration />} />
           <Route path="ai-provider" element={<DocsAIProvider />} />
           <Route path="whatsapp" element={<DocsWhatsApp />} />
+          <Route path="voice-calling" element={<DocsVoiceCalling />} />
         </Route>
       </Routes>
       <Footer />

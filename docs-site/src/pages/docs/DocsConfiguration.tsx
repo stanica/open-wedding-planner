@@ -166,6 +166,47 @@ export function DocsConfiguration() {
         from taking actions outside a defined scope.
       </p>
 
+      <h2>VAPI (Voice Calling)</h2>
+      <p>
+        Configure credentials for AI-powered outbound phone calls to vendors.
+        See the <Link to="/docs/voice-calling">voice calling guide</Link> for
+        full details.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>API Key</td>
+            <td>
+              Bearer token from your{" "}
+              <a
+                href="https://dashboard.vapi.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                VAPI dashboard
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>Phone Number ID</td>
+            <td>ID of the provisioned phone number to call from</td>
+          </tr>
+          <tr>
+            <td>Assistant ID</td>
+            <td>
+              Default VAPI assistant ID (the app sends overrides for model,
+              system prompt, and first message)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <h2>Integrations</h2>
       <p>Connect external services. Currently supported:</p>
       <ul>

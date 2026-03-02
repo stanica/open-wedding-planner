@@ -7,6 +7,7 @@ import {
   Globe,
   Bot,
   Shield,
+  Phone,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -35,6 +36,12 @@ const FEATURES = [
     title: "Budget Tracking",
     description:
       "Break your budget down by category, track quotes and what you've actually spent. A summary bar keeps the big picture visible.",
+  },
+  {
+    icon: Phone,
+    title: "Voice Calling",
+    description:
+      "Have the AI agent phone vendors for you via VAPI. Calls are transcribed, summarised, and recorded automatically. Review everything in the Calls view and ask the AI follow-up questions.",
   },
   {
     icon: MessageCircle,

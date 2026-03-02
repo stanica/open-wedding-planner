@@ -28,6 +28,12 @@ Connect your personal WhatsApp account via QR code scan (uses the Baileys librar
 
 You can also interact with the research agent by sending messages to yourself on WhatsApp. Use `/new` to start a new research thread and `/status` to check the delivery queue.
 
+### Voice Calling (VAPI)
+
+Make outbound phone calls to vendors via [VAPI](https://vapi.ai). The AI agent can initiate a call, speak to the vendor on your behalf, and when the call ends the app stores a full transcript, an AI-generated summary, structured data extraction, and a recording URL. Call status is tracked in real time (queued → ringing → in-progress → ended) with live UI updates via WebSocket. After a call you can open an AI chat panel to ask follow-up questions about the conversation.
+
+Requires a VAPI account with an API key, a provisioned phone number, and an assistant. Configure these in **Settings → VAPI**.
+
 ### Outreach Agent
 
 Dispatch an AI agent to draft and send outreach messages to vendors. Supports WhatsApp and Gmail (via the `gog` CLI, auto-downloaded on first use). Drafts can be reviewed and approved before sending.
@@ -160,6 +166,7 @@ Everything is configured through the in-app Settings screen and stored in the SQ
 | Heartbeat        | Optional scheduled agent that runs on a configurable interval (default 30 min). Runs health checks (stalled tasks, unparsed messages) and optionally executes a custom research prompt. |
 | Tool Permissions | Per-tool approval settings — control which agent tools require explicit user confirmation before running.                                                                               |
 | Guardrails       | Safety rules applied to agent outputs.                                                                                                                                                  |
+| VAPI             | Voice calling credentials — API key, phone number ID, and assistant ID.                                                                                                                  |
 | Integrations     | WhatsApp QR code setup, auto-send toggle, Google Services (Gmail via `gog` CLI).                                                                                                        |
 | Internet Tunnel  | Start/stop the Cloudflare tunnel.                                                                                                                                                       |
 | Data Management  | Export or clear application data.                                                                                                                                                       |
