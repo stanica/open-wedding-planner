@@ -1,3 +1,5 @@
+import { CodeBlock } from "../../components/CodeBlock";
+
 export function DocsAIProvider() {
   return (
     <>
@@ -37,9 +39,7 @@ export function DocsAIProvider() {
         <li>
           <strong>Setup token</strong> — starts with <code>sk-ant-oat</code>.
           Generated from a Claude Max or Pro subscription via:
-          <pre>
-            <code>claude setup-token</code>
-          </pre>
+          <CodeBlock>claude setup-token</CodeBlock>
           This uses OAuth authentication and doesn't require a paid API plan.
         </li>
       </ul>
@@ -54,9 +54,7 @@ export function DocsAIProvider() {
         The default model is <code>claude-sonnet-4-20250514</code>. You can
         change it in Settings or switch mid-session in the research chat with:
       </p>
-      <pre>
-        <code>/model claude-opus-4-20250514</code>
-      </pre>
+      <CodeBlock>/model claude-opus-4-20250514</CodeBlock>
 
       <h2>Subagent model</h2>
       <p>

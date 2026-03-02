@@ -55,8 +55,8 @@ export function DocsLayout() {
       <main
         className="flex-1 min-w-0 prose prose-gray dark:prose-invert max-w-none
         prose-headings:font-bold prose-headings:tracking-tight
-        prose-code:rounded prose-code:bg-stone-100 prose-code:dark:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
-        prose-pre:bg-gray-900 prose-pre:dark:bg-black/40 prose-pre:rounded-xl
+        prose-code:rounded-md prose-code:bg-stone-100 prose-code:dark:bg-white/10 prose-code:border prose-code:border-stone-200 prose-code:dark:border-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[13px] prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+        prose-pre:bg-gray-950 prose-pre:dark:bg-black/50 prose-pre:rounded-xl prose-pre:border prose-pre:border-white/[0.06]
         prose-a:text-indigo-600 prose-a:dark:text-indigo-400 prose-a:no-underline hover:prose-a:underline"
       >
         <Outlet />

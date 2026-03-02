@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { CodeBlock } from "../../components/CodeBlock";
 
 export function DocsIndex() {
   return (
@@ -15,32 +16,24 @@ export function DocsIndex() {
         <li>Node.js 22 or later</li>
         <li>
           Playwright Chromium — required for the browser research agent:
-          <pre>
-            <code>npx playwright install chromium</code>
-          </pre>
+          <CodeBlock>npx playwright install chromium</CodeBlock>
         </li>
       </ul>
 
       <h2>Installation</h2>
-      <pre>
-        <code>{`git clone git@github.com:stanica/open-wedding-planner.git
+      <CodeBlock>{`git clone git@github.com:stanica/open-wedding-planner.git
 cd open-wedding-planner
-npm install`}</code>
-      </pre>
+npm install`}</CodeBlock>
 
       <h2>Running in development</h2>
-      <pre>
-        <code>npm run dev</code>
-      </pre>
+      <CodeBlock>npm run dev</CodeBlock>
       <p>
         This builds the shared package and starts the gateway and Electron app
         in watch mode.
       </p>
 
       <h2>Building a distributable</h2>
-      <pre>
-        <code>npm run package --workspace=packages/app</code>
-      </pre>
+      <CodeBlock>npm run package --workspace=packages/app</CodeBlock>
       <p>
         Produces a macOS DMG, Windows NSIS installer, or Linux AppImage
         depending on your platform. The build script automatically downloads the
