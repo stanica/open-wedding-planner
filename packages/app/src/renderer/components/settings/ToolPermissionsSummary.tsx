@@ -44,7 +44,10 @@ export function ToolPermissionsSummary() {
         <span>
           {toolCount} tools registered{customized > 0 && `, ${customized} customized`}
         </span>
-        <ChevronRight className="h-4 w-4 text-on-surface-tertiary" />
+        <span className="flex items-center gap-1 text-on-surface-secondary">
+          Manage
+          <ChevronRight className="h-4 w-4" />
+        </span>
       </button>
     </div>
   );
