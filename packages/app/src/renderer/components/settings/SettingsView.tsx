@@ -59,9 +59,9 @@ export function SettingsView() {
           )}
           {activeTab === "AI" && (
             <>
+              <HeartbeatSettings />
               <AIProviderSetup />
               <SearchConfig />
-              <HeartbeatSettings />
             </>
           )}
           {activeTab === "Integrations" && (

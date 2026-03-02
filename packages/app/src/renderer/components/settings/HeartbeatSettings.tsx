@@ -56,7 +56,7 @@ export function HeartbeatSettings() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">Scheduled Research</h2>
+      <h2 className="text-lg font-semibold mb-4">Agent Heartbeat</h2>
       <div className="space-y-4">
         {/* Enable toggle */}
         <label className="flex items-center gap-3 cursor-pointer">
@@ -68,10 +68,10 @@ export function HeartbeatSettings() {
           />
           <div>
             <p className="text-sm font-medium text-on-surface">
-              Enable scheduled research
+              Enable autonomous agent
             </p>
             <p className="text-xs text-on-surface-secondary">
-              An AI agent will automatically run on a timer to research vendors
+              The agent will autonomously research, reach out, and follow up on your behalf
             </p>
           </div>
         </label>
