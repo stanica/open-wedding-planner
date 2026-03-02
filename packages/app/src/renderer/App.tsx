@@ -12,6 +12,7 @@ import { WhatsAppView } from "./components/whatsapp/WhatsAppView";
 import { CallsView } from "./components/calls/CallsView";
 import { InboxView } from "./components/inbox/InboxView";
 import { TimelineView } from "./components/timeline/TimelineView";
+import { ToolPermissionsPage } from "./components/settings/ToolPermissionsPage";
 import { DebugConsole } from "./components/debug/DebugConsole";
 
 export function App() {
@@ -35,6 +36,7 @@ export function App() {
           <Route path="timeline" element={<TimelineView />} />
           <Route path="budget" element={<BudgetView />} />
           <Route path="settings" element={<SettingsView />} />
+          <Route path="settings/tools" element={<ToolPermissionsPage />} />
         </Route>
       </Routes>
     </HashRouter>
