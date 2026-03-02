@@ -75,4 +75,55 @@ describe("ai-config handlers", () => {
     expect(result.provider).toBe("openai");
     expect(result.hasApiKey).toBe(true);
   });
+
+  describe("provider switching flow", () => {
+    it("switches from anthropic to openrouter and back", async () => {
+      // Start with default
+      let result = (await router.handle(db, "ai-config.get", undefined)) as any;
+      expect(result.provider).toBe("anthropic");
+
+      // Switch to openrouter
+      await router.handle(db, "ai-config.update", {
+        provider: "openrouter",
+        baseUrl: "https://openrouter.ai/api/v1",
+        model: "meta-llama/llama-3-70b",
+        apiKey: "sk-or-test",
+      });
+      result = (await router.handle(db, "ai-config.get", undefined)) as any;
+      expect(result.provider).toBe("openrouter");
+      expect(result.model).toBe("meta-llama/llama-3-70b");
+
+      // Switch back to anthropic
+      await router.handle(db, "ai-config.update", {
+        provider: "anthropic",
+        model: "claude-sonnet-4-20250514",
+      });
+      result = (await router.handle(db, "ai-config.get", undefined)) as any;
+      expect(result.provider).toBe("anthropic");
+    });
+
+    it("ollama provider does not require apiKey", async () => {
+      await router.handle(db, "ai-config.update", {
+        provider: "ollama",
+        baseUrl: "http://localhost:11434",
+        model: "llama3",
+      });
+      const result = (await router.handle(db, "ai-config.get", undefined)) as any;
+      expect(result.provider).toBe("ollama");
+      expect(result.hasApiKey).toBe(false);
+    });
+
+    it("custom provider stores base URL", async () => {
+      await router.handle(db, "ai-config.update", {
+        provider: "custom",
+        baseUrl: "http://my-server:8080/v1",
+        model: "my-model",
+        apiKey: "test-key",
+      });
+      const result = (await router.handle(db, "ai-config.get", undefined)) as any;
+      expect(result.provider).toBe("custom");
+      expect(result.baseUrl).toBe("http://my-server:8080/v1");
+      expect(result.model).toBe("my-model");
+    });
+  });
 });
