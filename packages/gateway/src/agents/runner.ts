@@ -75,8 +75,10 @@ export class AgentRunner {
 
       const builtInTools = await getBuiltInTools(ctx.emit);
 
-      // Exclude custom search/scrape when built-in alternatives are available
-      const customToolNames = config.tools.filter((t) => t !== "search" && t !== "scrape");
+      // Exclude custom search/scrape only when built-in alternatives (Anthropic webSearch/webFetch) are available
+      const customToolNames = builtInTools
+        ? config.tools.filter((t) => t !== "search" && t !== "scrape")
+        : config.tools;
 
       if (customToolNames.length > 0) {
         const rawTools = ctx.toolRegistry.getToolSetWithContext(customToolNames, toolCtx);
