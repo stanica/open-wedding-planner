@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { wsClient } from "../../lib/ws-client";
 
 interface AIConfig {
+  provider: string;
+  baseUrl: string | null;
   model: string;
   hasApiKey: boolean;
   maskedApiKey: string | null;
@@ -12,6 +14,8 @@ interface AIConfig {
 
 export function AIProviderSetup() {
   const [config, setConfig] = useState<AIConfig | null>(null);
+  const [provider, setProvider] = useState("anthropic");
+  const [baseUrl, setBaseUrl] = useState("");
   const [model, setModel] = useState("");
   const [models, setModels] = useState<string[]>([]);
   const [apiKey, setApiKey] = useState("");
@@ -28,6 +32,8 @@ export function AIProviderSetup() {
       .request<AIConfig>("ai-config.get")
       .then((cfg) => {
         setConfig(cfg);
+        setProvider(cfg.provider ?? "anthropic");
+        setBaseUrl(cfg.baseUrl ?? "");
         setModel(cfg.model);
         if (cfg.availableModels.length > 0) {
           setModels(cfg.availableModels);
@@ -43,7 +49,7 @@ export function AIProviderSetup() {
     try {
       const result = await wsClient.request<{ valid: boolean; error?: string }>(
         "ai-config.validate",
-        { apiKey },
+        { apiKey, provider, baseUrl: baseUrl || undefined },
       );
       setValidationResult(result);
     } catch (err) {
@@ -60,6 +66,8 @@ export function AIProviderSetup() {
     setSaving(true);
     try {
       await wsClient.request<{ ok: boolean }>("ai-config.update", {
+        provider,
+        baseUrl: baseUrl || null,
         model,
         ...(apiKey ? { apiKey } : {}),
         ...(openaiApiKey ? { openaiApiKey } : {}),
@@ -68,6 +76,8 @@ export function AIProviderSetup() {
       // Refetch config to get updated state
       const cfg = await wsClient.request<AIConfig>("ai-config.get");
       setConfig(cfg);
+      setProvider(cfg.provider ?? "anthropic");
+      setBaseUrl(cfg.baseUrl ?? "");
       setApiKey("");
       setOpenaiApiKey("");
       if (cfg.availableModels.length > 0) {
@@ -80,13 +90,51 @@ export function AIProviderSetup() {
 
   if (!config) return null;
 
-  const dirty = model !== config.model || !!apiKey || !!openaiApiKey;
+  const dirty = provider !== (config.provider ?? "anthropic") || model !== config.model || !!apiKey || !!openaiApiKey || baseUrl !== (config.baseUrl ?? "");
 
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">AI Provider</h2>
       <div className="space-y-4">
+        {/* Provider selector */}
+        <div className="space-y-2">
+          <label className="block text-sm text-on-surface-secondary">Provider</label>
+          <select
+            value={provider}
+            onChange={(e) => {
+              setProvider(e.target.value);
+              setModels([]);
+              if (e.target.value === "ollama") setBaseUrl("http://localhost:11434");
+              else if (e.target.value === "openrouter") setBaseUrl("https://openrouter.ai/api/v1");
+              else setBaseUrl("");
+            }}
+            className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface focus:border-accent focus:outline-none"
+          >
+            <option value="anthropic">Anthropic</option>
+            <option value="openai">OpenAI</option>
+            <option value="google">Google (Gemini)</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="ollama">Ollama (Local)</option>
+            <option value="custom">Custom (OpenAI-compatible)</option>
+          </select>
+        </div>
+
+        {/* Base URL */}
+        {(provider === "ollama" || provider === "custom" || provider === "openrouter") && (
+          <div className="space-y-2">
+            <label className="block text-sm text-on-surface-secondary">Base URL</label>
+            <input
+              type="text"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder={provider === "ollama" ? "http://localhost:11434" : "https://..."}
+              className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
+            />
+          </div>
+        )}
+
         {/* API key input */}
+        {provider !== "ollama" && (
         <div className="space-y-3 rounded-lg border border-border bg-surface-elevated px-4 py-3">
           {/* Current key status */}
           <div className="flex items-center gap-2">
@@ -115,7 +163,13 @@ export function AIProviderSetup() {
                   setApiKey(e.target.value);
                   setValidationResult(null);
                 }}
-                placeholder="sk-ant-..."
+                placeholder={
+                  provider === "anthropic" ? "sk-ant-..." :
+                  provider === "openai" ? "sk-..." :
+                  provider === "google" ? "AIza..." :
+                  provider === "openrouter" ? "sk-or-..." :
+                  "API key"
+                }
                 className="flex-1 rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
               />
               <button
@@ -140,7 +194,7 @@ export function AIProviderSetup() {
           )}
 
           {/* Instructions */}
-          {!config.hasApiKey && (
+          {!config.hasApiKey && provider === "anthropic" && (
             <div className="border-t border-border-subtle pt-2 mt-2">
               <p className="text-xs text-on-surface-tertiary">
                 Use an API key (<code className="rounded bg-surface-active px-1">sk-ant-api03-...</code>)
@@ -151,6 +205,7 @@ export function AIProviderSetup() {
             </div>
           )}
         </div>
+        )}
 
         {/* Model selector */}
         <div className="space-y-2">
@@ -175,7 +230,14 @@ export function AIProviderSetup() {
               type="text"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder="e.g. claude-sonnet-4-20250514"
+              placeholder={
+                provider === "anthropic" ? "e.g. claude-sonnet-4-20250514" :
+                provider === "openai" ? "e.g. gpt-4o" :
+                provider === "google" ? "e.g. gemini-2.5-pro" :
+                provider === "openrouter" ? "e.g. anthropic/claude-sonnet-4" :
+                provider === "ollama" ? "e.g. llama3" :
+                "model name"
+              }
               className="w-full rounded-md border border-border bg-surface-elevated px-3 py-2 text-sm text-on-surface placeholder-placeholder focus:border-accent focus:outline-none"
             />
           )}
