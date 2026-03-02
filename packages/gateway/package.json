@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.47",
+    "@ai-sdk/google": "^3.0.34",
     "@ai-sdk/openai": "^3.0.33",
     "@wedding-planner/shared": "*",
     "@whiskeysockets/baileys": "7.0.0-rc.9",
