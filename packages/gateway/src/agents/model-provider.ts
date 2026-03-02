@@ -74,18 +74,23 @@ async function createProviderModel(config: AIProviderConfig): Promise<LanguageMo
       return anthropic(config.model);
     }
     case "openai": {
+      if (!config.apiKey) throw new Error("OpenAI provider requires an API key");
       const { createOpenAI } = await import("@ai-sdk/openai");
-      const openai = createOpenAI({ apiKey: config.apiKey! });
+      const openai = createOpenAI({ apiKey: config.apiKey });
       return openai(config.model);
     }
     case "google": {
+      if (!config.apiKey) throw new Error("Google provider requires an API key");
       const { createGoogleGenerativeAI } = await import("@ai-sdk/google");
-      const google = createGoogleGenerativeAI({ apiKey: config.apiKey! });
+      const google = createGoogleGenerativeAI({ apiKey: config.apiKey });
       return google(config.model);
     }
     case "openrouter":
     case "ollama":
     case "custom": {
+      if (config.provider === "custom" && !config.baseUrl) {
+        throw new Error("Custom provider requires a base URL");
+      }
       const { createOpenAI } = await import("@ai-sdk/openai");
       const baseURL = config.baseUrl || DEFAULT_BASE_URLS[config.provider];
       const openai = createOpenAI({
@@ -93,6 +98,10 @@ async function createProviderModel(config: AIProviderConfig): Promise<LanguageMo
         baseURL,
       });
       return openai(config.model);
+    }
+    default: {
+      const _exhaustive: never = config.provider;
+      throw new Error(`Unsupported provider: ${_exhaustive}`);
     }
   }
 }
