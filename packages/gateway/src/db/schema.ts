@@ -196,6 +196,8 @@ export const sessions = sqliteTable("sessions", {
 
 export const aiConfig = sqliteTable("ai_config", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  provider: text("provider").notNull().default("anthropic"),
+  baseUrl: text("base_url"),
   model: text("model").notNull().default("claude-sonnet-4-20250514"),
   apiKey: text("api_key"),
   openaiApiKey: text("openai_api_key"),

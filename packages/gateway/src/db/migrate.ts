@@ -326,6 +326,18 @@ export function pushSchema(sqlite: Database.Database) {
     // Column already exists
   }
 
+  // Provider-agnostic AI columns
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN provider TEXT NOT NULL DEFAULT 'anthropic';`);
+  } catch {
+    // Column already exists
+  }
+  try {
+    sqlite.exec(`ALTER TABLE ai_config ADD COLUMN base_url TEXT;`);
+  } catch {
+    // Column already exists
+  }
+
   // Voice calls table
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS voice_calls (
