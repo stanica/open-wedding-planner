@@ -1,18 +1,12 @@
 import type { LanguageModel } from "ai";
 
-export type AIProviderType = "api-key" | "claude-max";
-
 export interface AIProviderConfig {
-  provider: AIProviderType;
   model: string;
-  proxyUrl: string;
   apiKey?: string | null;
 }
 
 const DEFAULT_CONFIG: AIProviderConfig = {
-  provider: "api-key",
   model: "claude-sonnet-4-20250514",
-  proxyUrl: "http://localhost:3456/v1",
 };
 
 let currentConfig: AIProviderConfig = { ...DEFAULT_CONFIG };
@@ -40,39 +34,6 @@ export function getContextWindowForModel(modelName: string): number {
   return 200_000;
 }
 
-export async function getSubagentModel(): Promise<LanguageModel> {
-  const modelId = "claude-haiku-4-5-20251001";
-  if (currentConfig.provider === "claude-max") {
-    const { createOpenAI } = await import("@ai-sdk/openai");
-    const openai = createOpenAI({
-      baseURL: currentConfig.proxyUrl,
-      apiKey: "claude-max",
-    });
-    return openai.chat(modelId);
-  }
-
-  const { createAnthropic } = await import("@ai-sdk/anthropic");
-  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
-  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
-  return anthropic(modelId);
-}
-
-export async function getSummarizationModel(): Promise<LanguageModel> {
-  if (currentConfig.provider === "claude-max") {
-    const { createOpenAI } = await import("@ai-sdk/openai");
-    const openai = createOpenAI({
-      baseURL: currentConfig.proxyUrl,
-      apiKey: "claude-max",
-    });
-    return openai.chat("claude-sonnet-4-20250514");
-  }
-
-  const { createAnthropic } = await import("@ai-sdk/anthropic");
-  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
-  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
-  return anthropic("claude-sonnet-4-20250514");
-}
-
 /** OAuth setup tokens (from `claude setup-token`) need Bearer auth + beta header */
 function isOAuthToken(key: string): boolean {
   return key.startsWith("sk-ant-oat");
@@ -85,24 +46,25 @@ function anthropicOptions(key: string): { apiKey?: string; authToken?: string; h
   return { apiKey: key };
 }
 
+export async function getSubagentModel(): Promise<LanguageModel> {
+  const modelId = "claude-haiku-4-5-20251001";
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
+  return anthropic(modelId);
+}
+
+export async function getSummarizationModel(): Promise<LanguageModel> {
+  const { createAnthropic } = await import("@ai-sdk/anthropic");
+  const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
+  const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
+  return anthropic("claude-sonnet-4-20250514");
+}
+
 /**
- * Returns a Vercel AI SDK LanguageModel based on current configuration.
- *
- * - "api-key" mode: uses @ai-sdk/anthropic with ANTHROPIC_API_KEY env var
- * - "claude-max" mode: uses @ai-sdk/openai pointed at claude-max-api-proxy
+ * Returns a Vercel AI SDK LanguageModel using @ai-sdk/anthropic.
  */
 export async function getModel(): Promise<LanguageModel> {
-  if (currentConfig.provider === "claude-max") {
-    const { createOpenAI } = await import("@ai-sdk/openai");
-    const openai = createOpenAI({
-      baseURL: currentConfig.proxyUrl,
-      apiKey: "claude-max", // proxy doesn't need a real key
-    });
-    // Use .chat() to force /chat/completions endpoint (default uses /responses which the proxy doesn't support)
-    return openai.chat(currentConfig.model);
-  }
-
-  // Default: Anthropic API key (stored key takes precedence over env var)
   const { createAnthropic } = await import("@ai-sdk/anthropic");
   const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
   const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
@@ -110,14 +72,11 @@ export async function getModel(): Promise<LanguageModel> {
 }
 
 /**
- * Returns Anthropic's built-in server-side tools (web_search, web_fetch) when
- * using the direct API. Returns null for claude-max proxy mode (not supported).
+ * Returns Anthropic's built-in server-side tools (web_search, web_fetch).
  */
 export async function getBuiltInTools(
   emit: (action: string, detail?: string) => void,
-): Promise<Record<string, unknown> | null> {
-  if (currentConfig.provider !== "api-key") return null;
-
+): Promise<Record<string, unknown>> {
   const { createAnthropic } = await import("@ai-sdk/anthropic");
   const key = currentConfig.apiKey || process.env.ANTHROPIC_API_KEY;
   const anthropic = createAnthropic(key ? anthropicOptions(key) : {});
@@ -138,9 +97,6 @@ export async function getBuiltInTools(
 /**
  * Check if we have a usable AI provider configured.
  */
-export function hasAIProvider(isProxyRunning?: boolean): boolean {
-  if (currentConfig.provider === "claude-max") {
-    return isProxyRunning ?? false;
-  }
+export function hasAIProvider(): boolean {
   return !!(currentConfig.apiKey || process.env.ANTHROPIC_API_KEY);
 }

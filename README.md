@@ -160,7 +160,7 @@ Everything is configured through the in-app Settings screen and stored in the SQ
 | Section          | What it does                                                                                                                                                                            |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Wedding Config   | Date, guest count, total budget, currency, couple names, location, language preferences, dietary/alcohol notes                                                                          |
-| AI Provider      | Choose between **Anthropic API key** (or `claude setup-token` OAuth token) and **Claude Max Proxy** (requires Claude Code CLI). Default model: `claude-sonnet-4-20250514`.              |
+| AI Provider      | Anthropic API key or `claude setup-token` OAuth token. Default model: `claude-sonnet-4-20250514`.                                                                                       |
 | OpenAI API Key   | Separate key for semantic search embeddings (`text-embedding-3-small`). Optional — semantic search is disabled without it.                                                              |
 | Search Provider  | **DuckDuckGo** (default, no key needed) or **Brave Search** (requires a Brave Search API key).                                                                                          |
 | Heartbeat        | Optional scheduled agent that runs on a configurable interval (default 30 min). Runs health checks (stalled tasks, unparsed messages) and optionally executes a custom research prompt. |
@@ -170,16 +170,6 @@ Everything is configured through the in-app Settings screen and stored in the SQ
 | Integrations     | WhatsApp QR code setup, auto-send toggle, Google Services (Gmail via `gog` CLI).                                                                                                        |
 | Internet Tunnel  | Start/stop the Cloudflare tunnel.                                                                                                                                                       |
 | Data Management  | Export or clear application data.                                                                                                                                                       |
-
-### AI Provider: Claude Max Proxy
-
-If you have a Claude Max subscription, you can use it instead of an API key:
-
-1. Install Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
-2. Authenticate: `claude auth login`
-3. Select "Claude Max Proxy" in Settings → AI Provider
-
-Note: All local agent tools work in proxy mode, but Anthropic's built-in server-side tools (`webSearch`, `webFetch`) are not available.
 
 ### AI Provider: Anthropic API Key
 
@@ -193,7 +183,7 @@ Standard `sk-ant-api03-...` keys work. You can also use a setup token generated 
 npm test
 ```
 
-292 tests across 54 files in `packages/gateway/`, using Vitest.
+307 tests across 57 files in `packages/gateway/`, using Vitest.
 
 ## Type Checking
 

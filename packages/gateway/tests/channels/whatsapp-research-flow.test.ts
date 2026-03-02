@@ -16,7 +16,7 @@ describe("WhatsApp research flow integration", () => {
     pushSchema(sqlite);
     db = drizzle(sqlite, { schema });
     // Seed ai_config
-    sqlite.exec(`INSERT INTO ai_config (provider) VALUES ('api-key')`);
+    sqlite.exec(`INSERT INTO ai_config (model) VALUES ('claude-sonnet-4-20250514')`);
   });
 
   it("full flow: /new → message → thread created with message", async () => {

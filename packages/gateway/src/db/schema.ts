@@ -196,9 +196,7 @@ export const sessions = sqliteTable("sessions", {
 
 export const aiConfig = sqliteTable("ai_config", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  provider: text("provider").notNull().default("api-key"),
   model: text("model").notNull().default("claude-sonnet-4-20250514"),
-  proxyUrl: text("proxy_url").notNull().default("http://localhost:3456/v1"),
   apiKey: text("api_key"),
   openaiApiKey: text("openai_api_key"),
   whatsappAutoSend: integer("whatsapp_auto_send").notNull().default(0),

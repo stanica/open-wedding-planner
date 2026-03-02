@@ -11,14 +11,14 @@ export function DocsAIProvider() {
         >
           Vercel AI SDK
         </a>{" "}
-        under the hood. You can choose between two provider modes in Settings →
-        AI Provider.
+        with the Anthropic provider. Configure your API key in Settings → AI
+        Provider.
       </p>
 
-      <h2>Anthropic API key (recommended)</h2>
+      <h2>Anthropic API key</h2>
       <p>
-        The default mode. Supports all agent tools including web search, browser
-        automation, WhatsApp, and database access.
+        Supports all agent tools including web search, browser automation,
+        WhatsApp, and database access.
       </p>
       <p>Two key formats are accepted:</p>
       <ul>
@@ -58,35 +58,6 @@ export function DocsAIProvider() {
         <code>/model claude-opus-4-20250514</code>
       </pre>
 
-      <h2>Claude Max proxy</h2>
-      <p>
-        If you have a Claude Max subscription, you can use it instead of an API
-        key via the <code>claude-max-api-proxy</code> package. All local agent
-        tools work normally, but Anthropic's built-in server-side tools (
-        <code>webSearch</code>, <code>webFetch</code>) are not available in this
-        mode.
-      </p>
-
-      <h3>Setup</h3>
-      <ol>
-        <li>
-          Install Claude Code CLI:
-          <pre>
-            <code>npm install -g @anthropic-ai/claude-code</code>
-          </pre>
-        </li>
-        <li>
-          Authenticate:
-          <pre>
-            <code>claude auth login</code>
-          </pre>
-        </li>
-        <li>
-          Select <strong>Claude Max Proxy</strong> in Settings → AI Provider.
-          The proxy starts automatically.
-        </li>
-      </ol>
-
       <h2>Subagent model</h2>
       <p>
         Browser subagents (spawned by the research agent to navigate complex
@@ -95,12 +66,11 @@ export function DocsAIProvider() {
         high-volume browsing tasks.
       </p>
 
-      <h2>Built-in tools (API key mode only)</h2>
+      <h2>Built-in tools</h2>
       <p>
-        When using a direct Anthropic API key, the app also enables Anthropic's
-        server-side <code>webSearch</code> and <code>webFetch</code> tools in
-        addition to the local tool set. These are not available in Claude Max
-        proxy mode.
+        In addition to the local tool set, the app enables Anthropic's
+        server-side <code>webSearch</code> and <code>webFetch</code> tools for
+        richer web research capabilities.
       </p>
     </>
   );

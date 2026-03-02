@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as sqliteVec from "sqlite-vec";
@@ -8,33 +8,13 @@ import { seedCategories } from "../../src/db/seed.js";
 import { Router } from "../../src/infra/router.js";
 import { registerAllHandlers } from "../../src/handlers/index.js";
 
-// Mock ProxyManager so registerAllHandlers doesn't spawn real processes
-vi.mock("../../src/infra/proxy-manager.js", () => {
-  const MockProxyManager = vi.fn().mockImplementation(function (this: Record<string, unknown>) {
-    this.start = vi.fn().mockResolvedValue("http://localhost:3456/v1");
-    this.stop = vi.fn().mockResolvedValue(undefined);
-    this.isRunning = vi.fn().mockReturnValue(false);
-    this.getStatus = vi.fn().mockReturnValue({
-      running: false,
-      url: null,
-      error: null,
-    });
-  });
-  return { ProxyManager: MockProxyManager };
-});
-
-async function importProxyManager() {
-  const { ProxyManager } = await import("../../src/infra/proxy-manager.js");
-  return new ProxyManager();
-}
-
-function setup(proxyManager: unknown) {
+function setup() {
   const sqlite = new Database(":memory:");
   sqliteVec.load(sqlite);
   pushSchema(sqlite);
   const db = drizzle(sqlite, { schema });
   const router = new Router();
-  registerAllHandlers(router, proxyManager as import("../../src/infra/proxy-manager.js").ProxyManager);
+  registerAllHandlers(router);
   return { db, router };
 }
 
@@ -43,8 +23,7 @@ describe("research chat flow", () => {
   let router: Router;
 
   beforeEach(async () => {
-    const proxyManager = await importProxyManager();
-    ({ db, router } = setup(proxyManager));
+    ({ db, router } = setup());
     await seedCategories(db);
   });
 

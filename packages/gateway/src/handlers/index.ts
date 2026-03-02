@@ -1,5 +1,4 @@
 import type { Router } from "../infra/router.js";
-import type { ProxyManager } from "../infra/proxy-manager.js";
 import type { DeliveryQueue } from "../infra/delivery-queue.js";
 import type { GogManager } from "../infra/gog-manager.js";
 import type { EmbeddingService } from "../db/embeddings.js";
@@ -32,7 +31,6 @@ import { getImagesDir } from "../config/paths.js";
 
 export function registerAllHandlers(
   router: Router,
-  proxyManager: ProxyManager,
   deliveryQueue?: DeliveryQueue,
   gogManager?: GogManager,
   imagesDir?: string,
@@ -51,7 +49,7 @@ export function registerAllHandlers(
   registerCommunicationHandlers(router, deliveryQueue);
   registerResearchNoteHandlers(router);
   registerDashboardHandlers(router);
-  registerAIConfigHandlers(router, proxyManager, embeddingService, sqlite);
+  registerAIConfigHandlers(router, embeddingService, sqlite);
   registerToolPermissionHandlers(router);
   registerSearchConfigHandlers(router);
   registerHeartbeatConfigHandlers(router);

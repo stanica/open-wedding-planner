@@ -8,7 +8,6 @@ import { seedCategories } from "./db/seed.js";
 import { createWsServer } from "./infra/ws-server.js";
 import { Router } from "./infra/router.js";
 import { registerAllHandlers } from "./handlers/index.js";
-import { ProxyManager } from "./infra/proxy-manager.js";
 import { registerShutdownHandlers } from "./infra/process-signal.js";
 import {
   getDbPath,
@@ -71,7 +70,6 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // 5. Create router, delivery queue, and register handlers
   const router = new Router();
-  const proxyManager = new ProxyManager();
   const deliveryQueue = new DeliveryQueue(getDeliveryQueueDir());
   deliveryQueue.recover();
   const imagesDir = getImagesDir();
@@ -103,7 +101,6 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   registerAllHandlers(
     router,
-    proxyManager,
     deliveryQueue,
     gogManager,
     imagesDir,
@@ -241,9 +238,7 @@ export async function startGateway(options: GatewayOptions = {}) {
   const [savedAiConfig] = await db.select().from(aiConfig).limit(1);
   if (savedAiConfig) {
     setAIConfig({
-      provider: savedAiConfig.provider as "api-key" | "claude-max",
       model: savedAiConfig.model,
-      proxyUrl: savedAiConfig.proxyUrl,
       apiKey: savedAiConfig.apiKey,
     });
   }
@@ -273,15 +268,6 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   let whatsappActiveThreadId: number | null =
     savedAiConfig?.whatsappActiveThreadId ?? null;
-
-  if (savedAiConfig?.provider === "claude-max") {
-    try {
-      await proxyManager.start();
-      console.log("Claude Max proxy started");
-    } catch (err) {
-      console.error("Failed to start Claude Max proxy:", err);
-    }
-  }
 
   const toolRegistry = createToolRegistry();
 
@@ -610,7 +596,6 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // Return cleanup function
   async function stop() {
-    await proxyManager.stop();
     await tunnelManager.stop();
     await vapiTunnelManager.stop();
     heartbeat.stop();
@@ -624,7 +609,6 @@ export async function startGateway(options: GatewayOptions = {}) {
 
   // Safety net: "exit" handler is synchronous-only, so use killSync
   process.on("exit", () => {
-    proxyManager.killSync();
     tunnelManager.killSync();
     vapiTunnelManager.killSync();
   });

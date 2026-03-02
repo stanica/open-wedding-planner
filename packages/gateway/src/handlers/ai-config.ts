@@ -5,14 +5,12 @@ import {
   type AIProviderConfig,
 } from "../agents/model-provider.js";
 import type { Router, Db } from "../infra/router.js";
-import type { ProxyManager } from "../infra/proxy-manager.js";
 import type { EmbeddingService } from "../db/embeddings.js";
 import type Database from "better-sqlite3";
 import { buildEmbeddingText } from "../db/text-builders.js";
 
 export function registerAIConfigHandlers(
   router: Router,
-  proxyManager: ProxyManager,
   embeddingService?: EmbeddingService,
   sqlite?: Database.Database,
 ) {
@@ -34,9 +32,7 @@ export function registerAIConfigHandlers(
 
     const config = row
       ? {
-          provider: row.provider,
           model: row.model,
-          proxyUrl: row.proxyUrl,
           hasApiKey,
           maskedApiKey,
           hasOpenaiApiKey,
@@ -48,7 +44,7 @@ export function registerAIConfigHandlers(
           vapiAutoCall: !!row.vapiAutoCall,
         }
       : {
-          ...memConfig,
+          model: memConfig.model,
           hasApiKey,
           maskedApiKey,
           hasOpenaiApiKey: false,
@@ -60,26 +56,9 @@ export function registerAIConfigHandlers(
           vapiAutoCall: false,
         };
 
-    // Fetch available models
+    // Fetch available models from Anthropic API
     let availableModels: string[] = [];
-    const status = proxyManager.getStatus();
-    if (status.running && status.url) {
-      // Claude Max proxy mode
-      try {
-        const res = await fetch(`${status.url}/models`, {
-          signal: AbortSignal.timeout(3000),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          availableModels = (data?.data ?? []).map(
-            (m: { id: string }) => m.id,
-          );
-        }
-      } catch {
-        // Proxy not responding, return empty list
-      }
-    } else if (effectiveKey) {
-      // Direct API mode — fetch from Anthropic
+    if (effectiveKey) {
       try {
         const isOAuth = effectiveKey.startsWith("sk-ant-oat");
         const res = await fetch("https://api.anthropic.com/v1/models", {
@@ -104,7 +83,6 @@ export function registerAIConfigHandlers(
 
     return {
       ...config,
-      proxyStatus: status,
       availableModels,
     };
   });
@@ -116,9 +94,7 @@ export function registerAIConfigHandlers(
 
     if (existing) {
       const updates: Record<string, unknown> = {
-        provider: data.provider ?? existing.provider,
         model: data.model ?? existing.model,
-        proxyUrl: data.proxyUrl ?? existing.proxyUrl,
       };
       if (data.apiKey !== undefined) {
         updates.apiKey = data.apiKey;
@@ -144,9 +120,7 @@ export function registerAIConfigHandlers(
       await db.update(aiConfig).set(updates);
     } else {
       await db.insert(aiConfig).values({
-        provider: data.provider ?? "api-key",
         model: data.model ?? "claude-sonnet-4-20250514",
-        proxyUrl: data.proxyUrl ?? "http://localhost:3456/v1",
         apiKey: data.apiKey ?? null,
         openaiApiKey: (data as any).openaiApiKey ?? null,
       });
@@ -156,9 +130,7 @@ export function registerAIConfigHandlers(
     const [updated] = await db.select().from(aiConfig);
     if (updated) {
       setAIConfig({
-        provider: updated.provider as AIProviderConfig["provider"],
         model: updated.model,
-        proxyUrl: updated.proxyUrl,
         apiKey: updated.apiKey,
       });
     }
@@ -189,48 +161,7 @@ export function registerAIConfigHandlers(
       embeddingService.setEmbedFn(null);
     }
 
-    // Manage proxy lifecycle based on provider change
-    const newProvider = updated?.provider ?? data.provider;
-    let proxyError: string | null = null;
-
-    if (newProvider === "claude-max") {
-      try {
-        await proxyManager.start();
-      } catch (err) {
-        proxyError =
-          err instanceof Error ? err.message : "Failed to start proxy";
-      }
-    } else {
-      try {
-        await proxyManager.stop();
-      } catch (err) {
-        proxyError = err instanceof Error ? err.message : "Failed to stop proxy";
-      }
-    }
-
-    return {
-      ok: true,
-      proxyStatus: proxyManager.getStatus(),
-      proxyError,
-    };
-  });
-
-  router.register("ai-config.ensure-proxy", async () => {
-    if (proxyManager.isRunning()) {
-      return { proxyStatus: proxyManager.getStatus() };
-    }
-    let proxyError: string | null = null;
-    try {
-      await proxyManager.start();
-    } catch (err) {
-      proxyError = err instanceof Error ? err.message : "Failed to start proxy";
-    }
-    return { proxyStatus: proxyManager.getStatus(), proxyError };
-  });
-
-  router.register("ai-config.stop-proxy", async () => {
-    await proxyManager.stop();
-    return { proxyStatus: proxyManager.getStatus() };
+    return { ok: true };
   });
 
   router.register("ai-config.validate", async (_db: Db, params: unknown) => {
@@ -268,27 +199,6 @@ export function registerAIConfigHandlers(
     } catch (err) {
       return {
         valid: false,
-        error: err instanceof Error ? err.message : "Connection failed",
-      };
-    }
-  });
-
-  router.register("ai-config.check", async (_db: Db, params: unknown) => {
-    const { proxyUrl } = (params as { proxyUrl?: string }) ?? {};
-    const url = proxyUrl ?? getAIConfig().proxyUrl;
-
-    try {
-      const res = await fetch(`${url}/models`, {
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { connected: true, models: data };
-      }
-      return { connected: false, error: `HTTP ${res.status}` };
-    } catch (err) {
-      return {
-        connected: false,
         error: err instanceof Error ? err.message : "Connection failed",
       };
     }

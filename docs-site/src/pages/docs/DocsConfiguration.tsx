@@ -63,9 +63,9 @@ export function DocsConfiguration() {
 
       <h2>AI Provider</h2>
       <p>
-        Configure which AI model powers the research and outreach agents. See
-        the <Link to="/docs/ai-provider">AI provider guide</Link> for full
-        details.
+        Configure your Anthropic API key and choose which model powers the
+        research and outreach agents. See the{" "}
+        <Link to="/docs/ai-provider">AI provider guide</Link> for full details.
       </p>
 
       <h2>OpenAI API Key</h2>

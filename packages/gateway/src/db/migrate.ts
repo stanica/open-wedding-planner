@@ -185,9 +185,7 @@ export function pushSchema(sqlite: Database.Database) {
 
     CREATE TABLE IF NOT EXISTS ai_config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      provider TEXT NOT NULL DEFAULT 'api-key',
       model TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
-      proxy_url TEXT NOT NULL DEFAULT 'http://localhost:3456/v1',
       api_key TEXT,
       openai_api_key TEXT,
       whatsapp_auto_send INTEGER NOT NULL DEFAULT 0
