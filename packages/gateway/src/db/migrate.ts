@@ -330,7 +330,8 @@ export function pushSchema(sqlite: Database.Database) {
   try {
     sqlite.exec(`ALTER TABLE ai_config ADD COLUMN provider TEXT NOT NULL DEFAULT 'anthropic';`);
   } catch {
-    // Column already exists
+    // Column already exists — migrate old "api-key"/"proxy" values from removed Claude Max support
+    sqlite.exec(`UPDATE ai_config SET provider = 'anthropic' WHERE provider NOT IN ('anthropic','openai','google','openrouter','ollama','custom')`);
   }
   try {
     sqlite.exec(`ALTER TABLE ai_config ADD COLUMN base_url TEXT;`);
