@@ -63,9 +63,11 @@ export function DocsConfiguration() {
 
       <h2>AI Provider</h2>
       <p>
-        Configure your Anthropic API key and choose which model powers the
-        research and outreach agents. See the{" "}
-        <Link to="/docs/ai-provider">AI provider guide</Link> for full details.
+        Choose which AI provider and model powers the research and outreach
+        agents. Supported providers: Anthropic (default), OpenAI, Google Gemini,
+        OpenRouter, Ollama (local), and any OpenAI-compatible endpoint. See
+        the <Link to="/docs/ai-provider">AI provider guide</Link> for full
+        details.
       </p>
 
       <h2>OpenAI API Key</h2>

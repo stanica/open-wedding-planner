@@ -160,7 +160,7 @@ Everything is configured through the in-app Settings screen and stored in the SQ
 | Section          | What it does                                                                                                                                                                            |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Wedding Config   | Date, guest count, total budget, currency, couple names, location, language preferences, dietary/alcohol notes                                                                          |
-| AI Provider      | Anthropic API key or `claude setup-token` OAuth token. Default model: `claude-sonnet-4-20250514`.                                                                                       |
+| AI Provider      | Choose from Anthropic (default), OpenAI, Google Gemini, OpenRouter, Ollama (local), or any OpenAI-compatible endpoint. Default model: `claude-sonnet-4-20250514`.                       |
 | OpenAI API Key   | Separate key for semantic search embeddings (`text-embedding-3-small`). Optional — semantic search is disabled without it.                                                              |
 | Search Provider  | **DuckDuckGo** (default, no key needed) or **Brave Search** (requires a Brave Search API key).                                                                                          |
 | Heartbeat        | Optional scheduled agent that runs on a configurable interval (default 30 min). Runs health checks (stalled tasks, unparsed messages) and optionally executes a custom research prompt. |
@@ -171,9 +171,20 @@ Everything is configured through the in-app Settings screen and stored in the SQ
 | Internet Tunnel  | Start/stop the Cloudflare tunnel.                                                                                                                                                       |
 | Data Management  | Export or clear application data.                                                                                                                                                       |
 
-### AI Provider: Anthropic API Key
+### AI Provider
 
-Standard `sk-ant-api03-...` keys work. You can also use a setup token generated from a Max/Pro subscription via `claude setup-token` (these start with `sk-ant-oat`).
+Supports six provider options:
+
+| Provider | API Key | Notes |
+|----------|---------|-------|
+| **Anthropic** (default) | `sk-ant-api03-...` or OAuth token via `claude setup-token` | Built-in web search and web fetch tools. |
+| **OpenAI** | `sk-...` from platform.openai.com | GPT-4o, o1, o3, etc. |
+| **Google Gemini** | `AIza...` from aistudio.google.com | Gemini 2.5 Pro, etc. |
+| **OpenRouter** | `sk-or-...` from openrouter.ai | Hundreds of models behind one API. |
+| **Ollama** | None needed | Runs locally at `localhost:11434`. Fully offline. |
+| **Custom** | Optional | Any OpenAI-compatible endpoint. Provide a base URL. |
+
+Non-Anthropic providers fall back to custom search/scrape tools instead of Anthropic's built-in web_search/web_fetch.
 
 ---
 
@@ -183,7 +194,7 @@ Standard `sk-ant-api03-...` keys work. You can also use a setup token generated 
 npm test
 ```
 
-307 tests across 57 files in `packages/gateway/`, using Vitest.
+318 tests across 57 files in `packages/gateway/`, using Vitest.
 
 ## Type Checking
 
