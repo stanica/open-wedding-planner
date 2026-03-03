@@ -35,7 +35,8 @@ export function pushSchema(sqlite: Database.Database) {
       location TEXT,
       language_preferences TEXT NOT NULL DEFAULT '["en","it"]',
       dietary_requirements TEXT,
-      alcohol_preferences TEXT
+      alcohol_preferences TEXT,
+      other_info TEXT
     );
 
     CREATE TABLE IF NOT EXISTS categories (
@@ -359,6 +360,13 @@ export function pushSchema(sqlite: Database.Database) {
       ended_at TEXT
     );
   `);
+
+  // Other info on wedding_config
+  try {
+    sqlite.exec(`ALTER TABLE wedding_config ADD COLUMN other_info TEXT;`);
+  } catch {
+    // Column already exists
+  }
 
   // Normalize direction values and add CHECK constraints to communications table
   migrateCommunicationsConstraints(sqlite);

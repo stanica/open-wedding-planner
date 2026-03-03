@@ -17,6 +17,7 @@ export function registerWeddingConfigHandlers(router: Router) {
         languagePreferences: ["en", "it"],
         dietaryRequirements: null,
         alcoholPreferences: null,
+        otherInfo: null,
       };
     }
     const row = rows[0];

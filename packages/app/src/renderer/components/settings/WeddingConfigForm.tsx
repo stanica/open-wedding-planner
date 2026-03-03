@@ -11,6 +11,7 @@ interface WeddingConfig {
   location: string | null;
   dietaryRequirements: string | null;
   alcoholPreferences: string | null;
+  otherInfo: string | null;
   languagePreferences: string[];
 }
 
@@ -31,6 +32,7 @@ export function WeddingConfigForm() {
     location: null,
     dietaryRequirements: null,
     alcoholPreferences: null,
+    otherInfo: null,
     languagePreferences: ["en", "it"],
   });
   const [saved, setSaved] = useState(false);
@@ -158,6 +160,15 @@ export function WeddingConfigForm() {
           value={form.alcoholPreferences ?? ""}
           onChange={(e) => update("alcoholPreferences", e.target.value || null)}
           placeholder="Wine, cocktails, open bar..."
+        />
+      </Field>
+
+      <Field label="Other Important Info">
+        <textarea
+          rows={3}
+          value={form.otherInfo ?? ""}
+          onChange={(e) => update("otherInfo", e.target.value || null)}
+          placeholder="Any other important details about the wedding..."
         />
       </Field>
 

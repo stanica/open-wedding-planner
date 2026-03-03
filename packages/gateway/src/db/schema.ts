@@ -13,6 +13,7 @@ export const weddingConfig = sqliteTable("wedding_config", {
   languagePreferences: text("language_preferences").default('["en","it"]').notNull(),
   dietaryRequirements: text("dietary_requirements"),
   alcoholPreferences: text("alcohol_preferences"),
+  otherInfo: text("other_info"),
 });
 
 export const categories = sqliteTable("categories", {
