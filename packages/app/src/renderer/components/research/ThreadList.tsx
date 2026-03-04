@@ -81,6 +81,7 @@ export function ThreadList({ threads, activeThreadId, onSelect, onCreate, onDele
                       onChange={(e) => setEditValue(e.target.value)}
                       onBlur={commitEdit}
                       onKeyDown={(e) => {
+                        e.stopPropagation();
                         if (e.key === "Enter") commitEdit();
                         if (e.key === "Escape") setEditingId(null);
                       }}

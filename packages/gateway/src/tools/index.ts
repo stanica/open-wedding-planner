@@ -105,7 +105,7 @@ export function createToolRegistry(): ToolRegistry {
     description: "Run Google Workspace commands via gog CLI",
     category: "messaging",
     create: (ctx: unknown) => {
-      const { gogManager, getGoogleConfig, getGoogleAutoSend, permissionCallbacks } =
+      const { gogManager, getGoogleConfig } =
         ctx as any;
       const googleConfig = getGoogleConfig?.();
       if (!gogManager || !googleConfig?.account_email) {
@@ -119,8 +119,6 @@ export function createToolRegistry(): ToolRegistry {
         gogManager,
         accountEmail: googleConfig.account_email,
         services: googleConfig.services ?? "gmail",
-        getAutoSend: getGoogleAutoSend ?? (() => false),
-        permissionCallbacks,
       });
     },
   });
