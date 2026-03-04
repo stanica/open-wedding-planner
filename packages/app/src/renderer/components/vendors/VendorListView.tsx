@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Store } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useVendors, useCategories } from "../../hooks/useVendors";
 import { useMutation } from "../../hooks/useRequest";
 import { VendorCard } from "./VendorCard";
@@ -78,6 +77,33 @@ export function VendorListView() {
     return counts;
   }, [vendors]);
 
+  const groupedByCategory = useMemo(() => {
+    if (!categories || categoryFilter !== null) return null;
+
+    const groups = new Map<number, typeof filtered>();
+    for (const vendor of filtered) {
+      const group = groups.get(vendor.categoryId) ?? [];
+      group.push(vendor);
+      groups.set(vendor.categoryId, group);
+    }
+
+    return categories
+      .filter((cat) => groups.has(cat.id))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((cat) => ({ category: cat, vendors: groups.get(cat.id)! }));
+  }, [filtered, categories, categoryFilter]);
+
+  const renderVendorCard = (vendor: (typeof filtered)[0]) => (
+    <VendorCard
+      vendor={vendor}
+      onClick={() => navigate(`/vendors/${vendor.id}`)}
+      onToggleFavorite={(id, favorite) => {
+        setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
+        updateVendor({ id, favorite });
+      }}
+    />
+  );
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -105,9 +131,11 @@ export function VendorListView() {
       />
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard key={i} />
+            <div key={i} className="break-inside-avoid mb-3">
+              <SkeletonCard />
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -117,29 +145,35 @@ export function VendorListView() {
           description={search || statusFilter ? "Try adjusting your filters" : "Import vendor data to get started"}
         />
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((vendor) => (
-              <motion.div
-                key={vendor.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-              >
-                <VendorCard
-                  vendor={vendor}
-                  onClick={() => navigate(`/vendors/${vendor.id}`)}
-                  onToggleFavorite={(id, favorite) => {
-                    setOptimisticFavorites((prev) => new Map(prev).set(id, favorite));
-                    updateVendor({ id, favorite });
-                  }}
-                />
-              </motion.div>
+        groupedByCategory ? (
+          <div className="space-y-8">
+            {groupedByCategory.map(({ category, vendors: groupVendors }) => (
+              <section key={category.id}>
+                <div className="flex items-baseline gap-2 mb-3">
+                  <h2 className="text-lg font-semibold text-on-surface">{category.name}</h2>
+                  <span className="text-sm text-on-surface-tertiary">
+                    {groupVendors.length}
+                  </span>
+                </div>
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+                  {groupVendors.map((vendor) => (
+                    <div key={vendor.id} className="break-inside-avoid mb-3">
+                      {renderVendorCard(vendor)}
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
-          </AnimatePresence>
-        </div>
+          </div>
+        ) : (
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-3">
+            {filtered.map((vendor) => (
+              <div key={vendor.id} className="break-inside-avoid mb-3">
+                {renderVendorCard(vendor)}
+              </div>
+            ))}
+          </div>
+        )
       ) : (
         <VendorTableView
           vendors={filtered}

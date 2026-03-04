@@ -18,19 +18,19 @@ interface VendorCardProps {
 }
 
 export function VendorCard({ vendor, onClick, onToggleFavorite }: VendorCardProps) {
-  const [imgError, setImgError] = useState(false);
-  const showImage = vendor.imageUrl && !imgError;
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <Card onClick={onClick}>
       <CardContent>
         <div className="flex gap-3">
-          {showImage && (
+          {vendor.imageUrl && (
             <img
-              src={vendor.imageUrl!}
+              src={vendor.imageUrl}
               alt=""
-              onError={() => setImgError(true)}
-              className="h-12 w-12 rounded object-cover shrink-0"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgLoaded(false)}
+              className={`h-12 w-12 rounded object-cover shrink-0 ${imgLoaded ? "" : "hidden"}`}
             />
           )}
           <div className="min-w-0 flex-1">
